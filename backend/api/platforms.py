@@ -170,7 +170,7 @@ async def marktplaats_debug(user_id: str = Depends(get_current_user)):
 
 
 @router.post("/marktplaats/sync-chrome-session")
-async def marktplaats_sync_chrome(body: dict):
+async def marktplaats_sync_chrome(body: dict, user_id: str = Depends(get_current_user)):
     """
     Save Marktplaats session cookies extracted from a real Chrome browser.
     Body: {"cookies": {"__mpx": "...", "MpSession": "...", "aws-waf-token": "...", ...}, "email": "...", "password": "..."}
@@ -179,7 +179,7 @@ async def marktplaats_sync_chrome(body: dict):
     cookies = body.get("cookies", {})
     if not cookies:
         raise HTTPException(status_code=400, detail="No cookies provided")
-    _save_credentials(MVP_USER_ID, "marktplaats", {
+    _save_credentials(user_id, "marktplaats", {
         "access_token": "session",
         "extra_data": {
             "cookies": cookies,
