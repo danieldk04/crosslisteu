@@ -1,19 +1,31 @@
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
 from backend.models import ListingCreate
 from backend.database import get_db
 from backend.services.crosslist import publish_to_platforms, handle_item_sold
+from backend.api.deps import get_current_user
 from datetime import datetime, timezone
 
 router = APIRouter(prefix="/listings", tags=["listings"])
 
-# Hardcoded single-user ID for MVP — replace with auth middleware for SaaS
-MVP_USER_ID = "00000000-0000-0000-0000-000000000001"
+
+def _user_item_ids(db, user_id: str) -> list[str]:
+    """Return all item IDs belonging to this user."""
+    rows = db.table("items").select("id").eq("user_id", user_id).execute()
+    return [r["id"] for r in (rows.data or [])]
 
 
 @router.get("/")
-async def list_all_listings(limit: int = 200, platform: str = None, status: str = None):
+async def list_all_listings(
+    limit: int = 200,
+    platform: str = None,
+    status: str = None,
+    user_id: str = Depends(get_current_user),
+):
     db = get_db()
-    q = db.table("listings").select("*")
+    item_ids = _user_item_ids(db, user_id)
+    if not item_ids:
+        return []
+    q = db.table("listings").select("*").in_("item_id", item_ids)
     if platform:
         q = q.eq("platform", platform)
     if status:
@@ -23,29 +35,37 @@ async def list_all_listings(limit: int = 200, platform: str = None, status: str 
 
 
 @router.post("/publish")
-async def publish_listing(body: ListingCreate, background_tasks: BackgroundTasks):
-    """Publish an item to one or more platforms concurrently."""
-    results = await publish_to_platforms(body.item_id, body.platforms, MVP_USER_ID)
+async def publish_listing(
+    body: ListingCreate,
+    background_tasks: BackgroundTasks,
+    user_id: str = Depends(get_current_user),
+):
+    results = await publish_to_platforms(body.item_id, body.platforms, user_id)
     return {"results": results}
 
 
 @router.get("/item/{item_id}")
-async def get_listings_for_item(item_id: str):
+async def get_listings_for_item(item_id: str, user_id: str = Depends(get_current_user)):
     db = get_db()
+    item = db.table("items").select("id").eq("id", item_id).eq("user_id", user_id).execute()
+    if not item.data:
+        raise HTTPException(status_code=404, detail="Item not found")
     result = db.table("listings").select("*").eq("item_id", item_id).execute()
     return result.data
 
 
 @router.post("/mark-active")
-async def mark_listing_active(body: dict):
-    """Manually mark a listing as active (for when user published manually via platform UI)."""
+async def mark_listing_active(body: dict, user_id: str = Depends(get_current_user)):
     item_id = body.get("item_id")
     platform = body.get("platform")
     if not item_id or not platform:
         raise HTTPException(status_code=400, detail="item_id and platform required")
     db = get_db()
-    existing = db.table("listings").select("id").eq("item_id", item_id).eq("platform", platform).execute()
+    item = db.table("items").select("id").eq("id", item_id).eq("user_id", user_id).execute()
+    if not item.data:
+        raise HTTPException(status_code=404, detail="Item not found")
     now = datetime.now(timezone.utc).isoformat()
+    existing = db.table("listings").select("id").eq("item_id", item_id).eq("platform", platform).execute()
     if existing.data:
         db.table("listings").update({
             "status": "active",
@@ -64,6 +84,5 @@ async def mark_listing_active(body: dict):
 
 @router.post("/sold")
 async def mark_sold(item_id: str, platform: str, background_tasks: BackgroundTasks):
-    """Manually trigger sold flow (webhook fallback)."""
     background_tasks.add_task(handle_item_sold, item_id, platform)
     return {"status": "delist_triggered"}
