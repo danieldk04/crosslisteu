@@ -22,6 +22,23 @@ async def register(body: AuthRequest):
         raise HTTPException(status_code=400, detail=str(e))
 
 
+class ResetRequest(BaseModel):
+    email: str
+
+
+@router.post("/forgot-password")
+async def forgot_password(body: ResetRequest):
+    db = get_db()
+    try:
+        db.auth.reset_password_email(
+            body.email,
+            options={"redirect_to": "https://crosslisteu.com/reset-password.html"}
+        )
+    except Exception:
+        pass
+    return {"ok": True, "message": "Als dit e-mailadres bekend is, ontvang je een resetlink."}
+
+
 @router.post("/login")
 async def login(body: AuthRequest):
     db = get_db()
