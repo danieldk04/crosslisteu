@@ -17,7 +17,7 @@ async def marktplaats_bootstrap(body: dict, user_id: str = Depends(get_current_u
     """Bootstrap Marktplaats session via Playwright. Body: {email, password}"""
     try:
         session = await MarktplaatsPlatform().bootstrap_session(body["email"], body["password"])
-        _save_credentials(MVP_USER_ID, "marktplaats", {
+        _save_credentials(user_id, "marktplaats", {
             "access_token": "session",
             "extra_data": {
                 "cookies": session["cookies"],
