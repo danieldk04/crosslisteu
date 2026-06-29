@@ -1092,7 +1092,7 @@ function openAddItem() {
 function editItem(id) {
   const item = state.items.find(i => i.id === id);
   if (!item) return;
-  document.getElementById('modal-title').textContent = 'Artikel bewerken';
+  document.getElementById('modal-title').textContent = 'Edit item';
   document.getElementById('edit-id').value = id;
   document.getElementById('f-title').value = item.title;
   document.getElementById('f-sku').value = item.sku || '';
