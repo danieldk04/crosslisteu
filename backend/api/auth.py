@@ -63,7 +63,7 @@ async def login(body: AuthRequest):
     try:
         res = db.auth.sign_in_with_password({"email": body.email, "password": body.password})
         if res.user is None:
-            raise HTTPException(status_code=401, detail="Onjuiste inloggegevens")
+            raise HTTPException(status_code=401, detail="Invalid email or password")
         return {
             "ok": True,
             "access_token": res.session.access_token,
