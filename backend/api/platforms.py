@@ -64,14 +64,14 @@ async def ebay_auth_url():
 
 
 @router.get("/ebay/callback")
-async def ebay_callback(code: str):
+async def ebay_callback(code: str, user_id: str = Depends(get_current_user)):
     tokens = await EbayPlatform().exchange_code(code)
-    _save_credentials(MVP_USER_ID, "ebay", tokens)
+    _save_credentials(user_id, "ebay", tokens)
     return {"status": "connected", "platform": "ebay"}
 
 
 @router.post("/vinted/bootstrap")
-async def vinted_bootstrap(body: dict):
+async def vinted_bootstrap(body: dict, user_id: str = Depends(get_current_user)):
     """
     Bootstrap a Vinted session via Playwright Stealth.
     Body: {"email": "...", "password": "..."}
