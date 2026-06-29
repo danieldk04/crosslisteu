@@ -36,11 +36,11 @@ async def marktplaats_bootstrap(body: dict, user_id: str = Depends(get_current_u
 
 
 @router.post("/2dehands/bootstrap")
-async def tweedehands_bootstrap(body: dict):
+async def tweedehands_bootstrap(body: dict, user_id: str = Depends(get_current_user)):
     """Bootstrap 2dehands session via Playwright. Body: {email, password}"""
     try:
         session = await TweedehandsPlatform().bootstrap_session(body["email"], body["password"])
-        _save_credentials(MVP_USER_ID, "2dehands", {
+        _save_credentials(user_id, "2dehands", {
             "access_token": "session",
             "extra_data": {
                 "cookies": session["cookies"],
