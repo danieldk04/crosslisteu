@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CrossList EU — Eén klik, alle Europese marktplaatsen</title>
+<title>CrossList EU — One click, all European marketplaces</title>
 <link rel="icon" type="image/png" href="Logo Crosslist EU.png">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -33,8 +33,6 @@ nav { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,.92);
 .nav-links a { font-size: 14px; font-weight: 500; color: var(--muted); transition: color .15s; }
 .nav-links a:hover, .nav-links a.active { color: var(--text); }
 .nav-actions { display: flex; gap: 10px; align-items: center; }
-.lang-toggle { background: none; border: 1.5px solid var(--border); border-radius: 100px; padding: 5px 12px; font-size: 12px; font-weight: 700; cursor: pointer; color: var(--muted); transition: all .15s; letter-spacing: .05em; font-family: inherit; }
-.lang-toggle:hover { border-color: var(--blue); color: var(--blue); }
 .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 20px; border-radius: 100px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: all .2s; white-space: nowrap; }
 .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
 .btn-outline:hover { border-color: var(--blue); color: var(--blue); }
@@ -126,35 +124,34 @@ footer strong { color: rgba(255,255,255,.8); }
     <span class="grad-text">CrossList EU</span>
   </a>
   <div class="nav-links">
-    <a href="/marketplaces" data-en="Marketplaces">Marktplaatsen</a>
-    <a href="#hoe-het-werkt" data-en="How it works">Hoe het werkt</a>
+    <a href="/marketplaces">Marketplaces</a>
+    <a href="#how-it-works">How it works</a>
   </div>
   <div class="nav-actions">
-    <button class="lang-toggle" onclick="toggleLang()" id="lang-btn">EN</button>
-    <a href="/login" class="btn btn-outline" data-en="Log in">Inloggen</a>
-    <a href="/register" class="btn btn-primary" data-en="7 days free →">7 dagen gratis →</a>
+    <a href="/login" class="btn btn-outline">Log in</a>
+    <a href="/register" class="btn btn-primary">7 days free →</a>
   </div>
 </nav>
 
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-badge" data-en="⚡ Save hours every week">⚡ Bespaar uren per week</div>
-  <h1 data-en-html="One item. <span class=&quot;grad-text&quot;>All European marketplaces.</span>">Eén artikel. <span class="grad-text">Alle Europese marktplaatsen.</span></h1>
-  <p data-en="Stop copy-pasting. CrossList EU automatically lists your second-hand items on Marktplaats, 2dehands, Vinted and more — in seconds.">Stop met kopiëren en plakken. CrossList EU plaatst je tweedehands items automatisch op Marktplaats, 2dehands, Vinted en meer — in seconden.</p>
+  <div class="hero-badge">⚡ Save hours every week</div>
+  <h1>One item. <span class="grad-text">All European marketplaces.</span></h1>
+  <p>Stop copy-pasting. CrossList EU automatically lists your second-hand items on Marktplaats, 2dehands, Vinted and more — in seconds.</p>
   <div class="hero-cta">
-    <a href="/register" class="btn btn-primary" data-en="Start 7-day free trial →">7 dagen gratis proberen →</a>
-    <a href="/login" class="btn btn-outline" data-en="Log in">Inloggen</a>
+    <a href="/register" class="btn btn-primary">Start 7-day free trial →</a>
+    <a href="/login" class="btn btn-outline">Log in</a>
   </div>
   <div class="platform-logos">
     <div class="platform-chip">🇳🇱 Marktplaats</div>
     <div class="platform-chip">🇧🇪 2dehands</div>
     <div class="platform-chip">👗 Vinted</div>
     <div class="platform-chip">🏪 Shopify</div>
-    <div class="platform-chip soon">🛒 eBay <span class="soon-label">binnenkort</span></div>
-    <div class="platform-chip soon">🎨 Etsy <span class="soon-label">binnenkort</span></div>
-    <div class="platform-chip soon">🇩🇪 Kleinanzeigen <span class="soon-label">binnenkort</span></div>
-    <div class="platform-chip soon">🇪🇸 Wallapop <span class="soon-label">binnenkort</span></div>
-    <div class="platform-chip soon">📘 Facebook Marketplace <span class="soon-label">binnenkort</span></div>
+    <div class="platform-chip soon">🛒 eBay <span class="soon-label">coming soon</span></div>
+    <div class="platform-chip soon">🎨 Etsy <span class="soon-label">coming soon</span></div>
+    <div class="platform-chip soon">🇩🇪 Kleinanzeigen <span class="soon-label">coming soon</span></div>
+    <div class="platform-chip soon">🇪🇸 Wallapop <span class="soon-label">coming soon</span></div>
+    <div class="platform-chip soon">📘 Facebook Marketplace <span class="soon-label">coming soon</span></div>
   </div>
 </section>
 
@@ -162,57 +159,57 @@ footer strong { color: rgba(255,255,255,.8); }
 <div class="stats-bar">
   <div class="stat-item">
     <div class="stat-num">6+</div>
-    <div class="stat-label" data-en="Platforms at once">Platforms tegelijk</div>
+    <div class="stat-label">Platforms at once</div>
   </div>
   <div class="stat-item">
     <div class="stat-num">3×</div>
-    <div class="stat-label" data-en="More reach per item">Meer bereik per artikel</div>
+    <div class="stat-label">More reach per item</div>
   </div>
   <div class="stat-item">
     <div class="stat-num">90%</div>
-    <div class="stat-label" data-en="Less manual work">Minder handwerk</div>
+    <div class="stat-label">Less manual work</div>
   </div>
   <div class="stat-item">
     <div class="stat-num">AI</div>
-    <div class="stat-label" data-en="Auto-generated descriptions">Automatische beschrijvingen</div>
+    <div class="stat-label">Auto-generated descriptions</div>
   </div>
 </div>
 
 <!-- PROBLEMS -->
 <div class="section">
-  <div class="section-label">Het probleem</div>
-  <div class="section-title">Crosslisten is tijdrovend en frustrerend</div>
-  <div class="section-sub">Elke verkoper kent het: hetzelfde artikel steeds opnieuw invoeren op elk platform.</div>
+  <div class="section-label">The problem</div>
+  <div class="section-title">Cross-listing is tedious and frustrating</div>
+  <div class="section-sub">Every reseller knows it: entering the same item over and over on every platform.</div>
   <div class="problems">
     <div class="problem-card">
       <div class="problem-icon">⏱️</div>
-      <h3>Urenlang handwerk</h3>
-      <p>Foto's opslaan, opnieuw uploaden, beschrijving overtypen — voor elk platform apart. Kost je zeker 15 minuten per artikel.</p>
+      <h3>Hours of manual work</h3>
+      <p>Save photos, re-upload, retype the description — for every platform separately. Easily 15 minutes per item.</p>
     </div>
     <div class="problem-card">
       <div class="problem-icon">😤</div>
-      <h3>Inconsistente listings</h3>
-      <p>Tikfouten, vergeten foto's, verkeerde prijzen — als je alles handmatig doet, sluipen er fouten in.</p>
+      <h3>Inconsistent listings</h3>
+      <p>Typos, missing photos, wrong prices — when you do everything manually, errors creep in.</p>
     </div>
     <div class="problem-card">
       <div class="problem-icon">📉</div>
-      <h3>Gemist bereik</h3>
-      <p>Wie alleen op Marktplaats staat, mist Belgische kopers op 2dehands en de internationale markt op Vinted en eBay.</p>
+      <h3>Missed reach</h3>
+      <p>Selling only on Marktplaats? You're missing Belgian buyers on 2dehands and the international market on Vinted and eBay.</p>
     </div>
     <div class="problem-card">
       <div class="problem-icon">🔄</div>
-      <h3>Dubbele verkoop</h3>
-      <p>Artikel verkocht op Marktplaats maar nog actief op 2dehands? Dat leidt tot onhandige situaties met kopers.</p>
+      <h3>Double sales</h3>
+      <p>Item sold on Marktplaats but still live on 2dehands? That leads to awkward situations with buyers.</p>
     </div>
     <div class="problem-card">
       <div class="problem-icon">💸</div>
-      <h3>Onduidelijke marges</h3>
-      <p>Elke marktplaats rekent andere commissies. Zonder overzicht weet je nooit wat je echt verdient.</p>
+      <h3>Unclear margins</h3>
+      <p>Every marketplace charges different fees. Without an overview you never know what you actually earn.</p>
     </div>
     <div class="problem-card">
       <div class="problem-icon">📱</div>
-      <h3>Geen centraal overzicht</h3>
-      <p>Al je actieve listings verspreid over 5 apps. Geen idee wat waar staat, of wat al lang weg is.</p>
+      <h3>No central overview</h3>
+      <p>Active listings spread across 5 apps. No idea what's where, or what has been sold for ages.</p>
     </div>
   </div>
 </div>
@@ -221,121 +218,121 @@ footer strong { color: rgba(255,255,255,.8); }
 
 <!-- FEATURES -->
 <div class="section" style="padding-top:0">
-  <div class="section-label">De oplossing</div>
-  <div class="section-title">CrossList EU regelt het voor je</div>
-  <div class="section-sub">Één dashboard voor alle platforms. Nooit meer handmatig kopiëren.</div>
+  <div class="section-label">The solution</div>
+  <div class="section-title">CrossList EU handles it for you</div>
+  <div class="section-sub">One dashboard for all platforms. No more manual copy-pasting.</div>
   <div class="features">
     <div class="feature-card">
       <div class="feature-icon">⚡</div>
-      <h3>Eén klik, alle platforms</h3>
-      <p>Upload je artikel één keer en kies op welke platforms je het wil publiceren. CrossList EU plaatst het overal tegelijk.</p>
+      <h3>One click, all platforms</h3>
+      <p>Upload your item once and choose which platforms to publish to. CrossList EU posts it everywhere simultaneously.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">🤖</div>
-      <h3>AI-beschrijvingen</h3>
-      <p>Foto uploaden is genoeg. Onze AI herkent het artikel en schrijft automatisch een professionele titel en beschrijving.</p>
+      <h3>AI descriptions</h3>
+      <p>Just upload a photo. Our AI recognises the item and automatically writes a professional title and description.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">💶</div>
-      <h3>Marge calculator</h3>
-      <p>Vul je inkoopprijs en gewenste winst in. We berekenen direct de optimale verkoopprijs per platform inclusief commissies.</p>
+      <h3>Margin calculator</h3>
+      <p>Enter your purchase price and desired profit. We instantly calculate the optimal selling price per platform including fees.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">🔄</div>
-      <h3>Automatische synchronisatie</h3>
-      <p>Verkoop je iets op één platform? Alle andere listings worden automatisch verwijderd. Nooit meer dubbele verkoop.</p>
+      <h3>Automatic sync</h3>
+      <p>Sold something on one platform? All other listings are automatically removed. No more double sales.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">📊</div>
-      <h3>Centraal overzicht</h3>
-      <p>Bekijk al je actieve listings, de status per platform en je totale bereik in één helder dashboard.</p>
+      <h3>Central dashboard</h3>
+      <p>View all your active listings, status per platform and total reach in one clear dashboard.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">🛡️</div>
-      <h3>Veilig & slim</h3>
-      <p>Ingebouwde pauzes tussen uploads zodat je accounts nooit geblokkeerd worden. Werkt volgens de regels van elk platform.</p>
+      <h3>Safe &amp; smart</h3>
+      <p>Built-in pacing between uploads so your accounts never get flagged. Works within the rules of every platform.</p>
     </div>
   </div>
 </div>
 
-<!-- BESCHERMINGEN -->
+<!-- BUILT-IN PROTECTIONS -->
 <div style="background:#f8fafc;padding:80px 40px">
   <div style="max-width:1100px;margin:0 auto">
-    <div class="section-label">Ingebouwde beschermingen</div>
-    <div class="section-title">CrossList EU werkt slim op de achtergrond</div>
-    <div class="section-sub" style="margin-bottom:48px">Elk platform heeft eigen regels en beperkingen. CrossList EU kent ze allemaal en lost ze automatisch op — zodat jij er nooit last van hebt.</div>
+    <div class="section-label">Built-in protections</div>
+    <div class="section-title">CrossList EU works smart in the background</div>
+    <div class="section-sub" style="margin-bottom:48px">Every platform has its own rules and restrictions. CrossList EU knows them all and resolves them automatically — so you never have to worry.</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px">
 
       <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:24px">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
           <div style="width:40px;height:40px;border-radius:10px;background:#dcfce7;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🔄</div>
           <div>
-            <div style="font-weight:700;font-size:15px">Marktplaats auto-herplaats</div>
-            <div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#16a34a;margin-top:3px">✓ Actief — elke 6 uur</div>
+            <div style="font-weight:700;font-size:15px">Marktplaats auto-relist</div>
+            <div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#16a34a;margin-top:3px">✓ Active — every 6 hours</div>
           </div>
         </div>
-        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:10px">Gratis Marktplaats advertenties vervallen stilletjes na 28 dagen. CrossList controleert elke 6 uur en herplaatst automatisch na 27 dagen, zodat je altijd zichtbaar blijft.</div>
-        <div style="font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px"><strong>Zonder dit:</strong> advertentie verdwijnt na 28 dagen zonder melding.</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:10px">Free Marktplaats listings expire silently after 28 days. CrossList checks every 6 hours and automatically relists after 27 days so you stay visible.</div>
+        <div style="font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px"><strong>Without this:</strong> listing disappears after 28 days without warning.</div>
       </div>
 
       <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:24px">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
           <div style="width:40px;height:40px;border-radius:10px;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🛡️</div>
           <div>
-            <div style="font-weight:700;font-size:15px">Vinted foto-bescherming</div>
-            <div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#16a34a;margin-top:3px">✓ Actief — bij elke upload</div>
+            <div style="font-weight:700;font-size:15px">Vinted photo protection</div>
+            <div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#16a34a;margin-top:3px">✓ Active — every upload</div>
           </div>
         </div>
-        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:10px">Vinted herkent identieke foto's van andere platforms via pixel-hashing en kan je account blokkeren. CrossList past elke foto minimaal aan via canvas-rendering — onzichtbaar voor het oog, maar een unieke hash voor Vinted.</div>
-        <div style="font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px"><strong>Zonder dit:</strong> risico op accountblokkade bij Vinted.</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:10px">Vinted detects identical photos from other platforms via pixel-hashing and may ban your account. CrossList slightly modifies each photo via canvas rendering — invisible to the eye, but a unique hash for Vinted.</div>
+        <div style="font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px"><strong>Without this:</strong> risk of account ban on Vinted.</div>
       </div>
 
       <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:24px">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
           <div style="width:40px;height:40px;border-radius:10px;background:#dcfce7;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🧹</div>
           <div>
-            <div style="font-weight:700;font-size:15px">2dehands opmaak-fix</div>
-            <div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#16a34a;margin-top:3px">✓ Actief — bij elke publicatie</div>
+            <div style="font-weight:700;font-size:15px">2dehands formatting fix</div>
+            <div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#16a34a;margin-top:3px">✓ Active — every publish</div>
           </div>
         </div>
-        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:10px">2dehands ondersteunt slechts 7 HTML-tags in beschrijvingen. Andere tags laten de editor crashen. CrossList filtert automatisch alle niet-ondersteunde opmaak weg vóór publicatie.</div>
-        <div style="font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px"><strong>Zonder dit:</strong> publicatie mislukt of beschrijving wordt leeg.</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:10px">2dehands only supports 7 HTML tags in descriptions. Other tags crash the editor. CrossList automatically strips all unsupported formatting before publishing.</div>
+        <div style="font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px"><strong>Without this:</strong> publish fails or description is empty.</div>
       </div>
 
       <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:24px">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
           <div style="width:40px;height:40px;border-radius:10px;background:#f3e8ff;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🌐</div>
           <div>
-            <div style="font-weight:700;font-size:15px">Automatisch vertalen</div>
-            <div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#16a34a;margin-top:3px">✓ Actief — Vinted &amp; Shopify</div>
+            <div style="font-weight:700;font-size:15px">Auto-translation</div>
+            <div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#16a34a;margin-top:3px">✓ Active — Marktplaats &amp; 2dehands</div>
           </div>
         </div>
-        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:10px">Vinted en Shopify richten zich op internationale kopers en verwachten Engelstalige content. Titels en beschrijvingen worden automatisch vertaald — je voert alles in het Nederlands in.</div>
-        <div style="font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px"><strong>Zonder dit:</strong> Nederlandse tekst zichtbaar op internationale platforms.</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:10px">Marktplaats and 2dehands are Dutch-language platforms. You enter your listings in English — CrossList automatically translates titles and descriptions to Dutch before publishing.</div>
+        <div style="font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px"><strong>Without this:</strong> English text visible on Dutch-language platforms.</div>
       </div>
 
       <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:24px">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
           <div style="width:40px;height:40px;border-radius:10px;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">⚡</div>
           <div>
-            <div style="font-weight:700;font-size:15px">Verkoop-synchronisatie</div>
-            <div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#16a34a;margin-top:3px">✓ Actief — alle platforms</div>
+            <div style="font-weight:700;font-size:15px">Sale sync</div>
+            <div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#16a34a;margin-top:3px">✓ Active — all platforms</div>
           </div>
         </div>
-        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:10px">Zodra een artikel verkocht is op één platform, worden alle andere actieve advertenties automatisch verwijderd. Geen dubbele verkopen, geen handmatig opruimen.</div>
-        <div style="font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px"><strong>Zonder dit:</strong> risico op dubbele verkopen en negatieve reviews.</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:10px">Once an item sells on one platform, all other active listings are automatically removed. No double sales, no manual cleanup.</div>
+        <div style="font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px"><strong>Without this:</strong> risk of double sales and negative reviews.</div>
       </div>
 
       <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:24px">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
           <div style="width:40px;height:40px;border-radius:10px;background:#fef9c3;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📋</div>
           <div>
-            <div style="font-weight:700;font-size:15px">Marktplaats editor-fix</div>
-            <div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#16a34a;margin-top:3px">✓ Actief — bij elke publicatie</div>
+            <div style="font-weight:700;font-size:15px">Marktplaats editor fix</div>
+            <div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#16a34a;margin-top:3px">✓ Active — every publish</div>
           </div>
         </div>
-        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:10px">Marktplaats gebruikt een eigen rich-text editor (Lexical) die niet reageert op standaard DOM-invulling. CrossList vult de editor correct in via de interne EditorState API.</div>
-        <div style="font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px"><strong>Zonder dit:</strong> beschrijving blijft leeg bij publicatie.</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:10px">Marktplaats uses its own rich-text editor (Lexical) that does not respond to standard DOM input. CrossList fills the editor correctly via the internal EditorState API.</div>
+        <div style="font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px"><strong>Without this:</strong> description stays empty on publish.</div>
       </div>
 
     </div>
@@ -343,31 +340,31 @@ footer strong { color: rgba(255,255,255,.8); }
 </div>
 
 <!-- HOW IT WORKS -->
-<div class="how">
+<div class="how" id="how-it-works">
   <div style="max-width:1100px;margin:0 auto;">
-    <div class="section-label" style="text-align:center">Hoe het werkt</div>
-    <div class="section-title" style="text-align:center;max-width:500px;margin:0 auto 0">In 3 stappen live op alle platforms</div>
+    <div class="section-label" style="text-align:center">How it works</div>
+    <div class="section-title" style="text-align:center;max-width:500px;margin:0 auto 0">Live on all platforms in 3 steps</div>
   </div>
   <div class="steps">
     <div class="step">
       <div class="step-num">1</div>
       <div class="step-text">
-        <h3>Maak een artikel aan</h3>
-        <p>Upload foto's, vul merk en maat in. De AI schrijft de beschrijving en stelt een prijs voor op basis van je inkoopprijs.</p>
+        <h3>Create an item</h3>
+        <p>Upload photos, fill in brand and size. The AI writes the description and suggests a price based on your purchase cost.</p>
       </div>
     </div>
     <div class="step">
       <div class="step-num">2</div>
       <div class="step-text">
-        <h3>Kies je platforms</h3>
-        <p>Vink aan op welke marktplaatsen je het wil publiceren. Marktplaats, 2dehands, Vinted, eBay — of allemaal tegelijk.</p>
+        <h3>Choose your platforms</h3>
+        <p>Select which marketplaces to publish to. Marktplaats, 2dehands, Vinted, eBay — or all at once.</p>
       </div>
     </div>
     <div class="step">
       <div class="step-num">3</div>
       <div class="step-text">
-        <h3>Publiceer met één klik</h3>
-        <p>CrossList EU regelt de rest. Je artikel staat binnen seconden op alle gekozen platforms, met foto's en volledige beschrijving.</p>
+        <h3>Publish with one click</h3>
+        <p>CrossList EU handles the rest. Your item is live on all chosen platforms within seconds, with photos and full description.</p>
       </div>
     </div>
   </div>
@@ -375,37 +372,14 @@ footer strong { color: rgba(255,255,255,.8); }
 
 <!-- CTA -->
 <div class="cta-block">
-  <h2 data-en="Ready to save time?">Klaar om tijd te besparen?</h2>
-  <p data-en="7 days free. No credit card needed. Start today.">7 dagen gratis uitproberen. Geen creditcard nodig.</p>
-  <a href="/register" class="btn btn-white btn-primary" style="background:#fff;color:var(--blue);font-size:16px;padding:14px 32px;" data-en="Start free trial →">7 dagen gratis proberen →</a>
+  <h2>Ready to save time?</h2>
+  <p>7 days free. No credit card needed. Start today.</p>
+  <a href="/register" class="btn btn-white btn-primary" style="background:#fff;color:var(--blue);font-size:16px;padding:14px 32px;">Start free trial →</a>
 </div>
 
 <footer>
   <strong>CrossList EU</strong> — crosslisteu.com &nbsp;·&nbsp; © 2026
 </footer>
 
-<script>
-function toggleLang() {
-  const cur = localStorage.getItem('lang') || 'nl';
-  setLang(cur === 'nl' ? 'en' : 'nl');
-}
-function setLang(lang) {
-  localStorage.setItem('lang', lang);
-  const btn = document.getElementById('lang-btn');
-  if (btn) btn.textContent = lang === 'nl' ? 'EN' : 'NL';
-  document.querySelectorAll('[data-en]').forEach(el => {
-    if (!el.dataset.nl) el.dataset.nl = el.textContent;
-    el.textContent = lang === 'en' ? el.dataset.en : el.dataset.nl;
-  });
-  document.querySelectorAll('[data-en-html]').forEach(el => {
-    if (!el.dataset.nlHtml) el.dataset.nlHtml = el.innerHTML;
-    el.innerHTML = lang === 'en' ? el.dataset.enHtml : el.dataset.nlHtml;
-  });
-}
-document.addEventListener('DOMContentLoaded', () => {
-  const saved = localStorage.getItem('lang') || 'nl';
-  if (saved === 'en') setLang('en');
-});
-</script>
 </body>
 </html>
