@@ -350,7 +350,7 @@ async def relist_expiring_marktplaats():
             db.table("listings").update({"status": "relisting"}).eq("id", listing["id"]).execute()
 
             db.table("jobs").insert({
-                "user_id": _MVP_USER_ID,
+                "user_id": item["user_id"],
                 "item_id": listing["item_id"],
                 "platform": "marktplaats",
                 "action": "create",
