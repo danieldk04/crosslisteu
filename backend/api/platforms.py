@@ -93,11 +93,11 @@ async def vinted_bootstrap(body: dict, user_id: str = Depends(get_current_user))
 
 
 @router.get("/marktplaats/debug")
-async def marktplaats_debug():
+async def marktplaats_debug(user_id: str = Depends(get_current_user)):
     """Navigate SYI form with stored session and capture the submit API call."""
     from playwright.async_api import async_playwright
     db = get_db()
-    creds = db.table("platform_credentials").select("*").eq("user_id", MVP_USER_ID).eq("platform", "marktplaats").single().execute()
+    creds = db.table("platform_credentials").select("*").eq("user_id", user_id).eq("platform", "marktplaats").single().execute()
     if not creds.data:
         return {"error": "not connected"}
     extra = creds.data.get("extra_data") or {}
