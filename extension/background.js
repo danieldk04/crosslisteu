@@ -623,9 +623,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 });
 
 async function reportError(jobId, serverUrl, error) {
+  const headers = await getAuthHeaders();
   await fetch(`${serverUrl}/api/jobs/${jobId}/error`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ error }),
   });
 }
