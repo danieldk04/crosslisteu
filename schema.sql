@@ -1,0 +1,79 @@
+-- CrossList EU — Supabase/PostgreSQL schema
+-- Run this in the Supabase SQL editor to initialise the database.
+
+CREATE TABLE IF NOT EXISTS items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000001',
+    sku VARCHAR(50) UNIQUE,
+    title VARCHAR(100) NOT NULL,
+    description TEXT,
+    price DECIMAL(10,2),
+    purchase_price DECIMAL(10,2),
+    brand VARCHAR(100),
+    size VARCHAR(20),
+    condition VARCHAR(20) DEFAULT 'good',
+    category VARCHAR(100),
+    color VARCHAR(50),
+    material VARCHAR(100),
+    photo_urls TEXT[] DEFAULT '{}',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    days_in_stock INT GENERATED ALWAYS AS
+        (EXTRACT(DAY FROM NOW() - created_at)::INT) STORED
+);
+
+CREATE TABLE IF NOT EXISTS listings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    item_id UUID REFERENCES items(id) ON DELETE CASCADE,
+    platform VARCHAR(50) NOT NULL,
+    platform_listing_id VARCHAR(100),
+    platform_listing_url TEXT,
+    status VARCHAR(20) DEFAULT 'pending',
+    listed_at TIMESTAMPTZ,
+    sold_at TIMESTAMPTZ,
+    last_checked TIMESTAMPTZ,
+    error_message TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS platform_credentials (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    platform VARCHAR(50) NOT NULL,
+    access_token TEXT,
+    refresh_token TEXT,
+    token_expires_at TIMESTAMPTZ,
+    extra_data JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(user_id, platform)
+);
+
+CREATE TABLE IF NOT EXISTS sync_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    listing_id UUID REFERENCES listings(id),
+    event_type VARCHAR(50),
+    payload JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Job queue: Chrome extension polls this to pick up crosslist/delist tasks
+CREATE TABLE IF NOT EXISTS jobs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000001',
+    item_id UUID REFERENCES items(id) ON DELETE CASCADE,
+    platform VARCHAR(50) NOT NULL,
+    action VARCHAR(20) NOT NULL,          -- 'create' or 'delete'
+    status VARCHAR(20) DEFAULT 'pending', -- pending / claimed / done / error
+    payload JSONB,                        -- item data snapshot for extension
+    result JSONB,                         -- {listing_id, listing_url} or {error}
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    claimed_at TIMESTAMPTZ,
+    done_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_jobs_status_platform ON jobs(status, platform);
+
+-- Indexes for common query patterns
+CREATE INDEX IF NOT EXISTS idx_listings_item_id ON listings(item_id);
+CREATE INDEX IF NOT EXISTS idx_listings_status ON listings(status);
+CREATE INDEX IF NOT EXISTS idx_listings_platform ON listings(platform);
+CREATE INDEX IF NOT EXISTS idx_sync_events_listing_id ON sync_events(listing_id);

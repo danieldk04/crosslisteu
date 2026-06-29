@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "CrossList EU",
+  "version": "1.0.0",
+  "description": "Automatisch crosslisten naar Marktplaats, 2dehands en meer",
+  "permissions": ["storage", "tabs", "alarms", "clipboardWrite", "clipboardRead", "scripting"],
+  "host_permissions": [
+    "https://www.marktplaats.nl/*",
+    "https://www.2dehands.be/*",
+    "https://www.vinted.com/*",
+    "http://localhost/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.marktplaats.nl/plaats/*"],
+      "js": ["content/shared.js", "content/marktplaats.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.2dehands.be/plaats/*"],
+      "js": ["content/shared.js", "content/tweedehands.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.vinted.com/items/new", "https://www.vinted.com/items/*"],
+      "js": ["content/shared.js", "content/vinted.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.marktplaats.nl/mijn-marktplaats/advertenties/*"],
+      "js": ["content/shared.js", "content/marktplaats.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.2dehands.be/mijn-2dehands/advertenties/*"],
+      "js": ["content/shared.js", "content/tweedehands.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "CrossList EU"
+  }
+}
