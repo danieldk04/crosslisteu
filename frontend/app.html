@@ -1004,7 +1004,7 @@ async function bulkDelete() {
   const more = ids.length > 3 ? ` en ${ids.length - 3} meer` : '';
   // Note: extension-platform listings (MP/2dehands/Vinted) can't be auto-delisted on delete
   // because delete removes the jobs queue. Delist manually first if needed.
-  if (!confirm(`Verwijder ${ids.length} artikel(en) permanent uit het dashboard?\n${names}${more}\n\nLet op: delist ze eerst van Marktplaats/2dehands/Vinted als ze daar nog staan.`)) return;
+  if (!confirm(`Permanently remove ${ids.length} item(s) from the dashboard?\n${names}${more}\n\nNote: delist them from Marktplaats/2dehands/Vinted first if they are still listed there.`)) return;
 
   let done = 0, errors = 0;
   for (const id of ids) {
