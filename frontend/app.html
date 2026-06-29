@@ -1172,8 +1172,8 @@ async function delistItem(itemId, title) {
   );
   const activePlatforms = delistable.map(l => PLATFORM_LABELS[l.platform] || l.platform);
   const msg = activePlatforms.length
-    ? `"${title}" delist van: ${activePlatforms.join(', ')}?`
-    : `"${title}" heeft geen actieve listings. Toch doorgaan?`;
+    ? `Delist "${title}" from: ${activePlatforms.join(', ')}?`
+    : `"${title}" has no active listings. Continue anyway?`;
   if (!confirm(msg)) return;
 
   try {
