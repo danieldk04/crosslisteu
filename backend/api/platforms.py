@@ -192,12 +192,12 @@ async def marktplaats_sync_chrome(body: dict, user_id: str = Depends(get_current
 
 
 @router.post("/2dehands/sync-chrome-session")
-async def tweedehands_sync_chrome(body: dict):
+async def tweedehands_sync_chrome(body: dict, user_id: str = Depends(get_current_user)):
     """Save 2dehands session cookies from Chrome browser."""
     cookies = body.get("cookies", {})
     if not cookies:
         raise HTTPException(status_code=400, detail="No cookies provided")
-    _save_credentials(MVP_USER_ID, "2dehands", {
+    _save_credentials(user_id, "2dehands", {
         "access_token": "session",
         "extra_data": {
             "cookies": cookies,
