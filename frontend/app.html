@@ -813,10 +813,10 @@ function renderDashboard() {
     <td><strong>€${item.price}</strong></td>
     <td><div class="platform-badges">${renderListingBadges(item.id)}</div></td>
     <td>
-      <button class="btn btn-sm btn-primary" onclick="openCrosslist('${item.id}')">Publiceer</button>
+      <button class="btn btn-sm btn-primary" onclick="openCrosslist('${item.id}')">Publish</button>
     </td>
   </tr>`).join('');
-  document.getElementById('dashboard-items-body').innerHTML = rows || '<tr><td colspan="4"><div class="empty"><h3>Geen artikelen</h3><p>Voeg je eerste artikel toe om te beginnen</p></div></td></tr>';
+  document.getElementById('dashboard-items-body').innerHTML = rows || '<tr><td colspan="4"><div class="empty"><h3>No items yet</h3><p>Add your first item to get started</p></div></td></tr>';
 }
 
 function renderListingBadges(itemId) {
