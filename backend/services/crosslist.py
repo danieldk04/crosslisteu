@@ -365,10 +365,12 @@ async def relist_expiring_marktplaats():
 
 async def _delist_one(listing: dict):
     db = get_db()
+    item_resp = db.table("items").select("user_id").eq("id", listing["item_id"]).single().execute()
+    item_user_id = item_resp.data["user_id"] if item_resp.data else None
     creds_resp = (
         db.table("platform_credentials")
         .select("*")
-        .eq("user_id", _MVP_USER_ID)
+        .eq("user_id", item_user_id)
         .eq("platform", listing["platform"])
         .execute()
     )
