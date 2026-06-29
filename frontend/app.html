@@ -534,53 +534,115 @@ input[type="checkbox"].row-check { width: 15px; height: 15px; cursor: pointer; a
 
     <!-- PRIJS / ABONNEMENT VIEW -->
     <div id="view-prijs" class="view">
-      <div style="margin-bottom:20px">
-        <div style="font-size:22px;font-weight:700;margin-bottom:4px">Abonnement</div>
-        <div style="font-size:13px;color:var(--muted)">Beheer je CrossList EU Pro abonnement.</div>
-      </div>
 
-      <!-- Status banner -->
-      <div id="billing-banner" style="display:none;border-radius:10px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px"></div>
-
-      <!-- Pricing card -->
-      <div id="billing-upgrade-card" style="display:none">
-        <div style="max-width:420px;background:linear-gradient(135deg,#1e3a8a 0%,#1d4ed8 100%);border-radius:14px;padding:28px;color:#fff;position:relative;overflow:hidden">
-          <div style="position:absolute;top:-30px;right:-30px;width:140px;height:140px;background:rgba(255,255,255,.06);border-radius:50%"></div>
-          <div style="position:absolute;bottom:-20px;right:40px;width:80px;height:80px;background:rgba(255,255,255,.04);border-radius:50%"></div>
-          <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;opacity:.7;margin-bottom:10px">CrossList EU</div>
-          <div style="font-size:28px;font-weight:800;margin-bottom:4px">Pro</div>
-          <div style="font-size:40px;font-weight:900;margin-bottom:4px">€19,99<span style="font-size:16px;font-weight:400;opacity:.8">/maand</span></div>
-          <div style="font-size:13px;opacity:.75;margin-bottom:24px">14 dagen gratis uitproberen — geen creditcard vereist om te starten</div>
-          <ul style="list-style:none;padding:0;margin:0 0 24px;display:flex;flex-direction:column;gap:9px;font-size:13px">
-            <li style="display:flex;align-items:center;gap:10px"><span style="color:#34d399;font-size:16px">✓</span> Onbeperkt crosslisten</li>
-            <li style="display:flex;align-items:center;gap:10px"><span style="color:#34d399;font-size:16px">✓</span> Marktplaats, 2dehands, Vinted, Shopify</li>
-            <li style="display:flex;align-items:center;gap:10px"><span style="color:#34d399;font-size:16px">✓</span> AI-beschrijvingen genereren</li>
-            <li style="display:flex;align-items:center;gap:10px"><span style="color:#34d399;font-size:16px">✓</span> Auto-delist bij verkoop</li>
-            <li style="display:flex;align-items:center;gap:10px"><span style="color:#34d399;font-size:16px">✓</span> Marktplaats auto-relist (28 dagen)</li>
-            <li style="display:flex;align-items:center;gap:10px"><span style="color:#34d399;font-size:16px">✓</span> Verkoop dashboard & winst inzicht</li>
-          </ul>
-          <button id="btn-checkout" onclick="startCheckout()" style="width:100%;padding:14px;background:#fff;color:#1d4ed8;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer">
-            Start 14 dagen gratis →
-          </button>
-          <div style="font-size:11px;opacity:.6;text-align:center;margin-top:10px">Betaling via iDEAL, Bancontact of creditcard · Opzegbaar per maand</div>
-        </div>
-      </div>
-
-      <!-- Active subscription card -->
-      <div id="billing-active-card" style="display:none;max-width:420px">
-        <div class="card" style="padding:24px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <!-- Active subscription state -->
+      <div id="billing-active-card" style="display:none">
+        <div class="active-plan-card">
+          <div class="active-plan-header">
             <div>
-              <div style="font-weight:700;font-size:16px">CrossList EU Pro</div>
+              <div style="font-size:11px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Huidig plan</div>
+              <div style="font-size:20px;font-weight:800">CrossList EU Pro</div>
               <div id="billing-active-detail" style="font-size:13px;color:var(--muted);margin-top:3px"></div>
             </div>
-            <span id="billing-status-badge" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:100px;background:#d1fae5;color:#065f46"></span>
+            <span id="billing-status-badge" class="status-pill active">Actief</span>
           </div>
-          <button onclick="openPortal()" style="width:100%;padding:10px;background:var(--primary);color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer">
-            Abonnement beheren →
-          </button>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
+            <div style="background:#f8faff;border-radius:8px;padding:12px 16px">
+              <div style="font-size:11px;color:var(--muted);margin-bottom:2px">Plan</div>
+              <div style="font-weight:600;font-size:13px">Pro · €19,99/mnd</div>
+            </div>
+            <div style="background:#f8faff;border-radius:8px;padding:12px 16px">
+              <div style="font-size:11px;color:var(--muted);margin-bottom:2px">Volgende betaling</div>
+              <div style="font-weight:600;font-size:13px" id="billing-next-date">—</div>
+            </div>
+          </div>
+          <button onclick="openPortal()" style="width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Abonnement beheren →</button>
+        </div>
+
+        <div style="max-width:440px;margin:0 auto">
+          <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Jouw plan bevat</div>
+          <div class="pricing-features-grid">
+            <div class="pricing-feature-item"><div class="pricing-feature-icon">🔁</div><div><div class="pricing-feature-title">Onbeperkt crosslisten</div><div class="pricing-feature-desc">Zoveel items als je wilt op alle platforms</div></div></div>
+            <div class="pricing-feature-item"><div class="pricing-feature-icon">🤖</div><div><div class="pricing-feature-title">AI-beschrijvingen</div><div class="pricing-feature-desc">Genereer per foto een professionele tekst</div></div></div>
+            <div class="pricing-feature-item"><div class="pricing-feature-icon">🛒</div><div><div class="pricing-feature-title">Auto-delist bij verkoop</div><div class="pricing-feature-desc">Verkoop op één platform, rest wordt verwijderd</div></div></div>
+            <div class="pricing-feature-item"><div class="pricing-feature-icon">📅</div><div><div class="pricing-feature-title">Marktplaats auto-relist</div><div class="pricing-feature-desc">Automatisch herplaatsen na 27 dagen</div></div></div>
+          </div>
         </div>
       </div>
+
+      <!-- Upgrade / trial state -->
+      <div id="billing-upgrade-card" style="display:none">
+        <div class="pricing-hero">
+          <h1>Eén plan. Alles inbegrepen.</h1>
+          <p>CrossList EU Pro geeft je alles wat je nodig hebt om slimmer te verkopen.</p>
+        </div>
+
+        <div class="pricing-card">
+          <div class="pricing-badge">Meest gekozen</div>
+          <div class="pricing-plan-name">Pro</div>
+          <div class="pricing-amount">€19,99<span>/mnd</span></div>
+          <div class="pricing-trial-note" id="pricing-trial-note">7 dagen gratis proberen · Geen creditcard nodig</div>
+          <ul class="pricing-features">
+            <li>Onbeperkt crosslisten op alle platforms</li>
+            <li>Marktplaats, 2dehands, Vinted & Shopify</li>
+            <li>AI-beschrijvingen vanuit foto's</li>
+            <li>Auto-delist bij verkoop (cross-platform)</li>
+            <li>Marktplaats auto-relist na 27 dagen</li>
+            <li>Verkoop dashboard & winstberekening</li>
+            <li>Prioriteit support via e-mail</li>
+          </ul>
+          <button id="btn-checkout" class="pricing-cta" onclick="startCheckout()">Start 7 dagen gratis →</button>
+          <div class="pricing-fine">Daarna €19,99/maand · Opzegbaar per maand<br>Betalen via iDEAL, Bancontact of creditcard</div>
+        </div>
+
+        <!-- All features -->
+        <div style="max-width:640px;margin:0 auto 40px">
+          <div style="text-align:center;font-size:18px;font-weight:700;margin-bottom:20px">Alles inbegrepen bij Pro</div>
+          <div class="pricing-features-grid">
+            <div class="pricing-feature-item"><div class="pricing-feature-icon">🔁</div><div><div class="pricing-feature-title">Crosslisten</div><div class="pricing-feature-desc">Eén item, direct op alle platforms — in seconden</div></div></div>
+            <div class="pricing-feature-item"><div class="pricing-feature-icon">🤖</div><div><div class="pricing-feature-title">AI-beschrijvingen</div><div class="pricing-feature-desc">Upload foto's, ontvang een kant-en-klare tekst</div></div></div>
+            <div class="pricing-feature-item"><div class="pricing-feature-icon">🛒</div><div><div class="pricing-feature-title">Auto-delist</div><div class="pricing-feature-desc">Verkoop gedetecteerd → rest automatisch verwijderd</div></div></div>
+            <div class="pricing-feature-item"><div class="pricing-feature-icon">📅</div><div><div class="pricing-feature-title">Auto-relist</div><div class="pricing-feature-desc">Marktplaats listings verlopen na 28 dagen — wij herplaatsen automatisch</div></div></div>
+            <div class="pricing-feature-item"><div class="pricing-feature-icon">📊</div><div><div class="pricing-feature-title">Dashboard</div><div class="pricing-feature-desc">Overzicht van al je items, listings en winst per platform</div></div></div>
+            <div class="pricing-feature-item"><div class="pricing-feature-icon">💶</div><div><div class="pricing-feature-title">Margeberekening</div><div class="pricing-feature-desc">Bereken je verkoopprijs op basis van gewenste winst</div></div></div>
+            <div class="pricing-feature-item"><div class="pricing-feature-icon">🔒</div><div><div class="pricing-feature-title">Veilig & privé</div><div class="pricing-feature-desc">Jouw inloggegevens worden nooit gedeeld</div></div></div>
+            <div class="pricing-feature-item"><div class="pricing-feature-icon">📬</div><div><div class="pricing-feature-title">Support</div><div class="pricing-feature-desc">Directe hulp via e-mail bij vragen of problemen</div></div></div>
+          </div>
+        </div>
+
+        <!-- FAQ -->
+        <div style="max-width:580px;margin:0 auto 40px">
+          <div style="text-align:center;font-size:18px;font-weight:700;margin-bottom:20px">Veelgestelde vragen</div>
+          <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-q">Kan ik CrossList EU gratis uitproberen? <svg class="faq-chevron" width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg></div>
+            <div class="faq-a">Ja — je krijgt 7 dagen gratis toegang tot alle Pro functies. Geen creditcard nodig om te starten.</div>
+          </div>
+          <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-q">Welke betaalmethoden accepteren jullie? <svg class="faq-chevron" width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg></div>
+            <div class="faq-a">We accepteren iDEAL, Bancontact en alle gangbare creditcards via Stripe — de meest gebruikte betaalprovider van Europa.</div>
+          </div>
+          <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-q">Kan ik op elk moment opzeggen? <svg class="faq-chevron" width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg></div>
+            <div class="faq-a">Ja, zonder gedoe. Je kunt je abonnement op elk moment opzeggen via het klantenportaal. Je behoudt toegang tot het einde van de betaalperiode.</div>
+          </div>
+          <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-q">Zijn mijn platformwachtwoorden veilig? <svg class="faq-chevron" width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg></div>
+            <div class="faq-a">CrossList EU werkt via je eigen browser (Chrome extensie) en slaat sessie-cookies op — niet je wachtwoord in leesbare tekst. Je gegevens worden nooit gedeeld met derden.</div>
+          </div>
+          <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-q">Voor welke marketplaces werkt CrossList EU? <svg class="faq-chevron" width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg></div>
+            <div class="faq-a">Momenteel: Marktplaats, 2dehands, Vinted en Shopify. eBay, Etsy, Kleinanzeigen en Facebook Marketplace zijn in ontwikkeling.</div>
+          </div>
+        </div>
+
+        <!-- Bottom CTA -->
+        <div style="max-width:580px;margin:0 auto;background:linear-gradient(135deg,#1e3a8a,#2563eb);border-radius:16px;padding:36px;text-align:center;color:#fff">
+          <div style="font-size:22px;font-weight:800;margin-bottom:8px">Klaar om te beginnen?</div>
+          <div style="font-size:14px;opacity:.8;margin-bottom:24px">7 dagen gratis · Geen creditcard · Direct aan de slag</div>
+          <button onclick="startCheckout()" style="padding:14px 36px;background:#fff;color:#1d4ed8;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer">Start gratis proefperiode →</button>
+        </div>
+      </div>
+
     </div>
 
   </div>
