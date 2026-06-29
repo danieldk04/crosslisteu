@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     stripe_subscription_id TEXT,
     status VARCHAR(20) DEFAULT 'trialing', -- trialing / active / canceled / past_due
     plan VARCHAR(20) DEFAULT 'pro',
-    trial_ends_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '14 days'),
+    trial_ends_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '7 days'),
     current_period_end TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
