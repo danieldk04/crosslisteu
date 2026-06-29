@@ -210,9 +210,9 @@ async def tweedehands_sync_chrome(body: dict, user_id: str = Depends(get_current
 
 
 @router.get("/status")
-async def platform_status():
+async def platform_status(user_id: str = Depends(get_current_user)):
     db = get_db()
-    result = db.table("platform_credentials").select("platform").eq("user_id", MVP_USER_ID).execute()
+    result = db.table("platform_credentials").select("platform").eq("user_id", user_id).execute()
     connected = [r["platform"] for r in result.data]
     return {"connected": connected}
 
