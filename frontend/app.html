@@ -1282,7 +1282,7 @@ function renderPlatformCheckboxes(containerId, itemId) {
   document.getElementById(containerId).innerHTML = PLATFORMS.map(p => {
     const already = activePlatforms.has(p);
     return `<label class="platform-checkbox" style="${already ? 'opacity:.5' : ''}">
-      <input type="checkbox" value="${p}"${already ? ' disabled title="Al gepubliceerd op dit platform"' : ''}>
+      <input type="checkbox" value="${p}"${already ? ' disabled title="Already published on this platform"' : ''}>
       <span>${PLATFORM_LABELS[p]}${already ? ' ✓' : ''}</span>
     </label>`;
   }).join('');
