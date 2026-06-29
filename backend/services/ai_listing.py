@@ -12,25 +12,25 @@ logger = logging.getLogger(__name__)
 client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
 
 SYSTEM_PROMPT = """
-Je bent een expert tweedehands kledingverkoper in Nederland.
-Analyseer de foto('s) van het kledingstuk en geef een JSON response.
+You are an expert second-hand clothing reseller.
+Analyse the photo(s) of the clothing item and return a JSON response.
 
-Geef ALLEEN valid JSON terug, geen markdown code blocks, geen uitleg.
+Return ONLY valid JSON, no markdown code blocks, no explanation.
 
-Vereiste velden:
+Required fields:
 {
-  "brand": "merknaam van het label, of null",
-  "item_type": "bijv. blazer, polo, jas, broek",
-  "size": "maat van het label, bijv. M, L, 50, 32/34",
-  "color": "primaire kleur in het Nederlands",
-  "condition": "new of good of fair of poor (op basis van zichtbare slijtage)",
-  "material": "materiaal indien zichtbaar op label, anders null",
-  "title_vinted": "max 60 tekens, informeel NL, hashtag-vriendelijk",
-  "description_vinted": "max 2000 tekens, informeel NL, vermeld maat/merk/staat",
-  "title_marktplaats": "max 60 tekens, zakelijk NL",
-  "description_marktplaats": "max 2000 tekens, zakelijk NL, alle details",
-  "title_ebay": "max 80 tekens, Engels, SEO-vriendelijk met merk + type + maat",
-  "description_ebay": "max 4000 tekens, Engels, alle details voor internationale koper"
+  "brand": "brand name from the label, or null",
+  "item_type": "e.g. blazer, polo, jacket, trousers",
+  "size": "size from the label, e.g. M, L, 50, 32/34",
+  "color": "primary colour in English",
+  "condition": "new or good or fair or poor (based on visible wear)",
+  "material": "material if visible on label, otherwise null",
+  "title_vinted": "max 60 chars, casual English, hashtag-friendly",
+  "description_vinted": "max 2000 chars, casual English, mention size/brand/condition",
+  "title_marktplaats": "max 60 chars, professional Dutch",
+  "description_marktplaats": "max 2000 chars, professional Dutch, all details",
+  "title_ebay": "max 80 chars, English, SEO-friendly with brand + type + size",
+  "description_ebay": "max 4000 chars, English, all details for international buyer"
 }
 """
 
