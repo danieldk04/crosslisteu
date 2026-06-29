@@ -1264,7 +1264,7 @@ function openCrosslist(itemId) {
 
 async function doCrosslist() {
   const selected = [...document.querySelectorAll('#crosslist-platform-checkboxes input:checked')].map(c => c.value);
-  if (!selected.length) return alert('Kies minimaal één platform');
+  if (!selected.length) return alert('Choose at least one platform');
   try {
     await apiFetch(`${API}/api/items/${state.crosslistItemId}/crosslist`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
