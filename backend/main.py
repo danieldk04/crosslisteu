@@ -49,3 +49,17 @@ app.include_router(billing.router)
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "crosslist-eu"}
+
+
+@app.get("/privacy")
+async def privacy():
+    return FileResponse(FRONTEND / "privacy.html")
+
+
+@app.get("/terms")
+async def terms():
+    return FileResponse(FRONTEND / "terms.html")
+
+
+# Serve frontend static assets (CSS, images, JS) — must come last
+app.mount("/", StaticFiles(directory=FRONTEND, html=True), name="frontend")
