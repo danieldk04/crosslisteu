@@ -1339,7 +1339,7 @@ function updateBidLabel() {
   const pct = parseInt(document.getElementById('f-bid-pct').value) || 0;
   const price = parseFloat(document.getElementById('f-price').value) || 0;
   const label = document.getElementById('bid-amount-label');
-  if (label) label.textContent = pct && price ? `→ minimaal €${(price * pct / 100).toFixed(2)}` : '';
+  if (label) label.textContent = pct && price ? `→ minimum €${(price * pct / 100).toFixed(2)}` : '';
 }
 
 function updateCategoryOptions(selectedCategory) {
