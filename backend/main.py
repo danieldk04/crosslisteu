@@ -3,9 +3,14 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(messag
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
+from pathlib import Path
 from backend.api import items, listings, platforms, webhooks, jobs, uploads, shopify, auth, billing
 from backend.scheduler import start_scheduler, stop_scheduler
+
+FRONTEND = Path(__file__).parent.parent / "frontend"
 
 
 @asynccontextmanager
