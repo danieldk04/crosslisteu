@@ -165,6 +165,46 @@ textarea { resize: vertical; min-height: 80px; }
 /* Jobs indicator */
 .jobs-banner { background: var(--yellow-bg); border: 1px solid #fde047; border-radius: var(--radius); padding: 10px 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--yellow); }
 
+/* Trial banner */
+.trial-banner { border-radius: var(--radius); padding: 12px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; }
+.trial-banner.active-sub { display: none !important; }
+
+/* Pricing page */
+.pricing-hero { text-align: center; padding: 0 0 32px; }
+.pricing-hero h1 { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+.pricing-hero p { color: var(--muted); font-size: 15px; }
+.pricing-card { background: #fff; border: 2px solid #2563eb; border-radius: 16px; padding: 32px; max-width: 440px; margin: 0 auto 32px; position: relative; box-shadow: 0 8px 40px rgba(37,99,235,.12); }
+.pricing-badge { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: #2563eb; color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 4px 16px; border-radius: 999px; white-space: nowrap; }
+.pricing-plan-name { font-size: 13px; font-weight: 700; color: #2563eb; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.pricing-amount { font-size: 48px; font-weight: 900; line-height: 1; margin-bottom: 4px; }
+.pricing-amount span { font-size: 18px; font-weight: 500; color: var(--muted); }
+.pricing-trial-note { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+.pricing-features { list-style: none; padding: 0; margin: 0 0 28px; display: flex; flex-direction: column; gap: 10px; }
+.pricing-features li { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.pricing-features li::before { content: '✓'; color: #16a34a; font-weight: 800; font-size: 15px; flex-shrink: 0; }
+.pricing-cta { width: 100%; padding: 15px; background: #2563eb; color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; transition: background .15s; }
+.pricing-cta:hover { background: #1d4ed8; }
+.pricing-fine { font-size: 12px; color: var(--muted); text-align: center; margin-top: 12px; }
+.pricing-features-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-bottom: 32px; }
+.pricing-feature-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; background: #fff; border: 1px solid var(--border); border-radius: 10px; }
+.pricing-feature-icon { width: 36px; height: 36px; border-radius: 8px; background: #eff6ff; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+.pricing-feature-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+.pricing-feature-desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+.faq-item { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 8px; background: #fff; }
+.faq-q { padding: 14px 18px; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+.faq-q:hover { background: #fafafa; }
+.faq-a { padding: 0 18px 14px; font-size: 13px; color: var(--muted); line-height: 1.6; display: none; }
+.faq-item.open .faq-a { display: block; }
+.faq-item.open .faq-chevron { transform: rotate(180deg); }
+.faq-chevron { transition: transform .2s; }
+.active-plan-card { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 24px; max-width: 440px; margin: 0 auto 24px; }
+.active-plan-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.status-pill { font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 999px; }
+.status-pill.active { background: #dcfce7; color: #166534; }
+.status-pill.past_due { background: #fee2e2; color: #991b1b; }
+.status-pill.trialing { background: #dbeafe; color: #1e40af; }
+.status-pill.trial_expired { background: #f3f4f6; color: var(--muted); }
+
 /* Spinner */
 @keyframes spin { to { transform: rotate(360deg); } }
 .spinner { width: 16px; height: 16px; border: 2px solid #e5e7eb; border-top-color: var(--primary); border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
