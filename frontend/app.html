@@ -907,91 +907,142 @@ function showView(name) {
 }
 
 // ── Billing ──────────────────────────────────────────────────────
+let _billingStatus = null;
+
 async function loadBillingStatus() {
-  const banner = document.getElementById('billing-banner');
-  const upgradeCard = document.getElementById('billing-upgrade-card');
-  const activeCard = document.getElementById('billing-active-card');
   try {
     const res = await apiFetch(`${API}/api/billing/status`);
-    if (!res.ok) { showUpgradeCard(); return; }
-    const data = await res.json();
-    const { status, trial_ends_at, current_period_end } = data;
-
-    banner.style.display = 'flex';
-    upgradeCard.style.display = 'none';
-    activeCard.style.display = 'none';
-
-    if (status === 'trialing') {
-      const days = trial_ends_at ? Math.max(0, Math.ceil((new Date(trial_ends_at) - Date.now()) / 86400000)) : 0;
-      banner.style.background = days <= 3 ? '#fef3c7' : '#eff6ff';
-      banner.style.border = days <= 3 ? '1px solid #f59e0b' : '1px solid #bfdbfe';
-      banner.innerHTML = `
-        <div>
-          <div style="font-weight:600;font-size:13px;color:${days <= 3 ? '#92400e' : '#1e40af'}">${days > 0 ? `Nog ${days} dag${days !== 1 ? 'en' : ''} gratis probeerperiode` : 'Gratis periode is verlopen'}</div>
-          <div style="font-size:12px;color:${days <= 3 ? '#b45309' : '#3b82f6'};margin-top:2px">Activeer Pro om onbeperkt te blijven gebruiken</div>
-        </div>
-        <button onclick="startCheckout()" style="white-space:nowrap;padding:8px 16px;background:#1d4ed8;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">Activeer Pro →</button>`;
-      upgradeCard.style.display = 'block';
-      document.getElementById('nav-prijs-label').textContent = `Abonnement (${days}d)`;
-    } else if (status === 'active') {
-      const until = current_period_end ? new Date(current_period_end).toLocaleDateString('nl-NL') : '';
-      banner.style.background = '#f0fdf4';
-      banner.style.border = '1px solid #86efac';
-      banner.innerHTML = `<div style="font-weight:600;font-size:13px;color:#166534">✓ CrossList EU Pro — actief</div><div style="font-size:12px;color:#15803d">Verlengd op ${until}</div>`;
-      activeCard.style.display = 'block';
-      document.getElementById('billing-status-badge').textContent = 'Actief';
-      document.getElementById('billing-active-detail').textContent = `Pro · Verlengt op ${until}`;
-      document.getElementById('nav-prijs-label').textContent = 'Abonnement ✓';
-    } else if (status === 'past_due') {
-      banner.style.background = '#fef2f2';
-      banner.style.border = '1px solid #fca5a5';
-      banner.innerHTML = `
-        <div style="font-weight:600;font-size:13px;color:#991b1b">⚠ Betaling mislukt</div>
-        <button onclick="openPortal()" style="padding:8px 16px;background:#dc2626;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">Betaling bijwerken →</button>`;
-      activeCard.style.display = 'block';
-      document.getElementById('billing-status-badge').textContent = 'Betaling mislukt';
-      document.getElementById('billing-status-badge').style.background = '#fee2e2';
-      document.getElementById('billing-status-badge').style.color = '#991b1b';
-      document.getElementById('billing-active-detail').textContent = 'Betaling vereist om toegang te behouden';
-    } else if (status === 'trial_expired' || status === 'canceled') {
-      banner.style.display = 'flex';
-      banner.style.background = '#fef2f2';
-      banner.style.border = '1px solid #fca5a5';
-      banner.innerHTML = `
-        <div>
-          <div style="font-weight:600;font-size:13px;color:#991b1b">Je gratis periode is verlopen</div>
-          <div style="font-size:12px;color:#b91c1c;margin-top:2px">Activeer Pro om verder te crosslisten</div>
-        </div>
-        <button onclick="startCheckout()" style="white-space:nowrap;padding:8px 16px;background:#1d4ed8;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">Activeer Pro →</button>`;
-      upgradeCard.style.display = 'block';
-      document.getElementById('nav-prijs-label').textContent = 'Abonnement ⚠';
-    } else {
-      showUpgradeCard();
-    }
+    if (!res.ok) { renderBilling(null); return; }
+    _billingStatus = await res.json();
   } catch (e) {
-    showUpgradeCard();
+    _billingStatus = null;
+  }
+  renderBilling(_billingStatus);
+  renderTrialBanner(_billingStatus);
+}
+
+function renderBilling(data) {
+  const upgradeCard = document.getElementById('billing-upgrade-card');
+  const activeCard  = document.getElementById('billing-active-card');
+  if (!data) { upgradeCard.style.display = 'block'; activeCard.style.display = 'none'; return; }
+
+  const { status, trial_ends_at, current_period_end } = data;
+
+  if (status === 'active') {
+    upgradeCard.style.display = 'none';
+    activeCard.style.display  = 'block';
+    const until = current_period_end ? new Date(current_period_end).toLocaleDateString('nl-NL') : '—';
+    document.getElementById('billing-active-detail').textContent = `Actief · verlengt op ${until}`;
+    document.getElementById('billing-next-date').textContent = until;
+    document.getElementById('billing-status-badge').textContent = 'Actief';
+    document.getElementById('billing-status-badge').className = 'status-pill active';
+    document.getElementById('nav-prijs-label').textContent = 'Abonnement ✓';
+
+  } else if (status === 'past_due') {
+    upgradeCard.style.display = 'none';
+    activeCard.style.display  = 'block';
+    document.getElementById('billing-active-detail').textContent = 'Betaling vereist om toegang te behouden';
+    document.getElementById('billing-next-date').textContent = '—';
+    document.getElementById('billing-status-badge').textContent = 'Betaling mislukt';
+    document.getElementById('billing-status-badge').className = 'status-pill past_due';
+    document.getElementById('nav-prijs-label').textContent = 'Abonnement ⚠';
+
+  } else if (status === 'trialing') {
+    const days = trial_ends_at ? Math.max(0, Math.ceil((new Date(trial_ends_at) - Date.now()) / 86400000)) : 0;
+    upgradeCard.style.display = 'block';
+    activeCard.style.display  = 'none';
+    const note = document.getElementById('pricing-trial-note');
+    if (note) note.textContent = days > 0 ? `Nog ${days} dag${days !== 1 ? 'en' : ''} gratis · Geen creditcard nodig` : 'Gratis periode verloopt vandaag';
+    const btn = document.getElementById('btn-checkout');
+    if (btn) btn.textContent = days > 0 ? `Start ${days} dag${days !== 1 ? 'en' : ''} gratis →` : 'Activeer Pro →';
+    document.getElementById('nav-prijs-label').textContent = days > 0 ? `Abonnement (${days}d)` : 'Abonnement';
+
+  } else {
+    // trial_expired / canceled / unknown
+    upgradeCard.style.display = 'block';
+    activeCard.style.display  = 'none';
+    const note = document.getElementById('pricing-trial-note');
+    if (note) note.textContent = 'Activeer Pro om verder te crosslisten';
+    const btn = document.getElementById('btn-checkout');
+    if (btn) btn.textContent = 'Activeer Pro →';
+    document.getElementById('nav-prijs-label').textContent = 'Abonnement ⚠';
   }
 }
 
-function showUpgradeCard() {
-  document.getElementById('billing-banner').style.display = 'none';
-  document.getElementById('billing-upgrade-card').style.display = 'block';
-  document.getElementById('billing-active-card').style.display = 'none';
+function renderTrialBanner(data) {
+  const banner = document.getElementById('trial-banner');
+  if (!banner) return;
+  if (!data || data.status === 'active') { banner.style.display = 'none'; return; }
+
+  const { status, trial_ends_at } = data;
+
+  if (status === 'trialing') {
+    const days = trial_ends_at ? Math.max(0, Math.ceil((new Date(trial_ends_at) - Date.now()) / 86400000)) : 0;
+    const urgent = days <= 2;
+    banner.className = 'trial-banner';
+    banner.style.cssText = `display:flex;background:${urgent ? '#fef3c7' : '#eff6ff'};border:1px solid ${urgent ? '#fcd34d' : '#bfdbfe'};border-radius:8px;padding:12px 18px;margin-bottom:20px;align-items:center;justify-content:space-between;gap:12px`;
+    banner.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:18px">${urgent ? '⏰' : '🎉'}</span>
+        <div>
+          <div style="font-weight:600;font-size:13px;color:${urgent ? '#92400e' : '#1e40af'}">
+            ${days > 0 ? `Nog ${days} dag${days !== 1 ? 'en' : ''} gratis probeerperiode` : 'Je proefperiode verloopt vandaag'}
+          </div>
+          <div style="font-size:12px;color:${urgent ? '#b45309' : '#3b82f6'};margin-top:1px">
+            Activeer Pro om onbeperkt te blijven gebruiken — €19,99/mnd
+          </div>
+        </div>
+      </div>
+      <button onclick="showView('prijs')" style="white-space:nowrap;flex-shrink:0;padding:8px 16px;background:#2563eb;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">
+        Activeer Pro →
+      </button>`;
+
+  } else if (status === 'trial_expired' || status === 'canceled') {
+    banner.style.cssText = 'display:flex;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:12px 18px;margin-bottom:20px;align-items:center;justify-content:space-between;gap:12px';
+    banner.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:18px">⚠️</span>
+        <div>
+          <div style="font-weight:600;font-size:13px;color:#991b1b">Je gratis periode is verlopen</div>
+          <div style="font-size:12px;color:#b91c1c;margin-top:1px">Crosslisten is gepauzeerd — activeer Pro om door te gaan</div>
+        </div>
+      </div>
+      <button onclick="showView('prijs')" style="white-space:nowrap;flex-shrink:0;padding:8px 16px;background:#dc2626;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">
+        Nu activeren →
+      </button>`;
+
+  } else if (status === 'past_due') {
+    banner.style.cssText = 'display:flex;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:12px 18px;margin-bottom:20px;align-items:center;justify-content:space-between;gap:12px';
+    banner.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:18px">💳</span>
+        <div>
+          <div style="font-weight:600;font-size:13px;color:#991b1b">Betaling mislukt</div>
+          <div style="font-size:12px;color:#b91c1c;margin-top:1px">Werk je betaalgegevens bij om toegang te behouden</div>
+        </div>
+      </div>
+      <button onclick="openPortal()" style="white-space:nowrap;flex-shrink:0;padding:8px 16px;background:#dc2626;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">
+        Bijwerken →
+      </button>`;
+  } else {
+    banner.style.display = 'none';
+  }
 }
 
+function toggleFaq(el) { el.classList.toggle('open'); }
+
 async function startCheckout() {
-  const btn = document.getElementById('btn-checkout');
-  if (btn) { btn.textContent = 'Laden…'; btn.disabled = true; }
+  const btns = document.querySelectorAll('#btn-checkout, .pricing-cta');
+  btns.forEach(b => { b.textContent = 'Laden…'; b.disabled = true; });
   try {
     const res = await apiFetch(`${API}/api/billing/checkout`, { method: 'POST' });
     const data = await res.json();
-    if (data.url) { window.location.href = data.url; }
-    else { alert('Kon checkout niet starten. Probeer het opnieuw.'); }
+    if (data.url) { window.location.href = data.url; return; }
+    alert('Kon checkout niet starten. Probeer het opnieuw.');
   } catch (e) {
     alert('Fout bij verbinden met betalingsprovider.');
-  } finally {
-    if (btn) { btn.textContent = 'Start 14 dagen gratis →'; btn.disabled = false; }
   }
+  btns.forEach(b => { b.textContent = 'Start 7 dagen gratis →'; b.disabled = false; });
 }
 
 async function openPortal() {
