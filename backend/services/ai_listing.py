@@ -49,7 +49,7 @@ async def generate_listing_from_photos(photo_urls: list[str], platforms: list[st
             "type": "image",
             "source": {"type": "url", "url": url},
         })
-    content.append({"type": "text", "text": "Analyseer dit kledingstuk en geef de JSON response."})
+    content.append({"type": "text", "text": "Analyse this clothing item and return the JSON response."})
 
     response = client.messages.create(
         model="claude-sonnet-4-6",
