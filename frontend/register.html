@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Account aanmaken — CrossList EU</title>
+<title>Create account — CrossList EU</title>
 <link rel="icon" type="image/png" href="Logo Crosslist EU.png">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -44,38 +44,38 @@ input:focus { border-color: var(--blue); background: #fff; }
 </div>
 
 <div class="card">
-  <h1>7 dagen gratis proberen</h1>
-  <p class="subtitle">Maak je account aan — geen creditcard nodig</p>
+  <h1>Start your free trial</h1>
+  <p class="subtitle">Create your account — no credit card needed</p>
 
   <div class="perks">
-    <div class="perk">7 dagen gratis uitproberen</div>
-    <div class="perk">Geen creditcard nodig</div>
-    <div class="perk">Publiceer op 6+ platforms tegelijk</div>
-    <div class="perk">AI-beschrijvingen en marge calculator</div>
+    <div class="perk">7 days free trial</div>
+    <div class="perk">No credit card needed</div>
+    <div class="perk">Publish to 6+ platforms at once</div>
+    <div class="perk">AI descriptions and margin calculator</div>
   </div>
 
   <div id="error" class="error"></div>
-  <div id="success" class="success">✅ Account aangemaakt!<br>Check je e-mail om je account te bevestigen.</div>
+  <div id="success" class="success">✅ Account created!<br>Check your email to confirm your account.</div>
 
   <form id="form" onsubmit="doRegister(event)">
     <div class="field">
-      <label for="email">E-mailadres</label>
-      <input type="email" id="email" placeholder="naam@voorbeeld.nl" autofocus autocomplete="email">
+      <label for="email">Email address</label>
+      <input type="email" id="email" placeholder="name@example.com" autofocus autocomplete="email">
     </div>
     <div class="field">
-      <label for="password">Wachtwoord</label>
-      <input type="password" id="password" placeholder="Minimaal 8 tekens" autocomplete="new-password">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="At least 8 characters" autocomplete="new-password">
     </div>
     <div class="field">
-      <label for="password2">Wachtwoord bevestigen</label>
+      <label for="password2">Confirm password</label>
       <input type="password" id="password2" placeholder="••••••••" autocomplete="new-password">
     </div>
-    <button type="submit" class="btn" id="btn">Account aanmaken →</button>
+    <button type="submit" class="btn" id="btn">Create account →</button>
   </form>
 
   <div class="links">
-    <span>Al een account? <a href="/login">Inloggen</a></span>
-    <a href="/">← Terug naar homepage</a>
+    <span>Already have an account? <a href="/login">Log in</a></span>
+    <a href="/">← Back to homepage</a>
   </div>
 </div>
 
@@ -92,18 +92,18 @@ async function doRegister(e) {
   errEl.style.display = 'none';
 
   if (password.length < 8) {
-    errEl.textContent = 'Wachtwoord moet minimaal 8 tekens zijn.';
+    errEl.textContent = 'Password must be at least 8 characters.';
     errEl.style.display = 'block';
     return;
   }
   if (password !== password2) {
-    errEl.textContent = 'Wachtwoorden komen niet overeen.';
+    errEl.textContent = 'Passwords do not match.';
     errEl.style.display = 'block';
     return;
   }
 
   btn.disabled = true;
-  btn.textContent = 'Account aanmaken...';
+  btn.textContent = 'Creating account...';
 
   try {
     const res = await fetch(`${API}/api/auth/register`, {
@@ -112,14 +112,14 @@ async function doRegister(e) {
       body: JSON.stringify({ email, password })
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Registratie mislukt');
+    if (!res.ok) throw new Error(data.detail || 'Registration failed');
     document.getElementById('form').style.display = 'none';
     document.getElementById('success').style.display = 'block';
   } catch (err) {
     errEl.textContent = err.message;
     errEl.style.display = 'block';
     btn.disabled = false;
-    btn.textContent = 'Account aanmaken →';
+    btn.textContent = 'Create account →';
   }
 }
 </script>
