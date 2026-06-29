@@ -534,10 +534,10 @@ input[type="checkbox"].row-check { width: 15px; height: 15px; cursor: pointer; a
       <div class="form-group" style="background:var(--card-bg,#f8f8f8);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:0">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:0">
           <input type="checkbox" id="f-bid-enabled" style="width:16px;height:16px;margin:0;cursor:pointer;accent-color:var(--accent)" onchange="toggleBidField()">
-          <label for="f-bid-enabled" style="margin:0;text-transform:none;letter-spacing:0;font-size:13px;font-weight:600;color:var(--text);cursor:pointer">Bieden toestaan <span style="font-weight:400;color:var(--muted)">(Marktplaats / 2dehands)</span></label>
+          <label for="f-bid-enabled" style="margin:0;text-transform:none;letter-spacing:0;font-size:13px;font-weight:600;color:var(--text);cursor:pointer">Allow bidding <span style="font-weight:400;color:var(--muted)">(Marktplaats / 2dehands)</span></label>
         </div>
         <div id="bid-pct-group" style="display:none;margin-top:10px">
-          <label style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:4px">Minimumbod (% van vraagprijs)</label>
+          <label style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:4px">Minimum bid (% of asking price)</label>
           <div style="display:flex;align-items:center;gap:10px">
             <input id="f-bid-pct" type="number" min="1" max="99" step="1" style="width:80px;margin:0" oninput="updateBidLabel()">
             <span id="bid-amount-label" style="font-size:13px;color:var(--muted)"></span>
