@@ -1367,7 +1367,7 @@ function renderPhotoGrid() {
          ondragstart="photoThumbDragStart(event,${i})" ondragover="photoThumbDragOver(event,${i})"
          ondragleave="photoThumbDragLeave(event)" ondrop="photoThumbDrop(event,${i})" ondragend="photoThumbDragEnd()">
       <img src="${url}" loading="lazy">
-      <button class="photo-thumb-remove" onclick="removePhoto(${i})" title="Verwijder">✕</button>
+      <button class="photo-thumb-remove" onclick="removePhoto(${i})" title="Remove">✕</button>
     </div>`).join('');
 }
 function photoThumbDragStart(e,i){_dragSrcIdx=i;e.dataTransfer.effectAllowed='move';}
