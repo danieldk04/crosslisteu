@@ -959,7 +959,7 @@ function openBulkCrosslist() {
 
 async function doBulkCrosslist() {
   const selected = [...document.querySelectorAll('#bulk-crosslist-checkboxes input:checked')].map(c => c.value);
-  if (!selected.length) return alert('Kies minimaal één platform');
+  if (!selected.length) return alert('Choose at least one platform');
   const ids = [...selectedIds];
   closeModal('modal-bulk-crosslist');
   let done = 0, errors = 0;
