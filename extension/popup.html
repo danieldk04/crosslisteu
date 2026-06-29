@@ -4,17 +4,46 @@
   <meta charset="utf-8">
   <style>
     body { font-family: sans-serif; padding: 16px; width: 280px; }
-    input { width: 100%; padding: 6px; margin: 6px 0 12px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-    button { width: 100%; padding: 8px; background: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    input { width: 100%; padding: 6px; margin: 4px 0 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+    button { width: 100%; padding: 8px; background: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 4px; }
+    button:hover { background: #1d4ed8; }
+    button.secondary { background: #6b7280; margin-top: 8px; }
     .status { margin-top: 10px; font-size: 12px; color: #666; }
+    .error { color: #dc2626; }
+    .success { color: #16a34a; }
+    #loggedIn { display: none; }
+    #loggedOut { display: none; }
+    .user-info { font-size: 12px; color: #374151; margin-bottom: 10px; background: #f3f4f6; padding: 8px; border-radius: 4px; }
+    hr { border: none; border-top: 1px solid #e5e7eb; margin: 12px 0; }
   </style>
 </head>
 <body>
   <h3 style="margin:0 0 12px">CrossList EU</h3>
-  <label>Server URL</label>
-  <input id="serverUrl" type="text" placeholder="http://localhost:8000">
-  <button id="save">Opslaan</button>
-  <div class="status" id="status"></div>
+
+  <div id="loggedOut">
+    <label>E-mail</label>
+    <input id="email" type="email" placeholder="jouw@email.nl">
+    <label>Wachtwoord</label>
+    <input id="password" type="password" placeholder="••••••••">
+    <button id="loginBtn">Inloggen</button>
+    <button id="registerBtn" class="secondary">Account aanmaken</button>
+    <div class="status" id="authStatus"></div>
+    <hr>
+    <label>Server URL</label>
+    <input id="serverUrl" type="text" placeholder="http://localhost:8000">
+    <button id="saveUrl">URL opslaan</button>
+  </div>
+
+  <div id="loggedIn">
+    <div class="user-info" id="userInfo"></div>
+    <button id="logoutBtn" class="secondary">Uitloggen</button>
+    <div class="status" id="status"></div>
+    <hr>
+    <label>Server URL</label>
+    <input id="serverUrl2" type="text" placeholder="http://localhost:8000">
+    <button id="saveUrl2">URL opslaan</button>
+  </div>
+
   <script src="popup.js"></script>
 </body>
 </html>
