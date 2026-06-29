@@ -742,7 +742,7 @@ function showView(name) {
   document.getElementById('view-' + name).classList.add('active');
   const navNames = ['dashboard', 'items', 'help'];
   document.querySelectorAll('.nav-item')[navNames.indexOf(name)]?.classList.add('active');
-  const titles = { dashboard: 'Dashboard', items: 'Artikelen', help: 'Help', protections: 'Beschermingen' };
+  const titles = { dashboard: 'Dashboard', items: 'Items', help: 'Help', protections: 'Protections' };
   document.getElementById('topbar-title').textContent = titles[name] || name;
   if (name === 'items') { clearSelection(); applyFilters(); }
   // help view needs no data fetch;
