@@ -30,6 +30,11 @@ class Settings(BaseSettings):
     cloudinary_api_key: str = ""
     cloudinary_api_secret: str = ""
 
+    stripe_secret_key: str = ""
+    stripe_webhook_secret: str = ""
+    stripe_price_id: str = ""
+    app_url: str = "https://app.crosslisteu.com"
+
     secret_key: str = "change-me"
     polling_interval: int = 300
 
