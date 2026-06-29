@@ -86,7 +86,7 @@ async function doLogin(e) {
     sessionStorage.setItem('cl_auth', '1');
     sessionStorage.setItem('cl_token', data.access_token);
     sessionStorage.setItem('cl_email', data.user.email);
-    window.location.href = 'app.html';
+    window.location.href = '/app';
   } catch (err) {
     errEl.textContent = err.message;
     errEl.style.display = 'block';
