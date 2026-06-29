@@ -843,7 +843,7 @@ function renderListingBadges(itemId) {
     } else if (l.status === 'error') {
       // Show error only if no active listing exists for this platform
       const label = PLATFORM_LABELS[platform] || platform;
-      badges.push(`<span class="badge-error-subtle" title="Klik om handmatig als gepubliceerd te markeren" style="cursor:pointer" onclick="markListingActive('${itemId}','${platform}',event)">⚠️ ${label}</span>`);
+      badges.push(`<span class="badge-error-subtle" title="Click to manually mark as published" style="cursor:pointer" onclick="markListingActive('${itemId}','${platform}',event)">⚠️ ${label}</span>`);
     }
     // delisted: don't show
   }
