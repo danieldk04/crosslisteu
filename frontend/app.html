@@ -1139,7 +1139,7 @@ async function saveItem() {
     condition: document.getElementById('f-condition').value,
     photo_urls: getPhotoUrls(),
   };
-  if (!data.title || !data.price) return alert('Titel en prijs zijn verplicht');
+  if (!data.title || !data.price) return alert('Title and price are required');
 
   const btn = document.getElementById('save-btn');
   btn.disabled = true; btn.textContent = 'Bezig...';
