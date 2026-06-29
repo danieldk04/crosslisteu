@@ -80,7 +80,7 @@ async def vinted_bootstrap(body: dict, user_id: str = Depends(get_current_user))
     from backend.platforms.vinted import VintedPlatform
     platform = VintedPlatform()
     session = await platform.bootstrap_session(body["email"], body["password"])
-    _save_credentials(MVP_USER_ID, "vinted", {
+    _save_credentials(user_id, "vinted", {
         "access_token": "session",
         "extra_data": {
             "cookies": session["cookies"],
