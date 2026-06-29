@@ -1014,7 +1014,7 @@ async function bulkDelete() {
       done++;
     } catch { errors++; }
   }
-  alert(`${done} verwijderd${errors ? `, ${errors} fout(en)` : ''}.`);
+  alert(`${done} removed${errors ? `, ${errors} error(s)` : ''}.`);
   clearSelection();
   await loadAll();
 }
