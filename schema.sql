@@ -77,3 +77,17 @@ CREATE INDEX IF NOT EXISTS idx_listings_item_id ON listings(item_id);
 CREATE INDEX IF NOT EXISTS idx_listings_status ON listings(status);
 CREATE INDEX IF NOT EXISTS idx_listings_platform ON listings(platform);
 CREATE INDEX IF NOT EXISTS idx_sync_events_listing_id ON sync_events(listing_id);
+
+-- Subscription tracking (synced via Stripe webhooks)
+CREATE TABLE IF NOT EXISTS subscriptions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL UNIQUE,
+    stripe_customer_id TEXT,
+    stripe_subscription_id TEXT,
+    status VARCHAR(20) DEFAULT 'trialing', -- trialing / active / canceled / past_due
+    plan VARCHAR(20) DEFAULT 'pro',
+    trial_ends_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '14 days'),
+    current_period_end TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
