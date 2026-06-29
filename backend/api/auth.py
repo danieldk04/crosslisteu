@@ -54,7 +54,7 @@ async def reset_password(body: PasswordUpdate, authorization: str = Header(...))
         db.auth.update_user({"password": body.password})
         return {"ok": True, "message": "Password updated."}
     except Exception as e:
-        raise HTTPException(status_code=400, detail="Wachtwoord wijzigen mislukt. De link is mogelijk verlopen.")
+        raise HTTPException(status_code=400, detail="Password update failed. The link may have expired.")
 
 
 @router.post("/login")
