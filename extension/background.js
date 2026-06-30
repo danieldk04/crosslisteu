@@ -217,12 +217,21 @@ async function processJob(job, serverUrl) {
   const headers = await getAuthHeaders();
   // Claim job first
   const claimRes = await fetch(`${serverUrl}/api/jobs/${job.id}/claim`, { method: "POST", headers });
-  if (!claimRes.ok) return; // Already claimed by another instance
+  if (!claimRes.ok) return;
+
+  // MP/2dh delete: fully background-driven, no content script needed
+  if (job.action === "delete" && (job.platform === "marktplaats" || job.platform === "2dehands")) {
+    try {
+      await bgDeleteMp2dh(job, serverUrl);
+    } catch (e) {
+      await reportError(job.id, serverUrl, String(e));
+    }
+    return;
+  }
 
   // Store job for content script to pick up
   await chrome.storage.local.set({ [`job_${job.platform}`]: { ...job, serverUrl } });
 
-  // Open tab to the right page
   const url = job.action === "delete"
     ? getDeleteUrl(job.platform, job.payload)
     : getMpSyiUrl(job.platform, job.payload);
@@ -234,16 +243,154 @@ async function processJob(job, serverUrl) {
   console.log(`[CrossList] Opening tab for ${job.platform} job ${job.id}: ${url}`);
   chrome.tabs.create({ url, active: true }, (tab) => {
     if (chrome.runtime.lastError) {
-      console.error("[CrossList] tabs.create failed:", chrome.runtime.lastError.message);
       reportError(job.id, serverUrl, "tabs.create failed: " + chrome.runtime.lastError.message);
     } else {
-      console.log(`[CrossList] Tab created: id=${tab.id} url=${tab.url || url}`);
-      // Track this tab so we can auto-complete if user publishes manually
       if (job.action === "create") {
         chrome.storage.local.set({ [`jobtab_${tab.id}`]: { jobId: job.id, platform: job.platform, serverUrl } });
       }
     }
   });
+}
+
+// ── Background-driven delete for Marktplaats / 2dehands ───────────────────
+// Navigates: homepage → clicks "Mijn [platform]" nav link → finds listing by
+// title on the overview → clicks options → clicks Verwijder → confirms.
+// No content script needed — all via executeScript from background.
+
+function execInTab(tabId, func, args = []) {
+  return new Promise((resolve, reject) => {
+    chrome.scripting.executeScript(
+      { target: { tabId }, world: "MAIN", func, args },
+      results => chrome.runtime.lastError
+        ? reject(new Error(chrome.runtime.lastError.message))
+        : resolve(results?.[0]?.result)
+    );
+  });
+}
+
+function waitForTabLoad(tabId, timeoutMs = 20000) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      chrome.tabs.onUpdated.removeListener(fn);
+      reject(new Error("Tab load timeout"));
+    }, timeoutMs);
+    function fn(id, info) {
+      if (id !== tabId || info.status !== "complete") return;
+      chrome.tabs.onUpdated.removeListener(fn);
+      clearTimeout(timer);
+      resolve();
+    }
+    chrome.tabs.onUpdated.addListener(fn);
+  });
+}
+
+async function bgDeleteMp2dh(job, serverUrl) {
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const platform = job.platform;
+  const payload = job.payload || {};
+  const title = (payload.title || "").substring(0, 30);
+  const listingId = payload.platform_listing_id || "";
+
+  const homepage = platform === "marktplaats"
+    ? "https://www.marktplaats.nl"
+    : "https://www.2dehands.be";
+  const myPagePattern = platform === "marktplaats"
+    ? /mijn.?marktplaats|mijn.advertentie/i
+    : /mijn.?2dehands|mijn.advertentie/i;
+  const myPageHref = platform === "marktplaats"
+    ? "mijn-marktplaats"
+    : "mijn-2dehands";
+
+  // 1. Open homepage
+  const tab = await new Promise((res, rej) =>
+    chrome.tabs.create({ url: homepage, active: true }, t =>
+      chrome.runtime.lastError ? rej(new Error(chrome.runtime.lastError.message)) : res(t)
+    )
+  );
+  const tabId = tab.id;
+
+  try {
+    await waitForTabLoad(tabId);
+    await sleep(1500);
+
+    // 2. Find and click "Mijn Marktplaats" / "Mijn 2dehands" nav link
+    const navClicked = await execInTab(tabId, (pattern, href) => {
+      const re = new RegExp(pattern, "i");
+      const link = [...document.querySelectorAll("a")].find(a =>
+        re.test(a.textContent) || a.href.includes(href)
+      );
+      if (link) { link.click(); return link.href; }
+      return null;
+    }, [myPagePattern.source, myPageHref]);
+
+    if (!navClicked) throw new Error("Mijn " + platform + " nav link not found — are you logged in?");
+
+    await waitForTabLoad(tabId);
+    await sleep(2000);
+
+    // 3. Find listing on overview by title or ID, then find delete option
+    // Try direct delete first (some pages have it visible)
+    const deleted = await execInTab(tabId, (title, listingId) => {
+      // Find the card containing this listing
+      const allCards = [...document.querySelectorAll("article, li, [class*='listing'], [class*='advertentie']")];
+      let card = allCards.find(el => {
+        const text = el.textContent || "";
+        return (listingId && text.includes(listingId)) || (title && text.includes(title));
+      });
+      // Fallback: find by link
+      if (!card) {
+        const link = [...document.querySelectorAll("a")].find(a =>
+          (listingId && a.href.includes(listingId)) ||
+          (title && a.textContent.includes(title))
+        );
+        if (link) card = link.closest("article, li, [class*='listing']") || link.parentElement;
+      }
+      if (!card) return { found: false };
+
+      // Click any options/kebab button in the card
+      const optBtn = card.querySelector(
+        "button[aria-label], button:has(svg), [data-testid*='action'], [data-testid*='kebab'], [data-testid*='menu']"
+      );
+      if (optBtn) { optBtn.click(); return { found: true, step: "clicked_options" }; }
+      return { found: true, step: "no_options_btn" };
+    }, [title, listingId]);
+
+    if (!deleted?.found) throw new Error("Listing not found on overview — title: " + title);
+
+    await sleep(600);
+
+    // 4. Click Verwijder (may now be in a dropdown/menu)
+    const clickedDelete = await execInTab(tabId, () => {
+      const el = [...document.querySelectorAll("button, a, [role='menuitem'], li")]
+        .find(e => /verwijder/i.test(e.textContent));
+      if (el) { el.click(); return true; }
+      return false;
+    });
+
+    if (!clickedDelete) throw new Error("Verwijder button not found after opening options");
+
+    await sleep(800);
+
+    // 5. Confirm dialog
+    await execInTab(tabId, () => {
+      const btn = [...document.querySelectorAll("button")]
+        .find(e => /verwijder|bevestig|ok|ja\b/i.test(e.textContent));
+      if (btn) btn.click();
+    });
+
+    await sleep(1000);
+
+    // 6. Report success
+    const completeHeaders = await getAuthHeaders();
+    await fetch(`${serverUrl}/api/jobs/${job.id}/complete`, {
+      method: "POST", headers: completeHeaders,
+      body: JSON.stringify({}),
+    });
+    console.log(`[CrossList] bgDelete success: ${platform} listing ${listingId}`);
+
+  } finally {
+    setTimeout(() => chrome.tabs.remove(tabId).catch(() => {}), 2000);
+  }
 }
 
 // ── Auto-detect manual publish ─────────────────────────────────────────────
