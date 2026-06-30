@@ -240,7 +240,8 @@ textarea { resize: vertical; min-height: 80px; }
 .an-kpi-delta.up { background: var(--green-bg); color: #166534; }
 .an-kpi-delta.down { background: var(--red-bg); color: #991b1b; }
 .an-kpi-delta.flat { background: #f1f5f9; color: var(--muted); }
-.an-charts { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 16px; }
+.an-charts { display: grid; grid-template-columns: 3fr 2fr; gap: 16px; margin-bottom: 16px; min-width: 0; }
+.an-charts > * { min-width: 0; overflow: hidden; }
 .an-chart-card { background: #fff; border: 1.5px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: var(--shadow-sm); }
 .an-chart-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
 .an-chart-wrap { position: relative; height: 200px; }
