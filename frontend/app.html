@@ -1773,12 +1773,15 @@ function updateConditionHint() {
 function openAddItem() {
   document.getElementById('modal-title').textContent = 'New item';
   document.getElementById('edit-id').value = '';
-  ['f-title','f-sku','f-desc','f-price','f-compare','f-purchase','f-brand','f-size','f-color','f-material','f-shopify-title'].forEach(id => document.getElementById(id).value = '');
+  ['f-title','f-sku','f-desc','f-price','f-compare','f-purchase','f-brand','f-color','f-material','f-shopify-title','f-price-mp','f-price-2dh','f-price-vinted'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-size').value = '';
   document.getElementById('f-gender').value = '';
   document.getElementById('f-bid-enabled').checked = false;
   document.getElementById('f-bid-pct').value = '';
   document.getElementById('bid-pct-group').style.display = 'none';
   document.getElementById('bid-amount-label').textContent = '';
+  document.getElementById('f-platform-price-enabled').checked = false;
+  document.getElementById('platform-price-fields').style.display = 'none';
   updateCategoryOptions();
   document.getElementById('f-condition').value = 'good';
   updateConditionHint();
