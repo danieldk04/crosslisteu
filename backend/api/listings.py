@@ -30,7 +30,7 @@ async def list_all_listings(
         q = q.eq("platform", platform)
     if status:
         q = q.eq("status", status)
-    result = q.limit(limit).execute()
+    result = q.limit(2000).execute()
     return result.data
 
 
