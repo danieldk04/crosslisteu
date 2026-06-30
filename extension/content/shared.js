@@ -27,11 +27,28 @@ window.CL = (() => {
     try {
       setter.call(el, value);
     } catch (e) {
-      // Some platforms (Vinted) protect the setter — fall back to direct assignment
       el.value = value;
     }
     el.dispatchEvent(new Event("input", { bubbles: true }));
     el.dispatchEvent(new Event("change", { bubbles: true }));
+    el.dispatchEvent(new Event("blur", { bubbles: true }));
+    return true;
+  }
+
+  // Human-like typing: sets the full value at once but adds random pre/post delays
+  // so the browser sees natural timing gaps instead of instant programmatic fills.
+  async function fillInputHuman(el, value) {
+    if (!el) return false;
+    await sleep(60 + Math.random() * 120);
+    el.dispatchEvent(new Event("focus", { bubbles: true }));
+    await sleep(40 + Math.random() * 80);
+    const proto = el instanceof HTMLTextAreaElement ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
+    const setter = Object.getOwnPropertyDescriptor(proto, "value").set;
+    try { setter.call(el, value); } catch (e) { el.value = value; }
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    await sleep(30 + Math.random() * 60);
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+    await sleep(50 + Math.random() * 100);
     el.dispatchEvent(new Event("blur", { bubbles: true }));
     return true;
   }
