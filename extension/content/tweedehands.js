@@ -17,7 +17,7 @@
     } else {
       await fillForm(item);
       const id = await submitListing(/2dehands\.be\/v\/[^/]+\/(m\d+)/);
-      send("JOB_DONE", { platform_listing_id: id, platform_listing_url: `https://www.2dehands.be/seller/view/${id}` });
+      send("JOB_DONE", { platform_listing_id: id, platform_listing_url: `https://www.2dehands.be/v/listing/${id}` });
     }
   } catch (e) {
     send("JOB_ERROR", null, String(e)); // tab stays open
