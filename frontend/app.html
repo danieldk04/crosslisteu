@@ -456,7 +456,7 @@ input[type="checkbox"].row-check { width: 15px; height: 15px; cursor: pointer; a
       <div style="font-size:22px;font-weight:900;letter-spacing:-.4px;margin-bottom:8px">Activate your subscription</div>
       <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:24px" id="paywall-msg">Start your 7-day free trial to access CrossList EU.</div>
       <button onclick="startCheckout()" style="width:100%;padding:14px;background:var(--grad);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:10px" id="paywall-cta">Start 7-day free trial →</button>
-      <button onclick="sessionStorage.removeItem('cl_auth'); window.location.href='/'" style="width:100%;padding:10px;background:transparent;border:none;color:var(--muted);font-size:13px;cursor:pointer">Log out</button>
+      <button onclick="sessionStorage.clear(); window.location.href='/'" style="width:100%;padding:10px;background:transparent;border:none;color:var(--muted);font-size:13px;cursor:pointer">Log out</button>
     </div>
   </div>
 
