@@ -1944,6 +1944,24 @@ function publishedAt(itemId){
   return listing?fmtDate(listing.listed_at):null;
 }
 
+// ── Mobile sidebar ───────────────────────────────────────────────
+function toggleSidebar() {
+  const open = document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('hamburger').classList.toggle('open', open);
+  document.getElementById('sidebar-overlay').classList.toggle('visible', open);
+  document.body.style.overflow = open ? 'hidden' : '';
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('hamburger').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('visible');
+  document.body.style.overflow = '';
+}
+// Close sidebar when a nav item is clicked on mobile
+document.querySelectorAll('.nav-item').forEach(el => {
+  el.addEventListener('click', () => { if (window.innerWidth <= 768) closeSidebar(); });
+});
+
 // ── Init ─────────────────────────────────────────────────────────
 const _urlParams = new URLSearchParams(window.location.search);
 if (_urlParams.get('billing') === 'success' || _urlParams.get('billing') === 'cancel') {
