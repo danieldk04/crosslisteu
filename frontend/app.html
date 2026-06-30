@@ -1278,6 +1278,14 @@ async function openPortal() {
 }
 
 // ── Data loading ─────────────────────────────────────────────────
+async function refreshDashboard(btn) {
+  btn.disabled = true;
+  btn.textContent = '…';
+  await loadAll();
+  btn.textContent = 'Refresh';
+  btn.disabled = false;
+}
+
 async function loadAll() {
   const [itemsRes, listingsRes, jobsRes, platformsRes] = await Promise.allSettled([
     apiFetch(`${API}/api/items/`).then(r => r.json()),
