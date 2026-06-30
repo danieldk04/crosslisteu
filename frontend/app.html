@@ -1302,7 +1302,7 @@ function renderBilling(data) {
     if (note) note.textContent = days > 0 ? `${days} day${days !== 1 ? 's' : ''} left in free trial · No credit card needed` : 'Your free trial expires today';
     const btn = document.getElementById('btn-checkout');
     if (btn) btn.textContent = days > 0 ? `Start ${days}-day free trial →` : 'Activate Pro →';
-    document.getElementById('nav-prijs-label').textContent = days > 0 ? `Trial (${days}d left)` : 'Trial expiring';
+    document.getElementById('nav-prijs-label').textContent = 'Account';
 
   } else {
     // trial_expired / canceled / unknown — block access
