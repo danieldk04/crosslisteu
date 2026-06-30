@@ -449,6 +449,17 @@ input[type="checkbox"].row-check { width: 15px; height: 15px; cursor: pointer; a
     </button>
   </div>
 
+  <!-- ── Paywall overlay (shown when subscription not active) ──────── -->
+  <div id="paywall-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.7);backdrop-filter:blur(6px);z-index:200;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:20px;padding:40px;max-width:420px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+      <div style="font-size:36px;margin-bottom:16px">🔒</div>
+      <div style="font-size:22px;font-weight:900;letter-spacing:-.4px;margin-bottom:8px">Activate your subscription</div>
+      <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:24px" id="paywall-msg">Start your 7-day free trial to access CrossList EU.</div>
+      <button onclick="startCheckout()" style="width:100%;padding:14px;background:var(--grad);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:10px" id="paywall-cta">Start 7-day free trial →</button>
+      <button onclick="sessionStorage.removeItem('cl_auth'); window.location.href='/'" style="width:100%;padding:10px;background:transparent;border:none;color:var(--muted);font-size:13px;cursor:pointer">Log out</button>
+    </div>
+  </div>
+
   <div class="content">
 
     <!-- ── DASHBOARD VIEW ──────────────────────────────────────────── -->
