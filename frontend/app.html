@@ -761,6 +761,27 @@ input[type="checkbox"].row-check { width: 15px; height: 15px; cursor: pointer; a
 
       <!-- Upgrade / trial state (paywall) -->
       <div id="billing-upgrade-card" style="display:none">
+
+        <!-- Account info (always visible at top) -->
+        <div class="card" style="max-width:580px;margin:0 auto 28px">
+          <div class="card-header"><h2>Account</h2></div>
+          <div style="padding:20px 22px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div>
+                <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:2px">Email address</div>
+                <div style="font-size:14px;font-weight:600" id="account-email-trial">—</div>
+              </div>
+            </div>
+            <div style="border-top:1px solid var(--border);padding-top:14px;display:flex;align-items:center;justify-content:space-between">
+              <div>
+                <div style="font-size:13px;font-weight:600;color:var(--text)">Log out</div>
+                <div style="font-size:12px;color:var(--muted)">You will be redirected to the login page</div>
+              </div>
+              <button onclick="document.getElementById('logout-btn').click()" class="btn btn-outline btn-sm">Log out</button>
+            </div>
+          </div>
+        </div>
+
         <div class="pricing-hero">
           <h1>One plan. Everything included.</h1>
           <p>CrossList EU Pro gives you everything you need to sell smarter across European marketplaces.</p>
