@@ -1289,7 +1289,7 @@ function showView(name) {
   document.getElementById('view-' + name).classList.add('active');
   const navNames = ['dashboard', 'items', 'calculator', 'protections', 'prijs', 'help'];
   document.querySelectorAll('.nav-item')[navNames.indexOf(name)]?.classList.add('active');
-  const titles = { dashboard: 'Dashboard', items: 'Items', calculator: 'Margin calculator', help: 'Help', protections: 'Protections', prijs: 'Subscription' };
+  const titles = { dashboard: 'Dashboard', items: 'Items', calculator: 'Margin calculator', help: 'Help', protections: 'Protections', prijs: 'Account' };
   document.getElementById('topbar-title').textContent = titles[name] || name;
   if (name === 'items') { clearSelection(); applyFilters(); }
 }
