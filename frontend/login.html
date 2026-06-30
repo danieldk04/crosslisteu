@@ -67,6 +67,10 @@ input:focus { border-color: var(--blue); background: #fff; }
 <script>
 const API = window.location.hostname === 'localhost' ? 'http://localhost:8001' : 'https://api.crosslisteu.com';
 
+if (new URLSearchParams(window.location.search).get('confirmed') === '1') {
+  document.getElementById('confirmed').style.display = 'block';
+}
+
 async function doLogin(e) {
   e.preventDefault();
   const email = document.getElementById('email').value.trim();
