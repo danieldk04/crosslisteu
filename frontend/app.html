@@ -2092,14 +2092,36 @@ function openCrosslist(itemId) {
 async function doCrosslist() {
   const selected = [...document.querySelectorAll('#crosslist-platform-checkboxes input:checked')].map(c => c.value);
   if (!selected.length) return alert('Choose at least one platform');
+  const btn = document.querySelector('#modal-crosslist .btn-primary');
+  btn.disabled = true;
+  btn.textContent = 'Adding to queue…';
   try {
     await apiFetch(`${API}/api/items/${state.crosslistItemId}/crosslist`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ platforms: selected }),
     });
     closeModal('modal-crosslist');
+    showToast(`Queued for ${selected.map(p => PLATFORM_LABELS[p]).join(', ')} — extension will publish within 15 seconds`);
     await loadAll();
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = 'Publish';
+    alert('Error: ' + e.message);
+  }
+}
+
+function showToast(msg) {
+  let t = document.getElementById('cl-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'cl-toast';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.25);transition:opacity .3s;white-space:nowrap;max-width:90vw;text-align:center';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => { t.style.opacity = '0'; }, 4000);
 }
 
 function renderPlatformCheckboxes(containerId, itemId) {
