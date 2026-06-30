@@ -1659,25 +1659,26 @@ function renderPlatformMatrix(itemId) {
 
   const SHORT = { marktplaats: 'MP', '2dehands': '2dh', vinted: 'V', ebay: 'eBay', etsy: 'Etsy', shopify: 'Shop' };
 
-  const chips = PLATFORMS.map(p => {
+  const dots = PLATFORMS.map(p => {
     const icon = PLATFORM_ICONS[p];
     const label = SHORT[p] || p;
     const l = byPlatform[p];
+    let cls = 's-none', badge = '', tip = `${PLATFORM_LABELS[p]}: not listed`;
     if (l && l.status === 'active') {
-      return `<span class="pm-chip pm-active" title="${PLATFORM_LABELS[p]}: listed ✓">✓ ${icon} ${label}</span>`;
+      cls = 's-active'; badge = '✓'; tip = `${PLATFORM_LABELS[p]}: listed ✓`;
+    } else if (l && (l.status === 'pending' || l.status === 'queued')) {
+      cls = 's-pending'; badge = '…'; tip = `${PLATFORM_LABELS[p]}: publishing…`;
+    } else if (l && l.status === 'error') {
+      cls = 's-error'; badge = '!'; tip = `${PLATFORM_LABELS[p]}: failed — publish again`;
     }
-    if (l && (l.status === 'pending' || l.status === 'queued')) {
-      return `<span class="pm-chip pm-pending" title="${PLATFORM_LABELS[p]}: publishing…">⏳ ${icon} ${label}</span>`;
-    }
-    if (l && l.status === 'error') {
-      return `<span class="pm-chip pm-error" title="${PLATFORM_LABELS[p]}: failed — publish again to retry">⚠ ${icon} ${label}</span>`;
-    }
-    return `<span class="pm-chip pm-none"></span>`;
-  }).filter(c => !c.includes('pm-none'));
+    const badgeEl = badge ? `<span class="pm-dot-badge">${badge}</span>` : '';
+    return `<div class="pm-dot" title="${tip}">
+      <div class="pm-dot-icon ${cls}">${icon}${badgeEl}</div>
+      <span class="pm-dot-label">${label}</span>
+    </div>`;
+  });
 
-  return chips.length
-    ? `<div class="pm-grid">${chips.join('')}</div>`
-    : `<div class="pm-grid"><span class="pm-empty">Not published yet</span></div>`;
+  return `<div class="pm-matrix">${dots.join('')}</div>`;
 }
 
 // ── Items view with filters ───────────────────────────────────────
