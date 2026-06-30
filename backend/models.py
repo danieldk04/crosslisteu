@@ -24,6 +24,9 @@ class ItemCreate(BaseModel):
     color: Optional[str] = None
     material: Optional[str] = None
     photo_urls: list[str] = []
+    price_marktplaats: Optional[float] = None
+    price_2dehands: Optional[float] = None
+    price_vinted: Optional[float] = None
 
 
 class ItemOut(ItemCreate):
