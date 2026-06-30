@@ -179,13 +179,17 @@ async def publish_to_platforms(item_id: str, platforms: list[str], user_id: str)
 
 async def _publish_one(item: dict, platform_name: str, credentials: dict, user_id: str) -> dict:
     db = get_db()
-    listing_row = {
-        "item_id": item["id"],
-        "platform": platform_name,
-        "status": "pending",
-    }
-    insert = db.table("listings").insert(listing_row).execute()
-    listing_id = insert.data[0]["id"]
+    existing = db.table("listings").select("id").eq("item_id", item["id"]).eq("platform", platform_name).execute()
+    if existing.data:
+        listing_id = existing.data[0]["id"]
+        db.table("listings").update({"status": "pending", "error_message": None}).eq("id", listing_id).execute()
+    else:
+        insert = db.table("listings").insert({
+            "item_id": item["id"],
+            "platform": platform_name,
+            "status": "pending",
+        }).execute()
+        listing_id = insert.data[0]["id"]
 
     try:
         platform = get_platform(platform_name)
