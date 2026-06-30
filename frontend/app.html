@@ -270,18 +270,104 @@ input[type="checkbox"].row-check { width: 15px; height: 15px; cursor: pointer; a
 .footer-col ul li a { color: rgba(255,255,255,.55); transition: color .15s; font-size: 13px; }
 .footer-col ul li a:hover { color: #fff; }
 
+/* ── Hamburger (hidden on desktop) ──────────────────────────────── */
+.hamburger { display: none; flex-direction: column; justify-content: center; gap: 5px; width: 36px; height: 36px; padding: 6px; border: none; background: transparent; cursor: pointer; border-radius: 8px; flex-shrink: 0; }
+.hamburger:hover { background: var(--bg); }
+.hamburger span { display: block; height: 2px; width: 100%; background: var(--text); border-radius: 2px; transition: all .22s; transform-origin: center; }
+.hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ── Sidebar overlay ─────────────────────────────────────────────── */
+.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.5); z-index: 99; backdrop-filter: blur(2px); }
+.sidebar-overlay.visible { display: block; }
+
 @media (max-width: 1100px) {
   .stats { grid-template-columns: repeat(2, 1fr); }
   .footer-main { grid-template-columns: 1fr 1fr; }
 }
+
 @media (max-width: 768px) {
-  .sidebar { width: 60px; }
-  .sidebar .logo-text, .sidebar .nav-item span, .sidebar .sidebar-bottom { display: none; }
-  .main { margin-left: 60px; }
-  .stats { grid-template-columns: 1fr 1fr; }
-  .content { padding: 16px; }
-  .topbar { padding: 0 16px; }
-  .footer-main { grid-template-columns: 1fr 1fr; gap: 24px; padding: 36px 20px; }
+  /* Hamburger visible, sidebar hidden off-screen */
+  .hamburger { display: flex; }
+  .sidebar {
+    transform: translateX(-100%);
+    width: 260px;
+    transition: transform .25s cubic-bezier(.4,0,.2,1);
+    z-index: 100;
+  }
+  .sidebar.open { transform: translateX(0); }
+
+  /* Main fills full width */
+  .main { margin-left: 0; }
+
+  /* Topbar */
+  .topbar { padding: 0 14px; gap: 10px; }
+  .topbar-title { font-size: 14px; }
+
+  /* Content */
+  .content { padding: 14px; }
+
+  /* Stats: 2 columns on small screens, 1 on very small */
+  .stats { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .stat { padding: 14px 16px; }
+  .stat-value { font-size: 24px; }
+
+  /* Platform breakdown */
+  .platform-breakdown { gap: 8px; margin-bottom: 16px; }
+
+  /* Cards */
+  .card-header { padding: 14px 16px; }
+  .card-header h2 { font-size: 13px; }
+
+  /* Filter bar: vertical stack */
+  .filter-bar { flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 14px; }
+  .filter-bar select, .filter-bar input[type="text"] { width: 100%; }
+  .filter-label { display: none; }
+  .filter-spacer { display: none; }
+
+  /* Bulk bar */
+  .bulk-bar { flex-wrap: wrap; padding: 10px 14px; gap: 6px; }
+
+  /* Table: horizontal scroll, hide non-essential columns */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  th.hide-mobile, td.hide-mobile { display: none; }
+  td, th { padding: 10px 12px; font-size: 12px; }
+  th.col-check, td.col-check { padding-left: 14px; width: 32px; }
+
+  /* Modals: full-width */
+  .modal { max-width: 100%; border-radius: 16px 16px 0 0; margin-top: auto; max-height: 95vh; }
+  .modal-overlay { align-items: flex-end; padding: 0; }
+  .modal-header { padding: 18px 20px 14px; }
+  .modal-body { padding: 16px 20px; }
+  .modal-footer { padding: 14px 20px; }
+
+  /* Form rows: single column */
+  .form-row { grid-template-columns: 1fr !important; }
+  .platform-checkboxes { grid-template-columns: 1fr 1fr; gap: 6px; }
+
+  /* View headers */
+  .view-header h1 { font-size: 18px; }
+  .view-header p { font-size: 12px; }
+
+  /* Protection grid: single column */
+  #view-protections > div:last-child { grid-template-columns: 1fr; }
+
+  /* Pricing card */
+  .pricing-hero h1 { font-size: 22px; }
+  .pricing-card { padding: 24px 20px; }
+  .pricing-amount { font-size: 40px; }
+  .pricing-features-grid { grid-template-columns: 1fr; }
+  .active-plan-card { padding: 18px; }
+  .active-plan-card > div:nth-child(2) { grid-template-columns: 1fr; }
+
+  /* Footer */
+  .footer-main { grid-template-columns: 1fr; gap: 24px; padding: 32px 20px; }
+}
+
+@media (max-width: 400px) {
+  .stats { grid-template-columns: 1fr; }
+  .stat-value { font-size: 28px; }
 }
 </style>
 </head>
