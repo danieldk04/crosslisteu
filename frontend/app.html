@@ -1552,19 +1552,18 @@ function renderPlatformMatrix(itemId) {
     const icon = PLATFORM_ICONS[p];
     const label = SHORT[p] || p;
     const l = byPlatform[p];
-    if (!l || l.status === 'delisted') {
-      return `<span class="pm-chip pm-none" title="${PLATFORM_LABELS[p]}: not listed">${icon} ${label}</span>`;
-    }
-    if (l.status === 'active') {
+    if (l && l.status === 'active') {
       return `<span class="pm-chip pm-active" title="${PLATFORM_LABELS[p]}: listed ✓">${icon} ${label}</span>`;
     }
-    if (l.status === 'pending' || l.status === 'queued') {
+    if (l && (l.status === 'pending' || l.status === 'queued')) {
       return `<span class="pm-chip pm-pending" title="${PLATFORM_LABELS[p]}: publishing…">${icon} ${label}</span>`;
     }
-    if (l.status === 'error') {
-      return `<span class="pm-chip pm-error" title="${PLATFORM_LABELS[p]}: error — click to fix" onclick="markListingActive('${itemId}','${p}',event)">${icon} ${label}</span>`;
+    if (l && l.status === 'error') {
+      // Show as grey but with error hint in tooltip — errors don't alarm, Publish button fixes them
+      return `<span class="pm-chip pm-none" style="border-color:#fbbf24" title="${PLATFORM_LABELS[p]}: previous attempt failed — publish again to retry">${icon} ${label}</span>`;
     }
-    return `<span class="pm-chip pm-none" title="${PLATFORM_LABELS[p]}">${icon} ${label}</span>`;
+    // not listed or delisted
+    return `<span class="pm-chip pm-none" title="${PLATFORM_LABELS[p]}: not listed">${icon} ${label}</span>`;
   });
 
   return `<div class="pm-grid">${chips.join('')}</div>`;
