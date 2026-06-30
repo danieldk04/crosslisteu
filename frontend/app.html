@@ -959,15 +959,15 @@ function calcMargin() {
   const profit = parseFloat(document.getElementById('mc-profit').value) || 0;
   const need   = cost + profit;
   const el     = document.getElementById('mc-results');
-  if (need <= 0) { el.innerHTML = ''; return; }
+  const empty  = document.getElementById('mc-empty');
+  if (need <= 0) { el.innerHTML = ''; if (empty) empty.style.display = 'block'; return; }
+  if (empty) empty.style.display = 'none';
   el.innerHTML = MC_PLATFORMS.map(p => {
-    // sell = (need + fixed) / (1 - commission)
     const sell = (need + p.fixed) / (1 - p.commission);
-    const color = sell <= 0 ? 'var(--muted)' : 'var(--text)';
-    return `<div style="border:1px solid var(--border);border-radius:8px;padding:12px 14px">
-      <div style="font-size:11px;color:var(--muted);margin-bottom:4px">${PLATFORM_ICONS[p.key] || ''} ${p.label}</div>
-      <div style="font-size:20px;font-weight:700;color:${color}">€ ${sell.toFixed(2)}</div>
-      <div style="font-size:10px;color:var(--muted);margin-top:2px">${p.commission ? `${(p.commission*100).toFixed(2)}% commissie` : 'Geen commissie'}</div>
+    return `<div class="mc-result">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600">${PLATFORM_ICONS[p.key] || ''} ${p.label}</div>
+      <div style="font-size:22px;font-weight:800;color:var(--text);letter-spacing:-.5px">€ ${sell.toFixed(2)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px">${p.commission ? `${(p.commission*100).toFixed(2)}% fee` : 'No fees'}</div>
     </div>`;
   }).join('');
 }
