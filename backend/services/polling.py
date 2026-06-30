@@ -40,9 +40,16 @@ async def _check_one(listing: dict):
     db = get_db()
     platform_name = listing["platform"]
 
+    item_resp = db.table("items").select("user_id").eq("id", listing["item_id"]).single().execute()
+    if not item_resp.data:
+        logger.warning(f"Item {listing['item_id']} not found — skipping poll")
+        return
+    user_id = item_resp.data["user_id"]
+
     creds_resp = (
         db.table("platform_credentials")
         .select("*")
+        .eq("user_id", user_id)
         .eq("platform", platform_name)
         .execute()
     )
