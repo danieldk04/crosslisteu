@@ -1182,7 +1182,7 @@ async function openPortal() {
     const data = await res.json();
     if (data.url) { window.location.href = data.url; }
   } catch (e) {
-    alert('Kon klantenportaal niet openen.');
+    alert('Could not open customer portal.');
   }
 }
 
