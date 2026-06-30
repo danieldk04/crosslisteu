@@ -1341,9 +1341,12 @@ function renderBilling(data) {
   }
   function hidePaywall() { paywall.style.display = 'none'; }
 
-  // Populate account email
+  // Populate account email (both active card and trial card)
+  const email = sessionStorage.getItem('cl_email') || '—';
   const emailEl = document.getElementById('account-email');
-  if (emailEl) emailEl.textContent = sessionStorage.getItem('cl_email') || '—';
+  if (emailEl) emailEl.textContent = email;
+  const emailTrialEl = document.getElementById('account-email-trial');
+  if (emailTrialEl) emailTrialEl.textContent = email;
 
   if (!data) {
     // Billing check failed — fail open, don't block
