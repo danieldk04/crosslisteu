@@ -82,22 +82,24 @@ async def publish_to_platforms(item_id: str, platforms: list[str], user_id: str)
     need_en = any(p in _ENGLISH_PLATFORMS for p in platforms)
     need_nl = any(p in _DUTCH_PLATFORMS for p in platforms)
 
+    brand = item.get("brand") or None
+
     async def _build_english():
         manual_title = (item.get("shopify_title") or "").strip()
         if manual_title:
             title_en = manual_title
-            desc_en = await _translate_to_english(item.get("description", ""))
+            desc_en = await _translate_to_english(item.get("description", ""), brand)
         else:
             title_en, desc_en = await asyncio.gather(
-                _translate_to_english(item.get("title", "")),
-                _translate_to_english(item.get("description", "")),
+                _translate_to_english(item.get("title", ""), brand),
+                _translate_to_english(item.get("description", ""), brand),
             )
         return {**item, "title": title_en, "description": desc_en}
 
     async def _build_dutch():
         title_nl, desc_nl = await asyncio.gather(
-            _translate_to_dutch(item.get("title", "")),
-            _translate_to_dutch(item.get("description", "")),
+            _translate_to_dutch(item.get("title", ""), brand),
+            _translate_to_dutch(item.get("description", ""), brand),
         )
         return {**item, "title": title_nl, "description": desc_nl}
 
