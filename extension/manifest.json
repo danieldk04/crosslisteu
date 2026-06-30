@@ -8,7 +8,7 @@
     "https://www.marktplaats.nl/*",
     "https://www.2dehands.be/*",
     "https://www.vinted.com/*",
-    "http://localhost/*"
+    "https://api.crosslisteu.com/*"
   ],
   "background": {
     "service_worker": "background.js"
