@@ -1117,15 +1117,15 @@ function renderTrialBanner(data) {
         <span style="font-size:18px">${urgent ? '⏰' : '🎉'}</span>
         <div>
           <div style="font-weight:600;font-size:13px;color:${urgent ? '#92400e' : '#1e40af'}">
-            ${days > 0 ? `Nog ${days} dag${days !== 1 ? 'en' : ''} gratis probeerperiode` : 'Je proefperiode verloopt vandaag'}
+            ${days > 0 ? `${days} day${days !== 1 ? 's' : ''} left in your free trial` : 'Your free trial expires today'}
           </div>
           <div style="font-size:12px;color:${urgent ? '#b45309' : '#3b82f6'};margin-top:1px">
-            Activeer Pro om onbeperkt te blijven gebruiken — €19,99/mnd
+            Activate Pro to keep full access — €19.99/month
           </div>
         </div>
       </div>
       <button onclick="showView('prijs')" style="white-space:nowrap;flex-shrink:0;padding:8px 16px;background:#2563eb;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">
-        Activeer Pro →
+        Activate Pro →
       </button>`;
 
   } else if (status === 'trial_expired' || status === 'canceled') {
