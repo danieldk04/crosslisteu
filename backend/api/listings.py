@@ -83,6 +83,10 @@ async def mark_listing_active(body: dict, user_id: str = Depends(get_current_use
 
 
 @router.post("/sold")
-async def mark_sold(item_id: str, platform: str, background_tasks: BackgroundTasks):
+async def mark_sold(item_id: str, platform: str, background_tasks: BackgroundTasks, user_id: str = Depends(get_current_user)):
+    db = get_db()
+    item = db.table("items").select("id").eq("id", item_id).eq("user_id", user_id).execute()
+    if not item.data:
+        raise HTTPException(status_code=404, detail="Item not found")
     background_tasks.add_task(handle_item_sold, item_id, platform)
     return {"status": "delist_triggered"}
