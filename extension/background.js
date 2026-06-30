@@ -269,10 +269,10 @@ function execInTab(tabId, func, args = []) {
 }
 
 function waitForTabLoad(tabId, timeoutMs = 20000) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const timer = setTimeout(() => {
       chrome.tabs.onUpdated.removeListener(fn);
-      reject(new Error("Tab load timeout"));
+      resolve(); // resolve on timeout so execution continues
     }, timeoutMs);
     function fn(id, info) {
       if (id !== tabId || info.status !== "complete") return;
@@ -281,6 +281,14 @@ function waitForTabLoad(tabId, timeoutMs = 20000) {
       resolve();
     }
     chrome.tabs.onUpdated.addListener(fn);
+    // Also check if already complete
+    chrome.tabs.get(tabId, t => {
+      if (t && t.status === "complete") {
+        chrome.tabs.onUpdated.removeListener(fn);
+        clearTimeout(timer);
+        resolve();
+      }
+    });
   });
 }
 
@@ -288,78 +296,72 @@ async function bgDeleteMp2dh(job, serverUrl) {
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const platform = job.platform;
   const payload = job.payload || {};
-  const title = (payload.title || "").substring(0, 30);
+  const title = (payload.title || "").substring(0, 35);
   const listingId = payload.platform_listing_id || "";
 
-  const homepage = platform === "marktplaats"
-    ? "https://www.marktplaats.nl"
-    : "https://www.2dehands.be";
-  const myPagePattern = platform === "marktplaats"
-    ? /mijn.?marktplaats|mijn.advertentie/i
-    : /mijn.?2dehands|mijn.advertentie/i;
-  const myPageHref = platform === "marktplaats"
-    ? "mijn-marktplaats"
-    : "mijn-2dehands";
+  // Navigate directly to account/advertenties overview
+  const overviewUrl = platform === "marktplaats"
+    ? "https://www.marktplaats.nl/account/advertenties"
+    : "https://www.2dehands.be/account/advertenties";
 
-  // 1. Open homepage
-  const tab = await new Promise((res, rej) =>
-    chrome.tabs.create({ url: homepage, active: true }, t =>
-      chrome.runtime.lastError ? rej(new Error(chrome.runtime.lastError.message)) : res(t)
+  const tabId = await new Promise((res, rej) =>
+    chrome.tabs.create({ url: overviewUrl, active: true }, t =>
+      chrome.runtime.lastError ? rej(new Error(chrome.runtime.lastError.message)) : res(t.id)
     )
   );
-  const tabId = tab.id;
 
   try {
     await waitForTabLoad(tabId);
-    await sleep(1500);
+    await sleep(3000); // let React fully render listings
 
-    // 2. Find and click "Mijn Marktplaats" / "Mijn 2dehands" nav link
-    const navClicked = await execInTab(tabId, (pattern, href) => {
-      const re = new RegExp(pattern, "i");
-      const link = [...document.querySelectorAll("a")].find(a =>
-        re.test(a.textContent) || a.href.includes(href)
+    // Find listing card by title or ID and click its options button
+    const findResult = await execInTab(tabId, (title, listingId) => {
+      const allEls = [...document.querySelectorAll("*")];
+
+      // Find element containing the title text (prefer smaller, more specific elements)
+      let titleEl = allEls.find(el =>
+        el.children.length === 0 && // leaf node
+        el.textContent.trim().startsWith(title.substring(0, 20)) &&
+        el.textContent.trim().length < title.length + 20
       );
-      if (link) { link.click(); return link.href; }
-      return null;
-    }, [myPagePattern.source, myPageHref]);
-
-    if (!navClicked) throw new Error("Mijn " + platform + " nav link not found — are you logged in?");
-
-    await waitForTabLoad(tabId);
-    await sleep(2000);
-
-    // 3. Find listing on overview by title or ID, then find delete option
-    // Try direct delete first (some pages have it visible)
-    const deleted = await execInTab(tabId, (title, listingId) => {
-      // Find the card containing this listing
-      const allCards = [...document.querySelectorAll("article, li, [class*='listing'], [class*='advertentie']")];
-      let card = allCards.find(el => {
-        const text = el.textContent || "";
-        return (listingId && text.includes(listingId)) || (title && text.includes(title));
-      });
-      // Fallback: find by link
-      if (!card) {
-        const link = [...document.querySelectorAll("a")].find(a =>
-          (listingId && a.href.includes(listingId)) ||
-          (title && a.textContent.includes(title))
-        );
-        if (link) card = link.closest("article, li, [class*='listing']") || link.parentElement;
+      if (!titleEl && listingId) {
+        titleEl = [...document.querySelectorAll(`a[href*="${listingId}"]`)][0];
       }
-      if (!card) return { found: false };
+      if (!titleEl) {
+        // Broader: any element whose text contains the first 15 chars of title
+        titleEl = allEls.find(el => el.textContent.includes(title.substring(0, 15)) && el.tagName !== "BODY" && el.tagName !== "HTML");
+      }
+      if (!titleEl) return { found: false };
 
-      // Click any options/kebab button in the card
-      const optBtn = card.querySelector(
-        "button[aria-label], button:has(svg), [data-testid*='action'], [data-testid*='kebab'], [data-testid*='menu']"
-      );
-      if (optBtn) { optBtn.click(); return { found: true, step: "clicked_options" }; }
-      return { found: true, step: "no_options_btn" };
+      // Walk up to find a card-like ancestor
+      let card = titleEl;
+      for (let i = 0; i < 8; i++) {
+        if (!card.parentElement) break;
+        card = card.parentElement;
+        if (/article|li/i.test(card.tagName) ||
+            (card.querySelectorAll("button").length > 0 && card.querySelectorAll("a").length > 0)) {
+          break;
+        }
+      }
+
+      // Find an options/kebab/more button inside the card
+      const btns = [...card.querySelectorAll("button")];
+      const optBtn = btns.find(b =>
+        /opties|meer|menu|\.\.\./i.test(b.textContent + (b.getAttribute("aria-label") || "")) ||
+        b.querySelector("svg")
+      ) || btns[btns.length - 1]; // last button is often the options button
+
+      if (optBtn) { optBtn.click(); return { found: true, btn: optBtn.textContent || "svg-btn" }; }
+      return { found: true, btn: null };
     }, [title, listingId]);
 
-    if (!deleted?.found) throw new Error("Listing not found on overview — title: " + title);
+    if (!findResult?.found) {
+      throw new Error(`Listing "${title}" not found on ${overviewUrl}. Is the item actually listed on ${platform}?`);
+    }
 
-    await sleep(600);
+    await sleep(700);
 
-    // 4. Click Verwijder (may now be in a dropdown/menu)
+    // Click Verwijder (in dropdown or directly visible)
     const clickedDelete = await execInTab(tabId, () => {
       const el = [...document.querySelectorAll("button, a, [role='menuitem'], li")]
         .find(e => /verwijder/i.test(e.textContent));
@@ -367,11 +369,11 @@ async function bgDeleteMp2dh(job, serverUrl) {
       return false;
     });
 
-    if (!clickedDelete) throw new Error("Verwijder button not found after opening options");
+    if (!clickedDelete) throw new Error("Verwijder button not found — options menu may not have opened");
 
     await sleep(800);
 
-    // 5. Confirm dialog
+    // Confirm dialog if it appears
     await execInTab(tabId, () => {
       const btn = [...document.querySelectorAll("button")]
         .find(e => /verwijder|bevestig|ok|ja\b/i.test(e.textContent));
@@ -380,16 +382,15 @@ async function bgDeleteMp2dh(job, serverUrl) {
 
     await sleep(1000);
 
-    // 6. Report success
     const completeHeaders = await getAuthHeaders();
     await fetch(`${serverUrl}/api/jobs/${job.id}/complete`, {
       method: "POST", headers: completeHeaders,
       body: JSON.stringify({}),
     });
-    console.log(`[CrossList] bgDelete success: ${platform} listing ${listingId}`);
+    console.log(`[CrossList] bgDelete success: ${platform} listing "${title}"`);
 
   } finally {
-    setTimeout(() => chrome.tabs.remove(tabId).catch(() => {}), 2000);
+    setTimeout(() => chrome.tabs.remove(tabId).catch(() => {}), 2500);
   }
 }
 
