@@ -427,7 +427,7 @@ input[type="checkbox"].row-check { width: 15px; height: 15px; cursor: pointer; a
       <div class="ext-dot" id="ext-dot"></div>
       <span id="ext-label">Loading...</span>
     </div>
-    <button onclick="sessionStorage.removeItem('cl_auth'); window.location.href='/'" style="background:transparent;border:none;color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;padding:4px 0;margin-top:6px;text-align:left;width:100%;">← Log out</button>
+    <button id="logout-btn" onclick="sessionStorage.removeItem('cl_auth'); window.location.href='/'" style="background:transparent;border:none;color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;padding:4px 0;margin-top:6px;text-align:left;width:100%;">← Log out</button>
   </div>
 </div>
 
