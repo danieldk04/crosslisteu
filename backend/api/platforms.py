@@ -218,7 +218,7 @@ async def platform_status(user_id: str = Depends(get_current_user)):
 
 
 @router.post("/ai-listing")
-async def ai_generate_listing(body: AIListingRequest):
+async def ai_generate_listing(body: AIListingRequest, user_id: str = Depends(get_current_user)):
     """Generate a listing from photos using Claude Vision."""
     result = await generate_listing_from_photos(body.photo_urls, body.platforms)
     return result
