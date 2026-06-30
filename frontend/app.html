@@ -1164,16 +1164,16 @@ function toggleFaq(el) { el.classList.toggle('open'); }
 
 async function startCheckout() {
   const btns = document.querySelectorAll('#btn-checkout, .pricing-cta');
-  btns.forEach(b => { b.textContent = 'Laden…'; b.disabled = true; });
+  btns.forEach(b => { b.textContent = 'Loading…'; b.disabled = true; });
   try {
     const res = await apiFetch(`${API}/api/billing/checkout`, { method: 'POST' });
     const data = await res.json();
     if (data.url) { window.location.href = data.url; return; }
-    alert('Kon checkout niet starten. Probeer het opnieuw.');
+    alert('Could not start checkout. Please try again.');
   } catch (e) {
-    alert('Fout bij verbinden met betalingsprovider.');
+    alert('Error connecting to payment provider.');
   }
-  btns.forEach(b => { b.textContent = 'Start 7 dagen gratis →'; b.disabled = false; });
+  btns.forEach(b => { b.textContent = 'Start 7-day free trial →'; b.disabled = false; });
 }
 
 async function openPortal() {
