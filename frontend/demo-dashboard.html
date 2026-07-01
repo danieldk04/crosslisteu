@@ -192,6 +192,42 @@ tr:last-child td { border-bottom: none; }
     </button>
   </div>
 
+  <div class="demo-modal-overlay" id="demo-modal-overlay">
+    <div class="demo-modal">
+      <div class="demo-modal-head"><span>New item</span><span style="color:var(--muted);font-weight:400;font-size:11px">Demo</span></div>
+      <div class="demo-modal-body" id="demo-modal-body">
+        <div class="demo-field">
+          <label>Photo</label>
+          <div class="demo-photo-drop"><span id="demo-photo-placeholder">Drop a photo…</span><div class="thumb" id="demo-photo-thumb">🧥</div></div>
+        </div>
+        <div class="demo-field">
+          <label>Title</label>
+          <div class="demo-field-box" id="demo-title-box">&nbsp;</div>
+        </div>
+        <div class="demo-field">
+          <label>AI description</label>
+          <div class="demo-field-box" id="demo-desc-box" style="min-height:34px">&nbsp;</div>
+        </div>
+        <div class="demo-field" style="margin-bottom:0">
+          <label>Publish to</label>
+          <div class="demo-platform-row" id="demo-platform-row">
+            <div class="demo-platform-chip" data-p="mp"><span class="chk"></span>Marktplaats</div>
+            <div class="demo-platform-chip" data-p="2dh"><span class="chk"></span>2dehands</div>
+            <div class="demo-platform-chip" data-p="vin"><span class="chk"></span>Vinted</div>
+          </div>
+        </div>
+        <div class="demo-success" id="demo-success">
+          <div class="demo-success-icon">✓</div>
+          <div style="font-weight:700;font-size:14px">Published to 3 platforms!</div>
+          <div style="font-size:12px;color:var(--muted)">Live in seconds — no manual work</div>
+        </div>
+      </div>
+      <div class="demo-modal-foot">
+        <button class="demo-publish-btn" id="demo-publish-btn">Publish item</button>
+      </div>
+    </div>
+  </div>
+
   <div class="content">
     <div class="welcome-row">
       <div>
