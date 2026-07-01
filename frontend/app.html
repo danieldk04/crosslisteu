@@ -2017,7 +2017,9 @@ function editItem(id) {
   document.getElementById('f-price-mp').value = item.price_marktplaats || '';
   document.getElementById('f-price-2dh').value = item.price_2dehands || '';
   document.getElementById('f-price-vinted').value = item.price_vinted || '';
-  const hasPlatformPrices = !!(item.price_marktplaats || item.price_2dehands || item.price_vinted);
+  document.getElementById('f-price-ebay').value = item.price_ebay || '';
+  document.getElementById('f-price-shopify').value = item.price_shopify || '';
+  const hasPlatformPrices = !!(item.price_marktplaats || item.price_2dehands || item.price_vinted || item.price_ebay || item.price_shopify);
   document.getElementById('f-platform-price-enabled').checked = hasPlatformPrices;
   document.getElementById('platform-price-fields').style.display = hasPlatformPrices ? 'grid' : 'none';
   document.getElementById('f-bid-enabled').checked = !!item.bid_percentage;
