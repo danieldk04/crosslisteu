@@ -128,7 +128,7 @@ class EbayPlatform(PlatformBase):
             raise EbayCategoryRequiredError(
                 f"Item '{item.get('title', sku)}' has no eBay category. "
                 "Set an eBay category ID on the item (look it up at "
-                "https://www.ebay.com/sh/lst/categories) or configure "
+                "https://www.ebay.com/sch/allcategories/all-categories) or configure "
                 "EBAY_DEFAULT_CATEGORY_ID as a fallback."
             )
 
