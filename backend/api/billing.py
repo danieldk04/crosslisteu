@@ -31,8 +31,27 @@ def _get_or_create_subscription(user_id: str) -> dict:
         return {"user_id": user_id, "status": "trialing", "plan": "pro", "trial_ends_at": trial_ends_at}
 
 
+def _is_owner(user_id: str) -> bool:
+    if not settings.owner_email:
+        return False
+    try:
+        user_resp = get_db().auth.admin.get_user_by_id(user_id)
+        email = user_resp.user.email if user_resp.user else None
+        return bool(email) and email.lower() == settings.owner_email.lower()
+    except Exception:
+        return False
+
+
 @router.get("/status")
 async def billing_status(user_id: str = Depends(get_current_user)):
+    if _is_owner(user_id):
+        return {
+            "status": "active",
+            "plan": "pro",
+            "trial_ends_at": None,
+            "current_period_end": None,
+            "stripe_subscription_id": None,
+        }
     try:
         sub = _get_or_create_subscription(user_id)
         return {
