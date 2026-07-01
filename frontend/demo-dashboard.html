@@ -364,7 +364,7 @@ function ambientLoop() {
 }
 setTimeout(ambientLoop, 3000);
 
-// Fake cursor visiting the "New item" button, then a random platform dot.
+// Fake cursor visiting elements to feel "in use".
 const cursor = document.getElementById('cursor');
 function moveCursorTo(target) {
   const r = target.getBoundingClientRect();
@@ -372,18 +372,73 @@ function moveCursorTo(target) {
   cursor.style.top = (r.top + r.height / 2 - 9) + 'px';
   cursor.style.opacity = '1';
 }
-function cursorLoop() {
-  const btn = document.getElementById('new-item-btn');
-  const dots = document.querySelectorAll('.pm-dot-icon.s-active');
-  const target = Math.random() > 0.5 && btn ? btn : (dots[Math.floor(Math.random() * dots.length)] || btn);
-  if (target) {
-    moveCursorTo(target);
-    setTimeout(() => { cursor.classList.add('click'); setTimeout(() => cursor.classList.remove('click'), 350); }, 1100);
-  }
-  setTimeout(() => { cursor.style.opacity = '0'; }, 2000);
-  setTimeout(cursorLoop, 4200 + Math.random() * 1800);
+function cursorClickAt(target, cb) {
+  moveCursorTo(target);
+  setTimeout(() => {
+    cursor.classList.add('click');
+    setTimeout(() => cursor.classList.remove('click'), 350);
+    if (cb) cb();
+  }, 950);
 }
-setTimeout(cursorLoop, 2800);
+
+function typeInto(el, text, speed, cb) {
+  el.innerHTML = '<span class="demo-typewriter"></span>';
+  const span = el.querySelector('span');
+  let i = 0;
+  (function step() {
+    span.textContent = text.slice(0, i);
+    i++;
+    if (i <= text.length) { setTimeout(step, speed); }
+    else { span.classList.remove('demo-typewriter'); if (cb) cb(); }
+  })();
+}
+
+// Full "New item" publish demo, played inside the modal.
+function playNewItemDemo() {
+  const overlay = document.getElementById('demo-modal-overlay');
+  const newBtn = document.getElementById('new-item-btn');
+  const photoThumb = document.getElementById('demo-photo-thumb');
+  const photoPlaceholder = document.getElementById('demo-photo-placeholder');
+  const titleBox = document.getElementById('demo-title-box');
+  const descBox = document.getElementById('demo-desc-box');
+  const chips = [...document.querySelectorAll('.demo-platform-chip')];
+  const publishBtn = document.getElementById('demo-publish-btn');
+  const success = document.getElementById('demo-success');
+
+  // Reset state.
+  photoThumb.classList.remove('show'); photoPlaceholder.style.opacity = '1';
+  titleBox.innerHTML = '&nbsp;'; descBox.innerHTML = '&nbsp;';
+  chips.forEach(c => c.classList.remove('on'));
+  publishBtn.classList.remove('loading'); publishBtn.textContent = 'Publish item'; publishBtn.style.opacity = '1';
+  success.classList.remove('show');
+
+  cursorClickAt(newBtn, () => {
+    overlay.classList.add('show');
+    cursor.style.opacity = '0';
+
+    setTimeout(() => { photoPlaceholder.style.opacity = '0'; photoThumb.classList.add('show'); }, 500);
+    setTimeout(() => typeInto(titleBox, 'Nike Tech Fleece Jas', 28), 1000);
+    setTimeout(() => typeInto(descBox, 'AI: "Zo goed als nieuw, maat M, warme fleece voering..."', 16), 2100);
+    setTimeout(() => {
+      chips.forEach((c, i) => setTimeout(() => c.classList.add('on'), i * 260));
+    }, 4300);
+    setTimeout(() => cursorClickAt(publishBtn, () => {
+      publishBtn.classList.add('loading');
+      publishBtn.textContent = 'Publishing…';
+      setTimeout(() => {
+        publishBtn.style.opacity = '0';
+        success.classList.add('show');
+      }, 1000);
+    }), 5300);
+    setTimeout(() => { overlay.classList.remove('show'); }, 7600);
+  });
+}
+
+// Alternate between the ambient sync loop and the full new-item demo.
+function scheduleNext() {
+  setTimeout(() => { playNewItemDemo(); scheduleNext(); }, 15000);
+}
+setTimeout(() => { playNewItemDemo(); scheduleNext(); }, 3200);
 </script>
 </body>
 </html>
