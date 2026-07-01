@@ -323,7 +323,7 @@ async def suggest_categories(query: str) -> list[dict]:
         resp = await client.get(
             f"{TAXONOMY_API}/category_tree/{tree_id}/get_category_suggestions",
             params={"q": query},
-            headers={"Authorization": f"Bearer {token}"},
+            headers={"Authorization": f"Bearer {token}", "Accept-Language": "en-US"},
         )
         resp.raise_for_status()
         data = resp.json()
