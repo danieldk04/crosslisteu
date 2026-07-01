@@ -65,11 +65,11 @@ def login(page):
         "document.getElementById('stat-items') && document.getElementById('stat-items').textContent.trim() !== '' && document.getElementById('stat-items').textContent.trim() !== '—'",
         timeout=15000,
     )
-    try:
-        page.click("text=I already have the extension installed", timeout=2000)
-    except Exception:
-        pass
-    page.wait_for_timeout(300)
+    # Call the dismiss function directly — clicking races the overlay's own
+    # setTimeout(800ms) reveal and is unreliable.
+    page.wait_for_timeout(900)
+    page.evaluate("if (typeof dismissExtOverlay === 'function') dismissExtOverlay();")
+    page.wait_for_timeout(200)
 
 
 def smooth_scroll(page, target_y, duration_ms=1200, steps=40):
@@ -131,7 +131,7 @@ with sync_playwright() as p:
     browser, ctx, page = new_ctx(p, "items")
     login(page)
     page.evaluate("showView('items')")
-    page.wait_for_selector("table tbody tr, .item-row", timeout=8000)
+    page.wait_for_selector("table tbody tr, .item-row", timeout=8000, state="attached")
     page.wait_for_timeout(200)
     move_mouse_smooth(page, 300, 200, 500, 500, steps=20)
     page.wait_for_timeout(1800)
@@ -142,7 +142,7 @@ with sync_playwright() as p:
     browser, ctx, page = new_ctx(p, "platforms")
     login(page)
     page.evaluate("showView('platforms')")
-    page.wait_for_selector("#platforms-body div", timeout=8000)
+    page.wait_for_selector("#platforms-body div", timeout=8000, state="attached")
     page.evaluate("""() => {
         try {
           if (!state.connected.includes('ebay')) state.connected.push('ebay');
@@ -218,7 +218,7 @@ with sync_playwright() as p:
     browser, ctx, page = new_ctx(p, "calculator")
     login(page)
     page.evaluate("showView('calculator')")
-    page.wait_for_selector("input", timeout=8000)
+    page.wait_for_selector("input", timeout=8000, state="attached")
     page.wait_for_timeout(200)
     inputs = page.query_selector_all("input")
     purchase_input = None
