@@ -704,6 +704,43 @@ function animateCounts(scope) {
   });
 }
 
+// Scroll-driven "how it works" storytelling: highlight step + swap sticky visual.
+(function() {
+  const steps = document.querySelectorAll('.step[data-step]');
+  const panels = document.querySelectorAll('.how-panel[data-panel]');
+  if (!steps.length) return;
+  function activate(n) {
+    steps.forEach(s => s.classList.toggle('active', s.dataset.step === n));
+    panels.forEach(p => p.classList.toggle('active', p.dataset.panel === n));
+    if (n === '2') animateChips();
+    if (n === '3') animatePublish();
+  }
+  let chipTimer, publishTimer;
+  function animateChips() {
+    clearTimeout(chipTimer);
+    const chips = document.querySelectorAll('.how-chip');
+    chips.forEach(c => c.classList.remove('on'));
+    chips.forEach((c, i) => { chipTimer = setTimeout(() => c.classList.add('on'), 200 + i * 220); });
+  }
+  function animatePublish() {
+    clearTimeout(publishTimer);
+    const icons = document.querySelectorAll('.how-publish-icon');
+    const check = document.querySelector('.how-publish-check');
+    icons.forEach(ic => ic.classList.remove('done'));
+    check.classList.remove('show');
+    icons.forEach((ic, i) => { publishTimer = setTimeout(() => ic.classList.add('done'), 200 + i * 200); });
+    publishTimer = setTimeout(() => check.classList.add('show'), 200 + icons.length * 200 + 200);
+  }
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => { if (entry.isIntersecting) activate(entry.target.dataset.step); });
+    }, { rootMargin: '-42% 0px -42% 0px', threshold: 0 });
+    steps.forEach(s => io.observe(s));
+  } else {
+    activate('1');
+  }
+})();
+
 // Handle Supabase auth redirects (email confirmation, password reset)
 (function() {
   if (!window.location.hash) return;
