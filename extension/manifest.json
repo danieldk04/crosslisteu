@@ -9,7 +9,7 @@
     "https://www.2dehands.be/*",
     "https://link.marktplaats.nl/*",
     "https://www.vinted.com/*",
-    "https://api.crosslisteu.com/*"
+    "https://crosslisteu.com/*"
   ],
   "background": {
     "service_worker": "background.js"
