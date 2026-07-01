@@ -4,7 +4,7 @@ Stripe billing endpoints — subscription management for CrossList EU Pro.
 import stripe
 from fastapi import APIRouter, HTTPException, Depends, Request, Header
 from backend.database import get_db
-from backend.api.deps import get_current_user
+from backend.api.deps import get_current_user, get_current_user_full
 from backend.config import settings
 
 router = APIRouter(prefix="/api/billing", tags=["billing"])
