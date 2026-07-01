@@ -86,7 +86,7 @@ nav { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,.92);
 .showcase-badge { animation: badgeFloat 3.4s ease-in-out infinite; }
 @keyframes badgeFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 @media (max-width: 900px) {
-  .showcase { display: flex; justify-content: center; align-items: flex-start; padding: 10px 16px 40px; overflow: hidden; }
+  .showcase { display: flex; justify-content: center; align-items: flex-start; padding: 10px 16px 64px; overflow: hidden; }
   .showcase-track { width: max-content; flex: none; transform-origin: top center; }
   .showcase-desktop { flex: none; width: 900px; }
   .showcase-mobile { flex: none; }
@@ -672,11 +672,15 @@ nav { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,.92);
   function fitScale() {
     if (!mq.matches) { track.style.transform = ''; wrap.style.height = ''; return; }
     track.style.transform = '';
+    const cs = getComputedStyle(wrap);
+    const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+    const padTop = parseFloat(cs.paddingTop);
+    const padBottom = parseFloat(cs.paddingBottom);
     const naturalWidth = track.offsetWidth;
     const naturalHeight = track.offsetHeight;
-    const scale = wrap.clientWidth / naturalWidth;
+    const scale = (wrap.clientWidth - padX) / naturalWidth;
     track.style.transform = `scale(${scale})`;
-    wrap.style.height = (naturalHeight * scale) + 'px';
+    wrap.style.height = (naturalHeight * scale + padTop + padBottom) + 'px';
   }
   fitScale();
   window.addEventListener('resize', fitScale);
