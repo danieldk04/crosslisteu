@@ -1,4 +1,4 @@
-const SERVER_URL = "https://api.crosslisteu.com";
+const SERVER_URL = "https://crosslisteu.com";
 
 async function checkLoginState() {
   const { authToken, userEmail } = await chrome.storage.sync.get(["authToken", "userEmail"]);
