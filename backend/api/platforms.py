@@ -72,7 +72,7 @@ async def ebay_callback(code: str, user_id: str = Depends(get_current_user)):
         tokens = await EbayPlatform().exchange_code(code)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"eBay authorization failed: {e}")
-    _save_credentials(user_id, "ebay", _with_expiry(tokens))
+    _save_credentials(user_id, "ebay", tokens)
     return {"status": "connected", "platform": "ebay"}
 
 
