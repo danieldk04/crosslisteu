@@ -85,8 +85,10 @@ nav { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,.92);
 .showcase-badge { animation: badgeFloat 3.4s ease-in-out infinite; }
 @keyframes badgeFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 @media (max-width: 900px) {
-  .showcase { flex-direction: column; padding: 10px 20px 60px; gap: 30px; }
-  .showcase-desktop { display: none; }
+  .showcase { flex-direction: column; align-items: center; padding: 10px 20px 60px; gap: 34px; }
+  .showcase-desktop { flex: none; width: 100%; }
+  .browser-frame-scale { width: min(340px, 100%); aspect-ratio: 920 / 612; overflow: hidden; margin: 0 auto; }
+  .browser-frame-scale .browser-frame { width: 920px; transform-origin: top left; animation: none; }
   .showcase-mobile { margin-bottom: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -299,14 +301,16 @@ nav { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,.92);
 <div class="showcase">
   <div class="showcase-desktop">
     <div class="showcase-badge">🖥️ Desktop dashboard</div>
-    <div class="browser-frame">
-      <div class="browser-bar">
-        <span class="browser-dot red"></span><span class="browser-dot yellow"></span><span class="browser-dot green"></span>
-        <div class="browser-url">app.crosslisteu.com/dashboard</div>
-      </div>
-      <div class="browser-body">
-        <div class="browser-viewport">
-          <iframe src="demo-dashboard.html" title="CrossList EU dashboard preview" loading="lazy"></iframe>
+    <div class="browser-frame-scale">
+      <div class="browser-frame">
+        <div class="browser-bar">
+          <span class="browser-dot red"></span><span class="browser-dot yellow"></span><span class="browser-dot green"></span>
+          <div class="browser-url">app.crosslisteu.com/dashboard</div>
+        </div>
+        <div class="browser-body">
+          <div class="browser-viewport">
+            <iframe src="demo-dashboard.html" title="CrossList EU dashboard preview" loading="lazy"></iframe>
+          </div>
         </div>
       </div>
     </div>
@@ -658,6 +662,22 @@ nav { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,.92);
 </footer>
 
 <script>
+// Scale the desktop preview to fit the available width on narrow screens
+(function() {
+  const scaler = document.querySelector('.browser-frame-scale');
+  const frame = scaler && scaler.querySelector('.browser-frame');
+  if (!scaler || !frame) return;
+  const NATURAL_WIDTH = 920;
+  const mq = window.matchMedia('(max-width: 900px)');
+  function fitScale() {
+    if (!mq.matches) { frame.style.transform = ''; return; }
+    const scale = scaler.clientWidth / NATURAL_WIDTH;
+    frame.style.transform = `scale(${scale})`;
+  }
+  fitScale();
+  window.addEventListener('resize', fitScale);
+})();
+
 function toggleMenu() {
   const open = document.getElementById('mobile-menu').classList.toggle('open');
   document.getElementById('hamburger').classList.toggle('open', open);
