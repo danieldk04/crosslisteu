@@ -5,6 +5,7 @@ that are naturally empty/sparse on a fresh demo account (analytics numbers, eBay
 Shopify connection state, platform icons), we inject richer front-end display data
 purely for the recording via page.evaluate — no backend writes, nothing persisted.
 """
+import base64
 import pathlib
 from playwright.sync_api import sync_playwright
 
@@ -19,12 +20,18 @@ BASE = "https://crosslisteu.com"
 
 W, H = 1600, 1000
 
+
+def data_uri(path, mime):
+    b64 = base64.b64encode(path.read_bytes()).decode()
+    return f"data:{mime};base64,{b64}"
+
+
 PLATFORM_LOGOS = {
-    "marktplaats": f"file://{ASSETS}/marktplaats.png",
-    "2dehands": f"file://{ASSETS}/2dehands.png",
-    "vinted": f"file://{ASSETS}/vinted.png",
-    "ebay": f"file://{ASSETS}/ebay.webp",
-    "shopify": f"file://{ASSETS}/shopify.webp",
+    "marktplaats": data_uri(ASSETS / "marktplaats.png", "image/png"),
+    "2dehands": data_uri(ASSETS / "2dehands.png", "image/png"),
+    "vinted": data_uri(ASSETS / "vinted.png", "image/png"),
+    "ebay": data_uri(ASSETS / "ebay.webp", "image/webp"),
+    "shopify": data_uri(ASSETS / "shopify.webp", "image/webp"),
 }
 
 
