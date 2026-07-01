@@ -148,12 +148,37 @@ nav { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,.92);
 
 /* HOW IT WORKS */
 .how { background: var(--bg); padding: 80px 40px; }
-.steps { max-width: 800px; margin: 48px auto 0; display: flex; flex-direction: column; gap: 0; }
-.step { display: flex; gap: 24px; align-items: flex-start; padding: 28px 0; border-bottom: 1px solid var(--border); transition: transform .25s; }
-.step:last-child { border-bottom: none; }
+.how-grid { max-width: 1080px; margin: 48px auto 0; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
+.steps { display: flex; flex-direction: column; gap: 0; }
+.step { display: flex; gap: 24px; align-items: flex-start; padding: 28px 22px; border-radius: 14px; cursor: default; transition: transform .25s, background .25s; opacity: .45; }
 .step:hover { transform: translateX(4px); }
-.step-num { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--blue), var(--mint)); color: #fff; font-weight: 800; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: transform .25s; }
-.step:hover .step-num { transform: scale(1.1); }
+.step.active { opacity: 1; background: #fff; box-shadow: var(--shadow-md); }
+.step-num { width: 40px; height: 40px; border-radius: 50%; background: #cbd5e1; color: #fff; font-weight: 800; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all .3s; }
+.step.active .step-num { background: linear-gradient(135deg, var(--blue), var(--mint)); transform: scale(1.1); box-shadow: 0 4px 14px rgba(37,99,235,.3); }
+.how-visual-wrap { position: sticky; top: 90px; }
+.how-visual { background: #fff; border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-md); padding: 26px; height: 300px; position: relative; overflow: hidden; }
+.how-panel { position: absolute; inset: 26px; opacity: 0; transform: translateY(10px) scale(.98); transition: opacity .4s ease, transform .4s ease; pointer-events: none; }
+.how-panel.active { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+.how-panel-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 14px; }
+.how-photo { border: 2px dashed var(--border); border-radius: 10px; height: 64px; display: flex; align-items: center; justify-content: center; font-size: 26px; background: #fafbfc; margin-bottom: 12px; }
+.how-line { height: 11px; border-radius: 4px; background: #e2e8f0; margin-bottom: 9px; }
+.how-line.short { width: 55%; }
+.how-chip-row { display: flex; flex-direction: column; gap: 10px; }
+.how-chip { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--muted); transition: all .3s; }
+.how-chip .box { width: 16px; height: 16px; border-radius: 5px; border: 1.5px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 10px; transition: all .25s; }
+.how-chip.on { border-color: #6ee7b7; background: #f0fdf4; color: #065f46; }
+.how-chip.on .box { background: #059669; border-color: #059669; }
+.how-publish-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 6px; }
+.how-publish-dot { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.how-publish-icon { width: 34px; height: 34px; border-radius: 9px; background: #f1f5f9; border: 1.5px solid #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 15px; color: transparent; transition: all .35s; }
+.how-publish-icon.done { background: #d1fae5; border-color: #6ee7b7; color: #059669; }
+.how-publish-label { font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase; }
+.how-publish-check { text-align: center; margin-top: 18px; font-size: 13px; font-weight: 700; color: #16a34a; opacity: 0; transition: opacity .4s; }
+.how-publish-check.show { opacity: 1; }
+@media (max-width: 900px) {
+  .how-grid { grid-template-columns: 1fr; gap: 24px; }
+  .how-visual-wrap { position: static; order: -1; }
+}
 .step-text h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
 .step-text p { font-size: 14px; color: var(--muted); line-height: 1.5; }
 
