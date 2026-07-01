@@ -1,10 +1,11 @@
 """
 Platform auth endpoints — login endpoints for all platforms.
 """
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from backend.database import get_db
 from backend.platforms.marktplaats import MarktplaatsPlatform, TweedehandsPlatform
 from backend.platforms.ebay import EbayPlatform
+from backend.platforms.shopify import ShopifyPlatform, is_valid_shop_domain, verify_install_hmac
 from backend.models import AIListingRequest
 from backend.services.ai_listing import generate_listing_from_photos
 from backend.api.deps import get_current_user
