@@ -69,5 +69,30 @@ async def terms():
     return FileResponse(FRONTEND / "terms.html")
 
 
+@app.get("/login")
+async def login_page():
+    return FileResponse(FRONTEND / "login.html")
+
+
+@app.get("/register")
+async def register_page():
+    return FileResponse(FRONTEND / "register.html")
+
+
+@app.get("/forgot-password")
+async def forgot_password_page():
+    return FileResponse(FRONTEND / "forgot-password.html")
+
+
+@app.get("/reset-password")
+async def reset_password_page():
+    return FileResponse(FRONTEND / "reset-password.html")
+
+
+@app.get("/app")
+async def app_page():
+    return FileResponse(FRONTEND / "app.html")
+
+
 # Serve frontend static assets (CSS, images, JS) — must come last
 app.mount("/", StaticFiles(directory=FRONTEND, html=True), name="frontend")
