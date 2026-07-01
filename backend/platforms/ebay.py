@@ -332,6 +332,41 @@ async def suggest_categories(query: str) -> list[dict]:
         ancestors = [a["categoryName"] for a in reversed(s.get("categoryTreeNodeAncestors", []))]
         path = " > ".join(ancestors + [s["category"]["categoryName"]])
         results.append({"category_id": s["category"]["categoryId"], "name": path})
+    return await _translate_category_names(results)
+
+
+async def _translate_category_names(results: list[dict]) -> list[dict]:
+    """eBay's Accept-Language override isn't honoured for every marketplace's
+    category tree (e.g. EBAY_NL always returns Dutch names) — translate the
+    display names to English ourselves so the UI stays English-only."""
+    if not results or not settings.anthropic_api_key:
+        return results
+    try:
+        import anthropic
+        client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+        numbered = "\n".join(f"{i}: {r['name']}" for i, r in enumerate(results))
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=1024,
+            messages=[{"role": "user", "content": (
+                "Translate each eBay category breadcrumb path below to English. "
+                "Keep the same numbering and the same '>' separators, translate every segment. "
+                "Return only the translated lines, nothing else.\n\n" + numbered
+            )}],
+        )
+        text = response.content[0].text.strip()
+        for line in text.splitlines():
+            if ":" not in line:
+                continue
+            idx_str, translated = line.split(":", 1)
+            try:
+                idx = int(idx_str.strip())
+            except ValueError:
+                continue
+            if 0 <= idx < len(results):
+                results[idx]["name"] = translated.strip()
+    except Exception as e:
+        logger.warning(f"eBay category name translation failed: {e}")
     return results
 
 
