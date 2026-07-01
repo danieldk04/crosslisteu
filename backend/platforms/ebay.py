@@ -113,6 +113,15 @@ class EbayPlatform(PlatformBase):
         credentials = await self._ensure_fresh_token(credentials)
         sku = item.get("sku") or item["id"]
 
+        category_id = item.get("ebay_category_id") or settings.ebay_default_category_id
+        if not category_id:
+            raise EbayCategoryRequiredError(
+                f"Item '{item.get('title', sku)}' has no eBay category. "
+                "Set an eBay category ID on the item (look it up at "
+                "https://www.ebay.com/sh/lst/categories) or configure "
+                "EBAY_DEFAULT_CATEGORY_ID as a fallback."
+            )
+
         # Step 1: Create inventory item
         aspects = {
             "Brand": [item["brand"]] if item.get("brand") else ["Unbranded"],
