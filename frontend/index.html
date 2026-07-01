@@ -706,10 +706,15 @@ function animateCounts(scope) {
 
 // Scroll-driven "how it works" storytelling: highlight step + swap sticky visual.
 (function() {
-  const steps = document.querySelectorAll('.step[data-step]');
+  const steps = [...document.querySelectorAll('.step[data-step]')];
   const panels = document.querySelectorAll('.how-panel[data-panel]');
-  if (!steps.length) return;
+  const howSection = document.getElementById('how-it-works');
+  if (!steps.length || !howSection) return;
+
+  let current = '1';
   function activate(n) {
+    if (n === current) return;
+    current = n;
     steps.forEach(s => s.classList.toggle('active', s.dataset.step === n));
     panels.forEach(p => p.classList.toggle('active', p.dataset.panel === n));
     if (n === '2') animateChips();
@@ -731,14 +736,32 @@ function animateCounts(scope) {
     icons.forEach((ic, i) => { publishTimer = setTimeout(() => ic.classList.add('done'), 200 + i * 200); });
     publishTimer = setTimeout(() => check.classList.add('show'), 200 + icons.length * 200 + 200);
   }
-  if ('IntersectionObserver' in window) {
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach(entry => { if (entry.isIntersecting) activate(entry.target.dataset.step); });
-    }, { rootMargin: '-42% 0px -42% 0px', threshold: 0 });
-    steps.forEach(s => io.observe(s));
-  } else {
-    activate('1');
+
+  // Pick whichever step sits closest to the vertical center of the viewport —
+  // robust even when the whole section fits on one screen (no long scroll runway needed).
+  let ticking = false;
+  function updateActiveStep() {
+    ticking = false;
+    const sectionRect = howSection.getBoundingClientRect();
+    if (sectionRect.bottom < 0 || sectionRect.top > window.innerHeight) return;
+    const viewportCenter = window.innerHeight * 0.5;
+    let closest = steps[0], closestDist = Infinity;
+    steps.forEach(s => {
+      const r = s.getBoundingClientRect();
+      const mid = r.top + r.height / 2;
+      const dist = Math.abs(mid - viewportCenter);
+      if (dist < closestDist) { closestDist = dist; closest = s; }
+    });
+    activate(closest.dataset.step);
   }
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(updateActiveStep);
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
+  updateActiveStep();
 })();
 
 // Handle Supabase auth redirects (email confirmation, password reset)
