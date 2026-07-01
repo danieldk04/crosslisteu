@@ -67,6 +67,17 @@ async def ebay_auth_url():
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@router.get("/ebay/category-suggest")
+async def ebay_category_suggest(q: str, user_id: str = Depends(get_current_user)):
+    from backend.platforms.ebay import suggest_categories
+    try:
+        return {"suggestions": await suggest_categories(q)}
+    except RuntimeError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"eBay category lookup failed: {e}")
+
+
 @router.get("/ebay/callback")
 async def ebay_callback(code: str, user_id: str = Depends(get_current_user)):
     try:
