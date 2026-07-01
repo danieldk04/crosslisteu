@@ -1624,6 +1624,55 @@ async function openPortal() {
   }
 }
 
+async function loadInvoices() {
+  const card = document.getElementById('billing-invoices-card');
+  const list = document.getElementById('billing-invoices-list');
+  const pmBox = document.getElementById('billing-payment-method');
+  const pmLabel = document.getElementById('billing-payment-method-label');
+  try {
+    const res = await apiFetch(`${API}/api/billing/invoices`);
+    if (!res.ok) return;
+    const { invoices, payment_method } = await res.json();
+
+    if (payment_method) {
+      pmBox.style.display = 'flex';
+      pmLabel.textContent = payment_method.type === 'card'
+        ? `${payment_method.brand.charAt(0).toUpperCase() + payment_method.brand.slice(1)} •••• ${payment_method.last4}`
+        : payment_method.type === 'ideal'
+        ? `iDEAL${payment_method.bank ? ' · ' + payment_method.bank : ''}`
+        : 'Bancontact';
+    }
+
+    if (!invoices || !invoices.length) {
+      card.style.display = 'block';
+      list.innerHTML = '<div style="padding:16px 22px;font-size:13px;color:var(--muted)">No invoices yet.</div>';
+      return;
+    }
+
+    card.style.display = 'block';
+    list.innerHTML = invoices.map(inv => {
+      const date = new Date(inv.created).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      const statusColor = inv.status === 'paid' ? 'var(--green)' : 'var(--muted)';
+      const statusBg = inv.status === 'paid' ? 'var(--green-bg)' : '#f1f5f9';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 22px;border-top:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div>
+            <div style="font-size:13px;font-weight:600">${inv.number || inv.id}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:1px">${date}</div>
+          </div>
+          <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;background:${statusBg};color:${statusColor};text-transform:capitalize">${inv.status}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px">
+          <div style="font-size:13px;font-weight:700">€${inv.amount_paid.toFixed(2)}</div>
+          ${inv.pdf_url ? `<a href="${inv.pdf_url}" target="_blank" rel="noopener" class="btn btn-outline btn-sm" style="text-decoration:none">Download PDF</a>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    // silent — invoices are a nice-to-have, don't block the account page
+  }
+}
+
 // ── Data loading ─────────────────────────────────────────────────
 async function refreshDashboard(btn) {
   btn.disabled = true;
