@@ -57,7 +57,8 @@ nav { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,.92);
 .hero-cta .btn { font-size: 15px; padding: 12px 28px; }
 
 /* PRODUCT SHOWCASE */
-.showcase { padding: 10px 40px 90px; display: flex; align-items: flex-end; justify-content: center; gap: 40px; position: relative; }
+.showcase { padding: 10px 40px 90px; position: relative; }
+.showcase-track { display: flex; align-items: flex-end; justify-content: center; gap: 40px; }
 .showcase-desktop { flex: 1; max-width: 900px; position: relative; }
 .browser-frame { background: #1e293b; border-radius: 14px; padding: 10px 10px 0; box-shadow: 0 30px 70px -15px rgba(15,23,42,.35), 0 10px 30px -10px rgba(15,23,42,.2); }
 .browser-bar { display: flex; align-items: center; gap: 8px; padding: 6px 8px 12px; }
@@ -85,11 +86,10 @@ nav { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,.92);
 .showcase-badge { animation: badgeFloat 3.4s ease-in-out infinite; }
 @keyframes badgeFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 @media (max-width: 900px) {
-  .showcase { flex-direction: column; align-items: center; padding: 10px 20px 60px; gap: 34px; }
-  .showcase-desktop { flex: none; width: 100%; }
-  .browser-frame-scale { width: min(340px, 100%); aspect-ratio: 920 / 612; overflow: hidden; margin: 0 auto; }
-  .browser-frame-scale .browser-frame { width: 920px; transform-origin: top left; animation: none; }
-  .showcase-mobile { margin-bottom: 0; }
+  .showcase { display: flex; justify-content: center; align-items: flex-start; padding: 10px 16px 40px; overflow: hidden; }
+  .showcase-track { width: max-content; flex: none; transform-origin: top center; }
+  .showcase-desktop { flex: none; width: 900px; }
+  .showcase-mobile { flex: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .browser-frame, .phone-frame, .showcase-badge, .hero::before { animation: none !important; }
@@ -299,9 +299,9 @@ nav { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,.92);
 
 <!-- PRODUCT SHOWCASE -->
 <div class="showcase">
-  <div class="showcase-desktop">
-    <div class="showcase-badge">🖥️ Desktop dashboard</div>
-    <div class="browser-frame-scale">
+  <div class="showcase-track">
+    <div class="showcase-desktop">
+      <div class="showcase-badge">🖥️ Desktop dashboard</div>
       <div class="browser-frame">
         <div class="browser-bar">
           <span class="browser-dot red"></span><span class="browser-dot yellow"></span><span class="browser-dot green"></span>
@@ -314,14 +314,14 @@ nav { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,.92);
         </div>
       </div>
     </div>
-  </div>
-  <div class="showcase-mobile">
-    <div class="showcase-badge" style="right:auto;left:10%">📱 Mobile</div>
-    <div class="phone-frame">
-      <div class="phone-notch"></div>
-      <div class="phone-screen">
-        <div class="phone-screen-viewport">
-          <iframe src="demo-dashboard.html" title="CrossList EU mobile dashboard preview" loading="lazy"></iframe>
+    <div class="showcase-mobile">
+      <div class="showcase-badge" style="right:auto;left:10%">📱 Mobile</div>
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="phone-screen-viewport">
+            <iframe src="demo-dashboard.html" title="CrossList EU mobile dashboard preview" loading="lazy"></iframe>
+          </div>
         </div>
       </div>
     </div>
@@ -662,17 +662,21 @@ nav { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,.92);
 </footer>
 
 <script>
-// Scale the desktop preview to fit the available width on narrow screens
+// Scale the whole showcase (desktop + mobile together) to fit narrow screens,
+// keeping their side-by-side layout instead of stacking them.
 (function() {
-  const scaler = document.querySelector('.browser-frame-scale');
-  const frame = scaler && scaler.querySelector('.browser-frame');
-  if (!scaler || !frame) return;
-  const NATURAL_WIDTH = 920;
+  const wrap = document.querySelector('.showcase');
+  const track = document.querySelector('.showcase-track');
+  if (!wrap || !track) return;
   const mq = window.matchMedia('(max-width: 900px)');
   function fitScale() {
-    if (!mq.matches) { frame.style.transform = ''; return; }
-    const scale = scaler.clientWidth / NATURAL_WIDTH;
-    frame.style.transform = `scale(${scale})`;
+    if (!mq.matches) { track.style.transform = ''; wrap.style.height = ''; return; }
+    track.style.transform = '';
+    const naturalWidth = track.offsetWidth;
+    const naturalHeight = track.offsetHeight;
+    const scale = wrap.clientWidth / naturalWidth;
+    track.style.transform = `scale(${scale})`;
+    wrap.style.height = (naturalHeight * scale) + 'px';
   }
   fitScale();
   window.addEventListener('resize', fitScale);
