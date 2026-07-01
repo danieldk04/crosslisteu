@@ -180,7 +180,7 @@ chrome.runtime.onStartup.addListener(pollJobs);
 
 async function getServerUrl() {
   return new Promise((resolve) => {
-    chrome.storage.sync.get({ serverUrl: "https://api.crosslisteu.com" }, (s) =>
+    chrome.storage.sync.get({ serverUrl: "https://crosslisteu.com" }, (s) =>
       resolve(s.serverUrl.replace(/\/$/, ""))
     );
   });
