@@ -1502,6 +1502,7 @@ function renderBilling(data) {
     document.getElementById('billing-status-badge').textContent = 'Active';
     document.getElementById('billing-status-badge').className = 'status-pill active';
     document.getElementById('nav-prijs-label').textContent = 'Account';
+    loadInvoices();
 
   } else if (status === 'past_due') {
     hidePaywall();
