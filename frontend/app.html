@@ -1895,6 +1895,11 @@ function renderPlatforms() {
     let action = '';
     if (p.type === 'extension') {
       action = `<span style="font-size:11px;color:var(--muted)">Auto-detected</span>`;
+    } else if (ok && cfg?.connectable) {
+      action = `<div style="display:flex;align-items:center;gap:8px">
+        <span class="badge active">✓ Connected</span>
+        <button class="btn btn-sm" onclick="disconnectPlatform('${p.id}')">Disconnect</button>
+      </div>`;
     } else if (ok) {
       action = `<span class="badge active">✓ Connected</span>`;
     } else if (cfg?.connectable) {
