@@ -1975,9 +1975,20 @@ async function suggestEbayCategory() {
       box.innerHTML = '<span style="font-size:11px;color:var(--muted)">No matches — enter the ID manually.</span>';
       return;
     }
-    box.innerHTML = suggestions.map(s =>
-      `<div style="font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;margin-bottom:4px;cursor:pointer;background:#fff" onclick='pickEbayCategory(${JSON.stringify(s.category_id)}, ${JSON.stringify(s.name)})'>${s.name} <span style="color:var(--muted)">(${s.category_id})</span></div>`
-    ).join('');
+    box.innerHTML = '';
+    suggestions.forEach(s => {
+      const row = document.createElement('div');
+      row.style.cssText = 'font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;margin-bottom:4px;cursor:pointer;background:#fff';
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = s.name;
+      const idSpan = document.createElement('span');
+      idSpan.style.color = 'var(--muted)';
+      idSpan.textContent = ` (${s.category_id})`;
+      row.appendChild(nameSpan);
+      row.appendChild(idSpan);
+      row.addEventListener('click', () => pickEbayCategory(s.category_id, s.name));
+      box.appendChild(row);
+    });
   } catch (e) {
     box.innerHTML = '<span style="font-size:11px;color:var(--red)">Lookup failed: ' + e.message + '</span>';
   }
@@ -1985,7 +1996,12 @@ async function suggestEbayCategory() {
 
 function pickEbayCategory(id, name) {
   document.getElementById('f-ebay-category').value = id;
-  document.getElementById('ebay-category-suggestions').innerHTML = `<span style="font-size:11px;color:#16a34a">✓ ${name}</span>`;
+  const box = document.getElementById('ebay-category-suggestions');
+  box.innerHTML = '';
+  const span = document.createElement('span');
+  span.style.cssText = 'font-size:11px;color:#16a34a';
+  span.textContent = `✓ ${name}`;
+  box.appendChild(span);
 }
 
 // ── Extension status ─────────────────────────────────────────────
