@@ -49,6 +49,7 @@ class ListingOut(BaseModel):
     platform: str
     platform_listing_id: Optional[str]
     platform_listing_url: Optional[str]
+    platform_offer_id: Optional[str] = None
     status: str
     listed_at: Optional[datetime]
     sold_at: Optional[datetime]
