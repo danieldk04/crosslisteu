@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CrossList EU — Dashboard preview</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --blue: #2563eb; --mint: #34d399; --blue-dark: #1d4ed8; --mint-dark: #10b981;
+  --bg: #f0f9ff; --surface: #fff; --border: #e2e8f0;
+  --text: #0f172a; --muted: #64748b;
+  --green: #16a34a; --green-bg: #dcfce7;
+  --red: #dc2626; --red-bg: #fee2e2;
+  --yellow: #ca8a04; --yellow-bg: #fef9c3;
+  --blue-bg: #dbeafe;
+  --sidebar-bg: #0f172a;
+  --radius: 10px; --radius-sm: 6px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.08);
+  --grad: linear-gradient(135deg, var(--blue), var(--mint));
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+a { color: inherit; text-decoration: none; }
+.grad-text { background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+.sidebar { position: fixed; top: 0; left: 0; width: 232px; height: 100vh; background: var(--sidebar-bg); display: flex; flex-direction: column; z-index: 100; }
+.logo { padding: 22px 20px 18px; border-bottom: 1px solid rgba(255,255,255,.07); display: flex; align-items: center; gap: 10px; }
+.logo-mark { width: 30px; height: 30px; border-radius: 8px; background: var(--grad); display: flex; align-items: center; justify-content: center; font-size: 15px; }
+.logo-text { font-size: 15px; font-weight: 800; letter-spacing: -.3px; }
+.nav { padding: 10px 10px; flex: 1; overflow-y: auto; }
+.nav-section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: rgba(255,255,255,.25); padding: 12px 10px 6px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; color: rgba(255,255,255,.55); cursor: default; border-radius: 8px; font-size: 13px; font-weight: 500; margin-bottom: 1px; }
+.nav-item.active { color: #fff; background: rgba(37,99,235,.35); }
+.nav-item svg { width: 16px; height: 16px; flex-shrink: 0; opacity: .8; }
+.nav-item.active svg { opacity: 1; }
+.sidebar-bottom { padding: 14px 16px; border-top: 1px solid rgba(255,255,255,.07); }
+.ext-status { font-size: 11px; color: rgba(255,255,255,.35); display: flex; align-items: center; gap: 6px; padding: 6px 0; }
+.ext-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; flex-shrink: 0; }
+
+.main { margin-left: 232px; min-height: 100vh; display: flex; flex-direction: column; }
+.topbar { background: rgba(255,255,255,.95); border-bottom: 1px solid var(--border); padding: 0 28px; height: 60px; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--shadow-sm); }
+.topbar-title { font-weight: 700; font-size: 15px; color: var(--text); }
+.content { padding: 24px 28px; flex: 1; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: none; border-radius: 100px; cursor: default; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.btn-primary { background: var(--grad); color: #fff; box-shadow: 0 2px 10px rgba(37,99,235,.25); }
+
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; position: relative; overflow: hidden; box-shadow: var(--shadow-sm); }
+.stat::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--grad); }
+.stat-icon { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, rgba(37,99,235,.1), rgba(52,211,153,.1)); display: flex; align-items: center; justify-content: center; font-size: 16px; margin-bottom: 12px; }
+.stat-label { font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .07em; }
+.stat-value { font-size: 30px; font-weight: 900; line-height: 1; color: var(--text); letter-spacing: -.5px; }
+.stat-sub { font-size: 12px; color: var(--green); margin-top: 4px; font-weight: 600; }
+
+.welcome-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+.welcome-title { font-size: 20px; font-weight: 800; letter-spacing: -.3px; }
+.welcome-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm); }
+.card-header { padding: 18px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.card-header h2 { font-size: 14px; font-weight: 700; color: var(--text); }
+.card-header-sub { font-size: 12px; color: var(--muted); }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 10px 16px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; background: #fafbfc; }
+td { padding: 13px 16px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+.item-photo { width: 42px; height: 42px; border-radius: 8px; object-fit: cover; background: linear-gradient(135deg, #f1f5f9, #e2e8f0); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 18px; flex-shrink: 0; border: 1px solid var(--border); }
+.item-info { display: flex; align-items: center; gap: 12px; }
+.item-title { font-weight: 600; font-size: 13px; color: var(--text); }
+.item-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.pm-matrix { display: flex; gap: 3px; align-items: center; }
+.pm-dot { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 30px; }
+.pm-dot-icon { width: 24px; height: 24px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 1.5px solid transparent; position: relative; }
+.pm-dot-icon.s-active { background: #d1fae5; border-color: #6ee7b7; }
+.pm-dot-icon.s-pending { background: #fef3c7; border-color: #fcd34d; }
+.pm-dot-icon.s-error { background: #fff7ed; border-color: #fbbf24; }
+.pm-dot-icon.s-none { background: #f1f5f9; border-color: #e2e8f0; opacity: .45; }
+.pm-dot-icon .pm-dot-badge { position: absolute; bottom: -3px; right: -3px; width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid #fff; font-size: 7px; display: flex; align-items: center; justify-content: center; font-weight: 800; line-height: 1; }
+.pm-dot-icon.s-active .pm-dot-badge { background: #059669; color: #fff; }
+.pm-dot-icon.s-pending .pm-dot-badge { background: #d97706; color: #fff; }
+.pm-dot-icon.s-error .pm-dot-badge { background: #dc2626; color: #fff; }
+.pm-dot-label { font-size: 8px; font-weight: 700; color: #94a3b8; letter-spacing: .2px; text-transform: uppercase; }
+
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.badge.active { background: var(--green-bg); color: var(--green); }
+
+.an-charts-mini { display: flex; align-items: flex-end; gap: 6px; height: 60px; padding: 0 4px; }
+.an-bar { flex: 1; background: var(--grad); border-radius: 4px 4px 0 0; opacity: .85; }
+
+@media (max-width: 900px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .content { padding: 16px; }
+  .item-meta, th:nth-child(4), td:nth-child(4) { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">✕</div>
+    <span class="logo-text grad-text">CrossList EU</span>
+  </div>
+  <nav class="nav">
+    <div class="nav-section-label">Main</div>
+    <div class="nav-item active">
+      <svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/></svg>
+      <span>Dashboard</span>
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/></svg>
+      <span>Items</span>
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
+      <span>Analytics</span>
+    </div>
+    <div class="nav-section-label">Tools</div>
+    <div class="nav-item">
+      <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6z" clip-rule="evenodd"/></svg>
+      <span>Margin calculator</span>
+    </div>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="ext-status"><div class="ext-dot"></div><span>Extension connected</span></div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">Dashboard</div>
+    <button class="btn btn-primary">
+      <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+      New item
+    </button>
+  </div>
+
+  <div class="content">
+    <div class="welcome-row">
+      <div>
+        <div class="welcome-title">Welcome back 👋</div>
+        <div class="welcome-sub">Here's how your listings are performing today</div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-icon">📦</div>
+        <div class="stat-label">Total items</div>
+        <div class="stat-value">47</div>
+        <div class="stat-sub">+6 this week</div>
+      </div>
+      <div class="stat">
+        <div class="stat-icon">🌍</div>
+        <div class="stat-label">Live listings</div>
+        <div class="stat-value">129</div>
+        <div class="stat-sub">across 4 platforms</div>
+      </div>
+      <div class="stat">
+        <div class="stat-icon">💰</div>
+        <div class="stat-label">Sold this month</div>
+        <div class="stat-value">€1.840</div>
+        <div class="stat-sub">+22% vs last month</div>
+      </div>
+      <div class="stat">
+        <div class="stat-icon">⚡</div>
+        <div class="stat-label">Avg. time saved</div>
+        <div class="stat-value">6.5u</div>
+        <div class="stat-sub">per week</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Recent items</h2>
+        <span class="card-header-sub">Marktplaats · 2dehands · Vinted · Shopify</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Item</th><th>Price</th><th>Status</th><th>Platforms</th></tr>
+          </thead>
+          <tbody id="demo-rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const items = [
+  { emoji: "🧥", title: "Nike Tech Fleece Jas", meta: "Maat M · Zo goed als nieuw", price: "€48", status: ["s-active","s-active","s-active","s-none"] },
+  { emoji: "👟", title: "Adidas Samba OG", meta: "Maat 42 · Gedragen", price: "€65", status: ["s-active","s-active","s-pending","s-none"] },
+  { emoji: "👜", title: "Vintage Leren Tas", meta: "Onbeschadigd", price: "€35", status: ["s-active","s-none","s-active","s-active"] },
+  { emoji: "👗", title: "Zara Zomerjurk Bloemenprint", meta: "Maat S · Nieuw met kaartje", price: "€22", status: ["s-active","s-active","s-active","s-none"] },
+  { emoji: "🧢", title: "New Era Cap 9FIFTY", meta: "One size", price: "€18", status: ["s-active","s-none","s-none","s-active"] },
+];
+const labels = ["MP","2DH","VIN","SHOP"];
+const icons = { "s-active": "✓", "s-pending": "…", "s-error": "!", "s-none": "" };
+document.getElementById('demo-rows').innerHTML = items.map(it => `
+  <tr>
+    <td><div class="item-info"><div class="item-photo">${it.emoji}</div><div><div class="item-title">${it.title}</div><div class="item-meta">${it.meta}</div></div></div></td>
+    <td>${it.price}</td>
+    <td><span class="badge active">● Active</span></td>
+    <td><div class="pm-matrix">${it.status.map((s,i)=>`<div class="pm-dot"><div class="pm-dot-icon ${s}">${icons[s]}</div><span class="pm-dot-label">${labels[i]}</span></div>`).join('')}</div></td>
+  </tr>
+`).join('');
+</script>
+</body>
+</html>
