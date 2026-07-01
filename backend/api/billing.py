@@ -101,6 +101,50 @@ async def create_checkout(user_id: str = Depends(get_current_user)):
     return {"url": session.url}
 
 
+@router.get("/invoices")
+async def list_invoices(user_id: str = Depends(get_current_user)):
+    if not settings.stripe_secret_key:
+        return {"invoices": [], "payment_method": None}
+
+    sub = _get_or_create_subscription(user_id)
+    customer_id = sub.get("stripe_customer_id")
+    if not customer_id:
+        return {"invoices": [], "payment_method": None}
+
+    invoices = stripe.Invoice.list(customer=customer_id, limit=24)
+    invoice_list = [{
+        "id": inv["id"],
+        "number": inv.get("number"),
+        "status": inv["status"],
+        "amount_paid": inv["amount_paid"] / 100,
+        "currency": inv["currency"].upper(),
+        "created": _ts(inv["created"]),
+        "pdf_url": inv.get("invoice_pdf"),
+        "hosted_url": inv.get("hosted_invoice_url"),
+    } for inv in invoices.data]
+
+    payment_method = None
+    pm_id = None
+    try:
+        customer = stripe.Customer.retrieve(customer_id)
+        pm_id = customer.get("invoice_settings", {}).get("default_payment_method")
+    except Exception:
+        pass
+    if pm_id:
+        try:
+            pm = stripe.PaymentMethod.retrieve(pm_id)
+            if pm["type"] == "card":
+                payment_method = {"type": "card", "brand": pm["card"]["brand"], "last4": pm["card"]["last4"]}
+            elif pm["type"] == "ideal":
+                payment_method = {"type": "ideal", "bank": pm.get("ideal", {}).get("bank")}
+            elif pm["type"] == "bancontact":
+                payment_method = {"type": "bancontact"}
+        except Exception:
+            pass
+
+    return {"invoices": invoice_list, "payment_method": payment_method}
+
+
 @router.post("/portal")
 async def customer_portal(user_id: str = Depends(get_current_user)):
     if not settings.stripe_secret_key:
