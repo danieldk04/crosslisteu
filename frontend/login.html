@@ -65,7 +65,7 @@ input:focus { border-color: var(--blue); background: #fff; }
 </div>
 
 <script>
-const API = window.location.hostname === 'localhost' ? 'http://localhost:8001' : 'https://api.crosslisteu.com';
+const API = window.location.hostname === 'localhost' ? 'http://localhost:8001' : '';
 
 if (new URLSearchParams(window.location.search).get('confirmed') === '1') {
   document.getElementById('confirmed').style.display = 'block';
