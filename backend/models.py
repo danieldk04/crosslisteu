@@ -27,6 +27,8 @@ class ItemCreate(BaseModel):
     price_marktplaats: Optional[float] = None
     price_2dehands: Optional[float] = None
     price_vinted: Optional[float] = None
+    price_ebay: Optional[float] = None
+    price_shopify: Optional[float] = None
     ebay_category_id: Optional[str] = None
 
 
