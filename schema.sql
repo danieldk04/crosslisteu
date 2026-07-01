@@ -91,3 +91,10 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- eBay support: items need a numeric eBay category ID to publish (eBay's
+-- Inventory API requires a leaf category, unlike Marktplaats/Vinted's free-form
+-- categories); listings need the offerId separately from the public listingId
+-- since eBay's offer-level endpoints (withdraw/status) are keyed by offerId.
+ALTER TABLE items ADD COLUMN IF NOT EXISTS ebay_category_id VARCHAR(50);
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS platform_offer_id VARCHAR(100);
