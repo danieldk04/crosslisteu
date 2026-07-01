@@ -106,7 +106,6 @@ class EbayPlatform(PlatformBase):
         return {
             "Authorization": f"Bearer {credentials['access_token']}",
             "Content-Type": "application/json",
-            "Accept-Language": "nl-NL",
         }
 
     async def _ensure_fresh_token(self, credentials: dict) -> dict:
