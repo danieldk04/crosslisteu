@@ -120,12 +120,13 @@ async def content_sitemap():
 
 
 @router.post("/api/content/generate")
-async def generate_content_page(body: dict):
+async def generate_content_page(body: dict, x_admin_secret: str | None = Header(default=None)):
     """
     Internal trigger for the content pipeline — called by the scheduled
     generation script (scripts/generate_content.py / GitHub Actions cron),
     not exposed to end users.
     """
+    _require_admin(x_admin_secret)
     keyword = body.get("keyword")
     region = body.get("region")
     pillar = body.get("pillar")
