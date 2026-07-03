@@ -1506,7 +1506,18 @@ function apiFetch(url, opts = {}) {
 
 const PLATFORMS = ['marktplaats', '2dehands', 'vinted', 'ebay', 'etsy', 'shopify'];
 const PLATFORM_LABELS = { marktplaats: 'Marktplaats', '2dehands': '2dehands', ebay: 'eBay', etsy: 'Etsy', shopify: 'Shopify', vinted: 'Vinted' };
-const PLATFORM_ICONS = { marktplaats: '🇳🇱', '2dehands': '🇧🇪', vinted: '👕', ebay: '🛒', etsy: '🎨', shopify: '🏪' };
+const PLATFORM_DOMAINS = { marktplaats: 'marktplaats.nl', '2dehands': '2dehands.be', vinted: 'vinted.nl', ebay: 'ebay.com', etsy: 'etsy.com', shopify: 'shopify.com' };
+const PLATFORM_EMOJI_FALLBACK = { marktplaats: '🇳🇱', '2dehands': '🇧🇪', vinted: '👕', ebay: '🛒', etsy: '🎨', shopify: '🏪' };
+// Real platform logos via Google's favicon service (no local asset hosting needed) —
+// falls back to the old emoji if the favicon fails to load (offline, blocked, etc).
+function platIcon(key, size) {
+  size = size || 16;
+  const domain = PLATFORM_DOMAINS[key];
+  const fallback = PLATFORM_EMOJI_FALLBACK[key] || '🏪';
+  if (!domain) return fallback;
+  return `<img src="https://www.google.com/s2/favicons?sz=64&domain=${domain}" alt="${key}" style="width:${size}px;height:${size}px;border-radius:3px;vertical-align:-${Math.round(size*0.15)}px;object-fit:contain" onerror="this.outerHTML='${fallback}'">`;
+}
+const PLATFORM_ICONS = new Proxy({}, { get: (_, key) => platIcon(key) });
 
 let state = { items: [], listings: [], jobs: [], connected: [], crosslistItemId: null };
 let selectedIds = new Set();
