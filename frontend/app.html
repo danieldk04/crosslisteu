@@ -2782,6 +2782,7 @@ function openMarkActiveModal(itemId, event) {
 async function doMarkActive(itemId) {
   const selected = [...document.querySelectorAll('#mark-active-checkboxes input:checked')].map(c => c.value);
   if (!selected.length) return alert('Choose at least one platform');
+  setBusy(true, 'Marking as published…');
   try {
     await Promise.all(selected.map(platform =>
       apiFetch(`${API}/api/listings/mark-active`, {
@@ -2791,7 +2792,7 @@ async function doMarkActive(itemId) {
     ));
     document.getElementById('modal-mark-active')?.remove();
     await loadAll();
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { alert('Error: ' + e.message); } finally { setBusy(false); }
 }
 
 function openCrosslist(itemId) {
