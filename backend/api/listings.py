@@ -83,6 +83,45 @@ async def mark_listing_active(body: dict, user_id: str = Depends(get_current_use
     return {"ok": True}
 
 
+@router.post("/refresh")
+async def refresh_one_listing(body: dict, user_id: str = Depends(get_current_user)):
+    """
+    Refresh a single listing. body: {item_id, platform, strategy: "content"|"relist"}
+    "content" = safe in-place edit (price/photo-order nudge).
+    "relist"  = legitimate delete + recreate, rate-limited and delayed to avoid a spam pattern.
+    """
+    item_id = body.get("item_id")
+    platform = body.get("platform")
+    strategy = body.get("strategy", "content")
+    if not item_id or not platform:
+        raise HTTPException(status_code=400, detail="item_id and platform required")
+    try:
+        result = await refresh_listing(item_id, platform, user_id, strategy)
+        return result
+    except RefreshError as e:
+        raise HTTPException(status_code=429, detail=str(e))
+
+
+@router.post("/refresh-stale")
+async def refresh_stale(body: dict, user_id: str = Depends(get_current_user)):
+    """
+    Bulk-refresh the oldest eligible listings on one platform.
+    body: {platform, older_than_days?: 30, limit?: 5}
+    Capped by the same per-user daily quota as single refreshes.
+    """
+    platform = body.get("platform")
+    if not platform:
+        raise HTTPException(status_code=400, detail="platform required")
+    if platform not in REFRESH_CAPABLE_PLATFORMS:
+        raise HTTPException(status_code=400, detail=f"Refresh isn't available for {platform} yet")
+    results = await refresh_stale_listings(
+        user_id, platform,
+        older_than_days=body.get("older_than_days", 30),
+        limit=min(body.get("limit", 5), 20),
+    )
+    return {"results": results}
+
+
 @router.post("/sold")
 async def mark_sold(item_id: str, platform: str, background_tasks: BackgroundTasks, user_id: str = Depends(get_current_user)):
     db = get_db()
