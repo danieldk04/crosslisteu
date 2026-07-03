@@ -9,7 +9,11 @@ from backend.services.crosslist import handle_item_sold
 
 logger = logging.getLogger(__name__)
 
-// placeholder
+# Vinted excluded: polling relies on a separate backend-bootstrapped session (distinct
+# from the browser-extension session used for scan/publish) that requires storing the
+# user's Vinted password, and when it goes stale it silently mass-delists live listings
+# via false "not found" reads. Not worth that risk for a status check.
+POLL_PLATFORMS = {"marktplaats", "2dehands"}
 
 
 async def poll_platform_statuses():
