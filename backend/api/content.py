@@ -91,13 +91,6 @@ async def content_sitemap():
     return HTMLResponse(content=xml, media_type="application/xml")
 
 
-class _GenerateBody:
-    keyword: str
-    region: str
-    pillar: str
-    slug: str
-
-
 @router.post("/api/content/generate")
 async def generate_content_page(body: dict):
     """
