@@ -40,8 +40,24 @@ async def process_item(item: dict) -> dict:
     from backend.content.pipeline import run_pipeline
 
     print(f"→ {item['keyword']} ({item['region']}, pillar {item['pillar']})")
-    result = await run_pipeline(item["keyword"], item["region"], item["pillar"], item["slug"])
+    result = await run_pipeline(item["keyword"], item["region"], item["pillar"], item["slug"], nl_slug=item.get("nl_slug"))
     return result
+
+
+def replenish_queue(data: dict) -> None:
+    """Auto-generates new keyword ideas so the daily cron never runs dry — this is
+    what makes `--autonomous` publishing actually sustainable long-term."""
+    from backend.content.keyword_planner import suggest_keywords
+
+    all_keywords = [i["keyword"] for i in data["queue"]] + [p["keyword"] for p in data["published"]]
+    next_priority = max([i.get("priority", 0) for i in data["queue"]], default=0) + 1
+
+    print("  Wachtrij leeg — nieuwe keywords laten voorstellen...")
+    new_items = suggest_keywords(all_keywords)
+    for i, item in enumerate(new_items):
+        item["priority"] = next_priority + i
+        data["queue"].append(item)
+    print(f"  {len(new_items)} nieuwe keywords toegevoegd aan de wachtrij")
 
 
 async def main():
@@ -50,12 +66,17 @@ async def main():
     dry_run = bool(os.environ.get("DRY_RUN"))
 
     items = [i for i in data["queue"] if i["status"] == "pending"]
+    if not items and not dry_run:
+        replenish_queue(data)
+        save_queue(data)
+        items = [i for i in data["queue"] if i["status"] == "pending"]
+
     items.sort(key=lambda i: i["priority"])
     if not run_all:
         items = items[:1] if items else []
 
     if not items:
-        print("Geen pending keywords in de wachtrij.")
+        print("Geen pending keywords in de wachtrij (en aanvullen leverde niets op).")
         return
 
     for item in items:
