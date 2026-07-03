@@ -435,28 +435,22 @@ async function bgScanVinted(job, serverUrl) {
     await waitForTabLoad(tabId);
     await sleep(2500);
 
-    const result = await execInTab(tabId, async () => {
-      // Vinted has no documented "current user" endpoint, so try several ways
-      // to find your own member id before giving up.
-      let userId = null;
+    // The account/avatar menu only exposes your numeric member id (/member/{id})
+    // once its dropdown is opened — nothing on the page reveals it beforehand.
+    await execInTab(tabId, () => {
+      document.querySelector('#user-menu-button, [data-testid="user-menu-button"]')?.click();
+    });
+    await sleep(600);
 
-      // 1) An inline script embedding the logged-in user's id (SPA hydration data).
-      for (const script of document.querySelectorAll("script")) {
-        const m = script.textContent.match(/"user"\s*:\s*{\s*"id"\s*:\s*(\d+)/) ||
-                  script.textContent.match(/"current_user"\s*:\s*{\s*"id"\s*:\s*(\d+)/);
+    const result = await execInTab(tabId, async () => {
+      let userId = null;
+      const links = [...document.querySelectorAll('a[href*="/member/"]')];
+      for (const link of links) {
+        const m = (link.getAttribute("href") || "").match(/\/member\/(\d+)(?:[/?]|$)/);
         if (m) { userId = m[1]; break; }
       }
 
-      // 2) Fallback: your own profile link in the header ("Wardrobe"/"Mijn kleerkast"/avatar).
-      if (!userId) {
-        const links = [...document.querySelectorAll('header a[href*="/member/"], nav a[href*="/member/"]')];
-        for (const link of links) {
-          const m = (link.getAttribute("href") || "").match(/\/member\/(\d+)/);
-          if (m) { userId = m[1]; break; }
-        }
-      }
-
-      if (!userId) return { error: "Could not find your logged-in Vinted account on this page — make sure you're logged into Vinted in this browser tab." };
+      if (!userId) return { error: "Could not find your logged-in Vinted account (member id) — make sure you're logged into Vinted in this browser tab." };
 
       const res = await fetch(`/api/v2/users/${userId}/items?order=newest_first&page=1&per_page=200`, {
         headers: { Accept: "application/json" },
