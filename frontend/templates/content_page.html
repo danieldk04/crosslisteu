@@ -81,7 +81,7 @@
 
     {% if page.takeaways %}
     <div class="takeaways">
-      <p class="takeaways-label">Key takeaways</p>
+      <p class="takeaways-label">{{ 'Belangrijkste punten' if page.language == 'nl' else 'Key takeaways' }}</p>
       <ul>
         {% for item in page.takeaways %}
         <li>{{ item }}</li>
