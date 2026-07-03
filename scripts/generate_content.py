@@ -81,7 +81,11 @@ async def main():
 
     for item in items:
         if dry_run:
-            print(f"[DRY RUN] zou verwerken: {item['keyword']} → /{item['region']}/{'crosslisten' if item['pillar'] == 'A' else 'reseller-tools'}/{item['slug']}")
+            from backend.content.pipeline import _url_path
+
+            print(f"[DRY RUN] zou verwerken: {item['keyword']} → {_url_path('en', item['pillar'], item['slug'])}")
+            if item.get("nl_slug"):
+                print(f"           + NL companion → {_url_path('nl', item['pillar'], item['nl_slug'] + '-nl')}")
             continue
 
         result = await process_item(item)
