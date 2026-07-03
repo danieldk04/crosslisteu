@@ -2476,6 +2476,20 @@ async function applyImportCandidate(candidateId) {
   }
 }
 
+async function bulkImportAllCandidates() {
+  if (!confirm('Import all pending candidates now? Matches get linked to the existing item; the rest become new items.')) return;
+  try {
+    const r = await apiFetch(`${API}/api/imports/bulk-import`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Bulk import failed');
+    alert(`Done: ${data.linked} linked, ${data.created} created${data.failed ? `, ${data.failed} failed` : ''}.`);
+    await loadAll();
+    await loadImportCandidates();
+  } catch (e) {
+    alert('Bulk import error: ' + e.message);
+  }
+}
+
 async function ignoreImportCandidate(candidateId) {
   try {
     await apiFetch(`${API}/api/imports/${candidateId}/ignore`, { method: 'POST' });
