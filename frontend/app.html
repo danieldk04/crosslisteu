@@ -881,9 +881,11 @@ input[type="checkbox"].row-check { width: 15px; height: 15px; cursor: pointer; a
         <div class="protection-card">
           <div style="font-weight:700;font-size:13px;margin-bottom:6px">Vinted &amp; Marktplaats / 2dehands</div>
           <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Delete + delayed recreate, reusing the same automation that already publishes your listings. Vinted also supports a lower-risk content-only nudge.</div>
-          <button class="btn btn-sm btn-outline" onclick="refreshStaleListings('vinted')">Bulk: Vinted</button>
-          <button class="btn btn-sm btn-outline" onclick="refreshStaleListings('marktplaats')" style="margin-left:6px">Bulk: Marktplaats</button>
-          <button class="btn btn-sm btn-outline" onclick="refreshStaleListings('2dehands')" style="margin-left:6px">Bulk: 2dehands</button>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <button class="btn btn-sm btn-outline" onclick="refreshStaleListings('vinted')">Bulk: Vinted</button>
+            <button class="btn btn-sm btn-outline" onclick="refreshStaleListings('marktplaats')">Bulk: Marktplaats</button>
+            <button class="btn btn-sm btn-outline" onclick="refreshStaleListings('2dehands')">Bulk: 2dehands</button>
+          </div>
         </div>
         <div class="protection-card">
           <div style="font-weight:700;font-size:13px;margin-bottom:6px">Etsy — official renewal</div>
@@ -893,6 +895,18 @@ input[type="checkbox"].row-check { width: 15px; height: 15px; cursor: pointer; a
           <div style="font-weight:700;font-size:13px;margin-bottom:6px">eBay — relist ended only</div>
           <div style="font-size:12px;color:var(--muted)">eBay's duplicate-listing policy forbids bumping a live listing, so this only republishes listings that have already ENDED (sold/expired/withdrawn) via eBay's own relist endpoint.</div>
         </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <input id="refresh-search" type="text" placeholder="Search item…" oninput="renderRefreshView()" style="flex:1;max-width:280px" class="input">
+        <select id="refresh-platform-filter" onchange="renderRefreshView()" class="input" style="max-width:200px">
+          <option value="">All platforms</option>
+          <option value="vinted">Vinted</option>
+          <option value="marktplaats">Marktplaats</option>
+          <option value="2dehands">2dehands</option>
+          <option value="etsy">Etsy</option>
+          <option value="ebay">eBay</option>
+        </select>
       </div>
 
       <table class="data-table">
