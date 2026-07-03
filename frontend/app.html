@@ -2364,15 +2364,22 @@ function renderRefreshView() {
   document.getElementById('refresh-quota-title').textContent =
     `Refresh quota: ${Math.min(usedToday, REFRESH_DAILY_CAP)} / ${REFRESH_DAILY_CAP} used today`;
 
-  const relevant = state.listings.filter(l =>
-    (REFRESH_PLATFORM_STRATEGIES[l.platform] && l.status === 'active') ||
+  const searchTerm = (document.getElementById('refresh-search')?.value || '').trim().toLowerCase();
+  const platformFilter = document.getElementById('refresh-platform-filter')?.value || '';
+
+  let relevant = state.listings.filter(l =>
+    // Vinted/Marktplaats/2dehands: any listing that's actually live on the platform,
+    // including ones stuck in "error" (still has a platform_listing_id) so they're not silently hidden.
+    (REFRESH_PLATFORM_STRATEGIES[l.platform] && (l.status === 'active' || (l.status === 'error' && l.platform_listing_id))) ||
     (l.platform === 'etsy' && ['active', 'sold', 'error'].includes(l.status)) ||
     (l.platform === 'ebay' && l.status !== 'active')
   );
+  if (platformFilter) relevant = relevant.filter(l => l.platform === platformFilter);
 
   const rows = relevant.map(l => {
     const item = state.items.find(i => i.id === l.item_id);
     if (!item) return '';
+    if (searchTerm && !item.title.toLowerCase().includes(searchTerm)) return '';
     const label = PLATFORM_LABELS[l.platform] || l.platform;
 
     let statusCell, actionCell;
