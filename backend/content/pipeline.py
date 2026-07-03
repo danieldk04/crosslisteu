@@ -148,7 +148,7 @@ def _save_page_row(
         logger.info(f"Nieuwe pagina aangemaakt: {intent_key}")
         action = "created"
 
-    return {"success": True, "action": action, "url_path": _url_path(region, pillar, slug), "linked": linked_intents, "intent_key": intent_key}
+    return {"success": True, "action": action, "url_path": _url_path(language, pillar, slug), "linked": linked_intents, "intent_key": intent_key}
 
 
 async def run_pipeline(keyword: str, region: str, pillar: str, slug: str) -> dict:
