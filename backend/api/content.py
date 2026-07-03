@@ -112,3 +112,26 @@ async def generate_content_page(body: dict):
     if not result["success"]:
         raise HTTPException(status_code=502, detail=result.get("error", "generation failed"))
     return result
+
+
+@router.post("/api/content/set-image")
+async def set_content_image(body: dict):
+    """
+    Attaches a manually-designed featured image to an existing page — the
+    pipeline no longer generates images itself (see pipeline.py docstring).
+    """
+    region = body.get("region")
+    pillar = body.get("pillar")
+    slug = body.get("slug")
+    image_url = body.get("image_url")
+    if not all([region, pillar, slug, image_url]):
+        raise HTTPException(status_code=400, detail="region, pillar, slug and image_url are required")
+
+    db = get_db()
+    intent_key = f"{region}:{pillar}:{slug}"
+    existing = db.table("content_pages").select("id").eq("intent_key", intent_key).execute().data
+    if not existing:
+        raise HTTPException(status_code=404, detail="page not found")
+
+    db.table("content_pages").update({"featured_image_url": image_url}).eq("id", existing[0]["id"]).execute()
+    return {"success": True, "intent_key": intent_key, "image_url": image_url}
