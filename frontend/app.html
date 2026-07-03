@@ -2408,6 +2408,25 @@ async function delistItem(itemId, title) {
 }
 
 // ── Import existing listings (scan platform → review → link/create) ──────
+const IMPORT_SCANNABLE = { vinted: true, marktplaats: false, '2dehands': false, ebay: false, etsy: false, shopify: false };
+
+function renderImportScanButtons() {
+  const html = Object.keys(IMPORT_SCANNABLE).map(p => {
+    const available = IMPORT_SCANNABLE[p];
+    const action = available
+      ? `<button class="btn btn-sm btn-primary" onclick="scanPlatform('${p}')">Scan</button>`
+      : `<span class="badge delisted">Coming soon</span>`;
+    return `<div class="card" style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:18px">${platIcon(p, 20)}</span>
+        <div style="font-weight:600;font-size:13px">${PLATFORM_LABELS[p] || p}</div>
+      </div>
+      ${action}
+    </div>`;
+  }).join('');
+  document.getElementById('import-scan-grid').innerHTML = html;
+}
+
 async function scanPlatform(platform) {
   setBusy(true, `Queuing ${PLATFORM_LABELS[platform] || platform} scan…`);
   try {
