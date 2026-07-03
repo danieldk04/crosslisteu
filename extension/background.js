@@ -427,7 +427,7 @@ async function bgDeleteMp2dh(job, serverUrl) {
 async function bgScanVinted(job, serverUrl) {
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const tabId = await new Promise((res, rej) =>
-    chrome.tabs.create({ url: "https://www.vinted.com/", active: true }, t =>
+    chrome.tabs.create({ url: "https://www.vinted.nl/", active: true }, t =>
       chrome.runtime.lastError ? rej(new Error(chrome.runtime.lastError.message)) : res(t.id)
     )
   );
