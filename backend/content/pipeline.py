@@ -169,9 +169,8 @@ async def run_pipeline(keyword: str, region: str, pillar: str, slug: str) -> dic
                 db, region=region, pillar=pillar, slug=nl_slug, keyword=keyword,
                 language="nl", translation_of=result["intent_key"], generated=translated, research=None,
             )
-            # Reverse-link: the English row also points at its Dutch companion.
-            db.table("content_pages").update({"translation_of": nl_result["intent_key"] + "|reverse"}).eq("intent_key", result["intent_key"]).execute() if False else None
-            db.table("content_pages").update({"translation_of": None}).eq("intent_key", result["intent_key"]).execute() if False else None
+            # No reverse pointer needed on the English row — content.py looks up the
+            # NL companion by querying translation_of = <this row's intent_key>.
             result["nl_translation"] = nl_result["url_path"]
         else:
             logger.warning(f"NL-vertaling mislukt voor '{keyword}' — Engelse pagina blijft zonder companion")
