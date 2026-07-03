@@ -96,5 +96,10 @@ async def app_page():
     return FileResponse(FRONTEND / "app.html")
 
 
+@app.get("/marketplaces")
+async def marketplaces_page():
+    return FileResponse(FRONTEND / "marketplaces.html")
+
+
 # Serve frontend static assets (CSS, images, JS) — must come last
 app.mount("/", StaticFiles(directory=FRONTEND, html=True), name="frontend")
