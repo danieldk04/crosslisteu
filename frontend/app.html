@@ -2765,6 +2765,33 @@ async function doCrosslist() {
   }
 }
 
+// Global busy lock — blocks the whole dashboard (overlay + disabled buttons) while
+// an action is in flight, so users can't fire off more actions (e.g. double-publish,
+// re-click bulk import) before the first one has actually finished.
+let _busyDepth = 0;
+function setBusy(on, msg) {
+  let ov = document.getElementById('cl-busy-overlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'cl-busy-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;background:rgba(15,23,42,.35)';
+    ov.innerHTML = '<div style="background:#fff;border-radius:12px;padding:20px 28px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 30px rgba(0,0,0,.2);font-size:14px;font-weight:600;color:#1e293b"><span class="spinner"></span><span id="cl-busy-text">Working…</span></div>';
+    document.body.appendChild(ov);
+  }
+  if (on) {
+    _busyDepth++;
+    document.getElementById('cl-busy-text').textContent = msg || 'Working…';
+    ov.style.display = 'flex';
+    document.querySelectorAll('button:not([disabled])').forEach(b => { b.dataset.clWasEnabled = '1'; b.disabled = true; });
+  } else {
+    _busyDepth = Math.max(0, _busyDepth - 1);
+    if (_busyDepth === 0) {
+      ov.style.display = 'none';
+      document.querySelectorAll('button[data-cl-was-enabled]').forEach(b => { b.disabled = false; delete b.dataset.clWasEnabled; });
+    }
+  }
+}
+
 function showToast(msg) {
   let t = document.getElementById('cl-toast');
   if (!t) {
