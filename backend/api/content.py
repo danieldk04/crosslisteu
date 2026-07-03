@@ -5,14 +5,26 @@ render Jinja2 templates directly from `content_pages`, no JS involved.
 """
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Header, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
+from backend.config import settings
 from backend.content.pipeline import run_pipeline
 from backend.database import get_db
 
 router = APIRouter(tags=["content"])
+
+
+def _require_admin(x_admin_secret: str | None) -> None:
+    """
+    These two endpoints publish/modify live site content, so they must not be
+    left wide open — anyone who found the URL could otherwise overwrite a
+    published page. Uses the existing SECRET_KEY env var as a shared secret,
+    passed as the X-Admin-Secret header.
+    """
+    if not settings.secret_key or settings.secret_key == "change-me" or x_admin_secret != settings.secret_key:
+        raise HTTPException(status_code=401, detail="unauthorized")
 templates = Jinja2Templates(directory=str(Path(__file__).parent.parent.parent / "frontend" / "templates"))
 
 REGIONS = {"nl", "be-nl", "be-fr", "fr", "de"}
