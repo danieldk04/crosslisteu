@@ -123,6 +123,80 @@ async def create_item_from_candidate(candidate_id: str, body: dict, user_id: str
     return {"item": created}
 
 
+@router.post("/bulk-import")
+async def bulk_import_candidates(body: dict = None, user_id: str = Depends(get_current_user)):
+    """
+    Process every pending import candidate in one go: candidates with a high-confidence
+    suggested_item_id get linked to that item, everything else becomes a new item
+    (title/price/photo straight from the scrape, condition defaults to 'good' since
+    scraping can't see purchase price/brand/size — those stay editable on the item after).
+    """
+    db = get_db()
+    platform = (body or {}).get("platform")
+    q = db.table("import_candidates").select("*").eq("user_id", user_id).eq("status", "pending")
+    if platform:
+        q = q.eq("platform", platform)
+    candidates = q.execute().data or []
+
+    linked, created, failed = 0, 0, 0
+    now = datetime.now(timezone.utc).isoformat()
+
+    for cand in candidates:
+        try:
+            if cand.get("suggested_item_id"):
+                item = db.table("items").select("id").eq("id", cand["suggested_item_id"]).eq("user_id", user_id).execute()
+                if not item.data:
+                    raise ValueError("suggested item no longer exists")
+                existing = db.table("listings").select("id").eq("item_id", cand["suggested_item_id"]).eq("platform", cand["platform"]).execute()
+                if existing.data:
+                    db.table("listings").update({
+                        "platform_listing_id": cand["platform_listing_id"],
+                        "platform_listing_url": cand["platform_listing_url"],
+                        "status": "active",
+                        "listed_at": now,
+                    }).eq("id", existing.data[0]["id"]).execute()
+                else:
+                    db.table("listings").insert({
+                        "item_id": cand["suggested_item_id"],
+                        "platform": cand["platform"],
+                        "platform_listing_id": cand["platform_listing_id"],
+                        "platform_listing_url": cand["platform_listing_url"],
+                        "status": "active",
+                        "listed_at": now,
+                    }).execute()
+                db.table("import_candidates").update({"status": "linked"}).eq("id", cand["id"]).execute()
+                linked += 1
+            else:
+                item_data = {
+                    "title": cand["title"] or "Untitled",
+                    "price": cand["price"] or 0,
+                    "photo_urls": [cand["photo_url"]] if cand.get("photo_url") else [],
+                    "condition": "good",
+                }
+                item = ItemCreate(**item_data)
+                data = item.model_dump()
+                data["id"] = str(uuid.uuid4())
+                data["user_id"] = user_id
+                data["sku"] = f"IMP-{data['id'][:8].upper()}"
+                created_item = db.table("items").insert(data).execute().data[0]
+
+                db.table("listings").insert({
+                    "item_id": created_item["id"],
+                    "platform": cand["platform"],
+                    "platform_listing_id": cand["platform_listing_id"],
+                    "platform_listing_url": cand["platform_listing_url"],
+                    "status": "active",
+                    "listed_at": now,
+                }).execute()
+
+                db.table("import_candidates").update({"status": "imported"}).eq("id", cand["id"]).execute()
+                created += 1
+        except Exception:
+            failed += 1
+
+    return {"linked": linked, "created": created, "failed": failed}
+
+
 @router.post("/{candidate_id}/ignore")
 async def ignore_candidate(candidate_id: str, user_id: str = Depends(get_current_user)):
     db = get_db()
