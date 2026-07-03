@@ -108,6 +108,9 @@ ALTER TABLE items ADD COLUMN IF NOT EXISTS price_shopify NUMERIC(10,2);
 -- a cooldown and expose "last refreshed" in the dashboard.
 ALTER TABLE listings ADD COLUMN IF NOT EXISTS last_refreshed_at TIMESTAMPTZ;
 ALTER TABLE listings ADD COLUMN IF NOT EXISTS refresh_count INT DEFAULT 0;
+-- Consecutive "not found" polls before we trust it enough to auto-delist — a single
+-- 404 is often a stale/expired polling session, not a genuinely removed listing.
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS not_found_count INT DEFAULT 0;
 
 -- Jobs can be scheduled for the future (used to jitter the "recreate" half of
 -- a relist so delete→create doesn't fire back-to-back like a script).
