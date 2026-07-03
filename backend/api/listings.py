@@ -125,6 +125,38 @@ async def refresh_stale(body: dict, user_id: str = Depends(get_current_user)):
     return {"results": results}
 
 
+@router.post("/renew-etsy")
+async def renew_etsy(body: dict, user_id: str = Depends(get_current_user)):
+    """
+    Etsy's official renewal action — charges the normal Etsy listing fee.
+    Not part of the shared refresh quota (real money, user-initiated per click).
+    body: {item_id}
+    """
+    item_id = body.get("item_id")
+    if not item_id:
+        raise HTTPException(status_code=400, detail="item_id required")
+    try:
+        return await renew_etsy_listing(item_id, user_id)
+    except RefreshError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/relist-ended-ebay")
+async def relist_ended_ebay(body: dict, user_id: str = Depends(get_current_user)):
+    """
+    Republish an ENDED eBay listing via eBay's own relist mechanism.
+    Refuses to run on a still-active listing (eBay duplicate-listing policy).
+    body: {item_id}
+    """
+    item_id = body.get("item_id")
+    if not item_id:
+        raise HTTPException(status_code=400, detail="item_id required")
+    try:
+        return await relist_ended_ebay_listing(item_id, user_id)
+    except RefreshError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @router.post("/sold")
 async def mark_sold(item_id: str, platform: str, background_tasks: BackgroundTasks, user_id: str = Depends(get_current_user)):
     db = get_db()
