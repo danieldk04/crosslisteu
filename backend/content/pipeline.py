@@ -180,9 +180,9 @@ async def run_pipeline(keyword: str, region: str, pillar: str, slug: str, nl_slu
         logger.info(f"NL-vertaling genereren voor '{keyword}'")
         translated = translate_to_dutch(generated)
         if translated:
-            nl_slug = f"{slug}-nl"
+            db_nl_slug = f"{nl_slug or slug}-nl"
             nl_result = _save_page_row(
-                db, region=region, pillar=pillar, slug=nl_slug, keyword=keyword,
+                db, region=region, pillar=pillar, slug=db_nl_slug, keyword=keyword,
                 language="nl", translation_of=result["intent_key"], generated=translated, research=None,
             )
             # No reverse pointer needed on the English row — content.py looks up the
