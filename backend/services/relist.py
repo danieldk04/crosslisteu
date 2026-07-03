@@ -1,29 +1,60 @@
 """
 Listing refresh ("bump old listings back up").
 
-Two strategies, both operating only within each platform's own rules —
-there is no mechanism here that fakes engagement, spoofs bot traffic, or
-otherwise evades a platform's abuse detection. Nothing here is "guaranteed";
-it is rate-limited on purpose so it can't look like scripted spam.
+Every strategy here operates only within each platform's own rules — nothing
+fakes engagement, spoofs bot traffic, or evades a platform's abuse detection.
+Nothing is "guaranteed" to change ranking; it's rate-limited on purpose so it
+can't look like scripted spam.
 
-- "content": light edit of an existing listing (price nudge, photo re-order)
-  to refresh its "updated" signal. Lowest impact, zero account risk.
-- "relist": legitimate delete + re-create. This is the only way to get a
-  new listing timestamp for platforms that sort "Newest" by creation date.
-  Only allowed for platforms the extension can drive (currently Vinted),
-  rate-limited per listing and per user/day, and the re-create step is
-  scheduled with a randomized delay so it doesn't fire back-to-back.
+Per-platform, what's actually available differs a lot:
+
+- "content" (Vinted only): light edit of an existing listing (price nudge,
+  photo re-order). Lowest impact, zero account risk. Not offered for
+  Marktplaats/2dehands because there's no verified edit-page automation for
+  them yet (see extension/content/marktplaats.js — it only implements the
+  create/delete flow) and shipping an unverified DOM script here would be a
+  reliability risk, not a safety one — it would just silently fail.
+
+- "relist" (Vinted, Marktplaats, 2dehands): legitimate delete + re-create,
+  the only way to get a new listing timestamp on platforms that sort
+  "Newest" by creation date. Reuses the extension's existing, already-proven
+  create/delete job flow — no new browser automation. Rate-limited per
+  listing and per user/day, re-create step delayed with jitter.
+
+- "renew" (Etsy only): Etsy's own official renewal mechanism — PATCH the
+  listing's state to 'active', which Etsy's API documents as re-charging the
+  listing fee and refreshing the listing. This is an intended platform
+  feature, not a workaround, and is the only strategy here that's an actual
+  first-party "refresh" action rather than an inferred side-effect of
+  delete+recreate.
+
+- "relist_ended" (eBay only): republish an offer that has ALREADY ended,
+  via eBay's own offer/publish endpoint (their "relist" flow). This never
+  touches a live listing — eBay's duplicate-listing policy prohibits two
+  active listings for the same item, so bumping an active eBay listing is
+  explicitly NOT implemented here.
 """
 from __future__ import annotations
 import logging
 import random
 from datetime import datetime, timezone, timedelta
 from backend.database import get_db
+from backend.platforms import get_platform
 
 logger = logging.getLogger(__name__)
 
-# Platforms the Chrome extension can drive end-to-end (create + delete).
-REFRESH_CAPABLE_PLATFORMS = {"vinted"}
+# Extension-driven platforms: relist reuses their existing, already-working
+# create/delete job flow. No new browser automation is introduced here.
+EXTENSION_RELIST_PLATFORMS = {"vinted", "marktplaats", "2dehands"}
+
+# Per-platform: which refresh strategies are actually offered.
+PLATFORM_STRATEGIES = {
+    "vinted": {"content", "relist"},
+    "marktplaats": {"relist"},
+    "2dehands": {"relist"},
+}
+
+REFRESH_CAPABLE_PLATFORMS = set(PLATFORM_STRATEGIES.keys())
 
 # Safety limits — deliberately conservative. These exist to keep the
 # behavior indistinguishable from a normal seller tidying up their shop.
