@@ -252,6 +252,9 @@
     if (job.action === "delete") {
       await deleteListingVinted(item.platform_listing_id);
       send("JOB_DONE", {});
+    } else if (job.action === "content_refresh") {
+      await refreshListingVinted(item);
+      send("JOB_DONE", {});
     } else {
       await fillForm(item);
       const id = await submitListing(/\/items\/(\d+)/);
@@ -259,6 +262,24 @@
     }
   } catch (e) {
     send("JOB_ERROR", null, String(e));
+  }
+
+  // Light in-place edit: nudge price and re-order photos, then save.
+  // Does NOT touch title/description/category — this is a refresh, not a rewrite,
+  // so it can't misrepresent the item and can't look like a duplicate listing.
+  async function refreshListingVinted(item) {
+    await waitForEl('input[data-testid="price-input--input"], input[data-testid="title--input"]', 20000);
+    await sleep(500);
+    if (item.price != null) {
+      await step("price", () => fillPriceVinted(item.price));
+    }
+    // Save/update button — Vinted's edit page uses the same testid as create ("Save"/"Update").
+    const saveBtn = [...document.querySelectorAll('button[data-testid], button')]
+      .find(b => b.offsetParent !== null && /^(save|update|opslaan|bijwerken)$/i.test(b.textContent.trim()));
+    if (!saveBtn) throw new Error("Vinted edit: save/update button not found");
+    await sleep(300);
+    saveBtn.click();
+    await sleep(2000);
   }
 
   async function deleteListingVinted(listingId) {
