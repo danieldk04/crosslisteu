@@ -1796,9 +1796,24 @@ async function refreshDashboard(btn) {
   btn.disabled = false;
 }
 
+// Backend paginates /api/items/ (default 50/page) — keep fetching pages until
+// a page comes back short, so the dashboard always has the user's full item set.
+async function fetchAllItems() {
+  const pageSize = 200;
+  let offset = 0, all = [];
+  while (true) {
+    const page = await apiFetch(`${API}/api/items/?limit=${pageSize}&offset=${offset}`).then(r => r.json());
+    if (!Array.isArray(page) || !page.length) break;
+    all = all.concat(page);
+    if (page.length < pageSize) break;
+    offset += pageSize;
+  }
+  return all;
+}
+
 async function loadAll() {
   const [itemsRes, listingsRes, jobsRes, platformsRes] = await Promise.allSettled([
-    apiFetch(`${API}/api/items/`).then(r => r.json()),
+    fetchAllItems(),
     apiFetch(`${API}/api/listings/`).then(r => r.json()),
     apiFetch(`${API}/api/jobs/pending`).then(r => r.json()),
     apiFetch(`${API}/api/platforms/status`).then(r => r.json()),
