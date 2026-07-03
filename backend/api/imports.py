@@ -126,14 +126,14 @@ async def create_item_from_candidate(candidate_id: str, body: dict, user_id: str
     data["sku"] = f"IMP-{data['id'][:8].upper()}"
     created = db.table("items").insert(data).execute().data[0]
 
-    now = datetime.now(timezone.utc).isoformat()
+    listed_at = cand.get("platform_listed_at") or datetime.now(timezone.utc).isoformat()
     db.table("listings").insert({
         "item_id": created["id"],
         "platform": cand["platform"],
         "platform_listing_id": cand["platform_listing_id"],
         "platform_listing_url": cand["platform_listing_url"],
         "status": "active",
-        "listed_at": now,
+        "listed_at": listed_at,
     }).execute()
 
     db.table("import_candidates").update({"status": "imported"}).eq("id", candidate_id).execute()
