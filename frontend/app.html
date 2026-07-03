@@ -2389,6 +2389,7 @@ async function delistItem(itemId, title) {
     : `"${title}" has no active listings. Continue anyway?`;
   if (!confirm(msg)) return;
 
+  setBusy(true, `Delisting "${title}"…`);
   try {
     const res = await apiFetch(`${API}/api/items/${itemId}/delist`, { method: 'POST' });
     const data = await res.json();
@@ -2404,6 +2405,8 @@ async function delistItem(itemId, title) {
     await loadAll();
   } catch (e) {
     alert('Delist error: ' + e.message);
+  } finally {
+    setBusy(false);
   }
 }
 
