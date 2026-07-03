@@ -30,9 +30,19 @@ STATIC_LINK_CANDIDATES = [
 ]
 
 
-def _url_path(region: str, pillar: str, slug: str) -> str:
+def _url_path(language: str, pillar: str, slug: str) -> str:
+    """
+    English (the default) gets no URL prefix at all — /crosslisten/{slug}.
+    Only a translated page gets its language as a prefix — /nl/crosslisten/{slug}.
+    Translated slugs carry an internal "-{language}" DB-only suffix (to stay
+    unique from the English row); that suffix is stripped for the public URL.
+    """
     folder = "crosslisten" if pillar == "A" else "reseller-tools"
-    return f"/{region}/{folder}/{slug}"
+    if language and language != "en":
+        suffix = f"-{language}"
+        public_slug = slug[: -len(suffix)] if slug.endswith(suffix) else slug
+        return f"/{language}/{folder}/{public_slug}"
+    return f"/{folder}/{slug}"
 
 
 def _link_terms_for(page: dict) -> list[str]:
