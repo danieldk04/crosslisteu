@@ -1,0 +1,12 @@
+# Minimal dependency set for the standalone content-generation pipeline
+# (scripts/generate_content.py), used by the daily GitHub Actions cron.
+# Deliberately excludes sqlalchemy/asyncpg (unused anywhere in this codebase —
+# only present in the full requirements.txt for the main FastAPI app — and
+# their pinned versions fail to build from source on newer Python on CI).
+anthropic==0.34.2
+httpx==0.27.2
+beautifulsoup4==4.12.3
+supabase==2.7.4
+pydantic==2.9.2
+pydantic-settings==2.5.2
+python-dotenv==1.0.1
