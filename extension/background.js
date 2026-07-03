@@ -140,6 +140,15 @@ function getDeleteUrl(platform, payload) {
   return null;
 }
 
+function getEditUrl(platform, payload) {
+  // Content-refresh only supported for Vinted today — light in-place edit
+  // (price/photo-order nudge) to refresh the listing's "updated" signal.
+  if (platform === "vinted") return payload?.platform_listing_id
+    ? `https://www.vinted.com/items/${payload.platform_listing_id}/edit`
+    : null;
+  return null;
+}
+
 function getMpSyiUrl(platform, item) {
   // Vinted has a simple listing flow — no category-based URLs needed
   if (platform === "vinted") {
