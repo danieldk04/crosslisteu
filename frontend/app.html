@@ -2354,6 +2354,7 @@ async function saveItem() {
 
   const btn = document.getElementById('save-btn');
   btn.disabled = true; btn.textContent = 'Saving...';
+  setBusy(true, 'Saving item…');
   try {
     let itemId = id;
     if (id) {
@@ -2373,6 +2374,7 @@ async function saveItem() {
     alert('Error: ' + e.message);
   } finally {
     btn.disabled = false;
+    setBusy(false);
   }
 }
 
