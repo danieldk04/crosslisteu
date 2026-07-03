@@ -2175,6 +2175,7 @@ async function connectShopify() {
 async function disconnectPlatform(platform) {
   const label = PLATFORM_LABELS[platform] || platform;
   if (!confirm(`Disconnect ${label}? You'll need to reconnect it before publishing to it again.`)) return;
+  setBusy(true, `Disconnecting ${label}…`);
   try {
     const res = await apiFetch(`${API}/api/platforms/${platform}/disconnect`, { method: 'DELETE' });
     if (!res.ok) {
@@ -2186,6 +2187,8 @@ async function disconnectPlatform(platform) {
     renderPlatforms();
   } catch (e) {
     alert(`Could not disconnect ${label}: ` + e.message);
+  } finally {
+    setBusy(false);
   }
 }
 
