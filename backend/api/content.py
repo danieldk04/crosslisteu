@@ -92,6 +92,12 @@ async def niche_page(request: Request, region: str, slug: str):
     return _render_page(request, region, "B", slug)
 
 
+@router.get("/blog")
+async def blog_index_default():
+    """Global nav link — stable regardless of region routing changes."""
+    return RedirectResponse(url="/nl/blog")
+
+
 @router.get("/{region}/blog", response_class=HTMLResponse)
 async def blog_index(request: Request, region: str):
     if region not in REGIONS:
