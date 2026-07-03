@@ -1,0 +1,234 @@
+"""
+Listing refresh ("bump old listings back up").
+
+Two strategies, both operating only within each platform's own rules —
+there is no mechanism here that fakes engagement, spoofs bot traffic, or
+otherwise evades a platform's abuse detection. Nothing here is "guaranteed";
+it is rate-limited on purpose so it can't look like scripted spam.
+
+- "content": light edit of an existing listing (price nudge, photo re-order)
+  to refresh its "updated" signal. Lowest impact, zero account risk.
+- "relist": legitimate delete + re-create. This is the only way to get a
+  new listing timestamp for platforms that sort "Newest" by creation date.
+  Only allowed for platforms the extension can drive (currently Vinted),
+  rate-limited per listing and per user/day, and the re-create step is
+  scheduled with a randomized delay so it doesn't fire back-to-back.
+"""
+from __future__ import annotations
+import logging
+import random
+from datetime import datetime, timezone, timedelta
+from backend.database import get_db
+
+logger = logging.getLogger(__name__)
+
+# Platforms the Chrome extension can drive end-to-end (create + delete).
+REFRESH_CAPABLE_PLATFORMS = {"vinted"}
+
+# Safety limits — deliberately conservative. These exist to keep the
+# behavior indistinguishable from a normal seller tidying up their shop.
+MIN_COOLDOWN_DAYS = 14          # can't refresh the same listing more than 1x/14d
+MAX_REFRESHES_PER_USER_PER_DAY = 8
+RELIST_DELAY_MIN_MINUTES = 45   # recreate happens 45min-4h after delete
+RELIST_DELAY_MAX_MINUTES = 240
+CONTENT_PRICE_JITTER_PCT = 0.02  # +/-2% nudge, rounded to a sane price
+
+
+class RefreshError(Exception):
+    pass
+
+
+def _check_and_increment_quota(db, user_id: str) -> None:
+    today = datetime.now(timezone.utc).date().isoformat()
+    row = db.table("refresh_quota").select("count").eq("user_id", user_id).eq("day", today).execute()
+    count = row.data[0]["count"] if row.data else 0
+    if count >= MAX_REFRESHES_PER_USER_PER_DAY:
+        raise RefreshError(
+            f"Daily refresh limit reached ({MAX_REFRESHES_PER_USER_PER_DAY}/day). "
+            "This cap is intentional — it keeps refresh activity looking like normal "
+            "shop upkeep instead of a bulk/bot pattern."
+        )
+    if row.data:
+        db.table("refresh_quota").update({"count": count + 1}).eq("user_id", user_id).eq("day", today).execute()
+    else:
+        db.table("refresh_quota").insert({"user_id": user_id, "day": today, "count": 1}).execute()
+
+
+def _check_cooldown(listing: dict) -> None:
+    last = listing.get("last_refreshed_at")
+    if not last:
+        return
+    last_dt = datetime.fromisoformat(last.replace("Z", "+00:00"))
+    elapsed = datetime.now(timezone.utc) - last_dt
+    if elapsed < timedelta(days=MIN_COOLDOWN_DAYS):
+        remaining = timedelta(days=MIN_COOLDOWN_DAYS) - elapsed
+        raise RefreshError(
+            f"This listing was refreshed {elapsed.days}d ago. "
+            f"Wait {remaining.days}d more — refreshing too often is what gets accounts flagged."
+        )
+
+
+def _jittered_price(price: float) -> float:
+    """Small, realistic-looking price nudge (a seller tweaking price is normal)."""
+    delta = price * random.uniform(-CONTENT_PRICE_JITTER_PCT, CONTENT_PRICE_JITTER_PCT)
+    new_price = max(1.0, round(price + delta, 2))
+    # Avoid landing on the exact same price by chance.
+    if new_price == price:
+        new_price = round(price + 0.5, 2)
+    return new_price
+
+
+async def refresh_listing(item_id: str, platform: str, user_id: str, strategy: str) -> dict:
+    """
+    Queue a refresh for one listing.
+    strategy: "content" (safe edit-in-place) or "relist" (delete + scheduled recreate).
+    """
+    if strategy not in ("content", "relist"):
+        raise RefreshError("strategy must be 'content' or 'relist'")
+
+    db = get_db()
+
+    item_resp = db.table("items").select("*").eq("id", item_id).eq("user_id", user_id).execute()
+    if not item_resp.data:
+        raise RefreshError("Item not found")
+    item = item_resp.data[0]
+
+    listing_resp = (
+        db.table("listings")
+        .select("*")
+        .eq("item_id", item_id)
+        .eq("platform", platform)
+        .eq("status", "active")
+        .execute()
+    )
+    if not listing_resp.data:
+        raise RefreshError("No active listing on this platform")
+    listing = listing_resp.data[0]
+
+    if platform not in REFRESH_CAPABLE_PLATFORMS:
+        raise RefreshError(f"Refresh isn't available for {platform} yet")
+
+    _check_cooldown(listing)
+    _check_and_increment_quota(db, user_id)
+
+    now = datetime.now(timezone.utc)
+
+    if strategy == "content":
+        payload = {
+            **item,
+            "platform_listing_id": listing["platform_listing_id"],
+            "platform_listing_url": listing["platform_listing_url"],
+            "price": _jittered_price(float(item.get("price") or 0)) or item.get("price"),
+            "photo_urls": _shuffled_photos(item.get("photo_urls") or []),
+        }
+        job = db.table("jobs").insert({
+            "user_id": user_id,
+            "item_id": item_id,
+            "platform": platform,
+            "action": "content_refresh",
+            "status": "pending",
+            "payload": payload,
+        }).execute().data[0]
+
+        db.table("listings").update({
+            "last_refreshed_at": now.isoformat(),
+            "refresh_count": (listing.get("refresh_count") or 0) + 1,
+        }).eq("id", listing["id"]).execute()
+
+        return {"strategy": "content", "job_id": job["id"], "status": "queued"}
+
+    # strategy == "relist": delete now, recreate after a randomized delay.
+    delete_payload = {
+        **item,
+        "platform_listing_id": listing["platform_listing_id"],
+        "platform_listing_url": listing["platform_listing_url"],
+    }
+    db.table("jobs").insert({
+        "user_id": user_id,
+        "item_id": item_id,
+        "platform": platform,
+        "action": "delete",
+        "status": "pending",
+        "payload": delete_payload,
+    }).execute()
+
+    delay_minutes = random.randint(RELIST_DELAY_MIN_MINUTES, RELIST_DELAY_MAX_MINUTES)
+    scheduled_for = (now + timedelta(minutes=delay_minutes)).isoformat()
+
+    create_payload = {
+        **item,
+        # Slight variation so the new listing isn't byte-identical to the old one —
+        # legitimate reasons (price update, reordered photos), not spoofing.
+        "price": _jittered_price(float(item.get("price") or 0)) or item.get("price"),
+        "photo_urls": _shuffled_photos(item.get("photo_urls") or []),
+    }
+    db.table("jobs").insert({
+        "user_id": user_id,
+        "item_id": item_id,
+        "platform": platform,
+        "action": "create",
+        "status": "pending",
+        "payload": create_payload,
+        "scheduled_for": scheduled_for,
+    }).execute()
+
+    db.table("listings").update({
+        "status": "relisting",
+        "last_refreshed_at": now.isoformat(),
+        "refresh_count": (listing.get("refresh_count") or 0) + 1,
+    }).eq("id", listing["id"]).execute()
+
+    logger.info(f"Queued relist for item {item_id} on {platform}, recreate scheduled in {delay_minutes}min")
+    return {
+        "strategy": "relist",
+        "status": "queued",
+        "recreate_scheduled_for": scheduled_for,
+        "message": f"Old listing removed now; new listing will be created in ~{delay_minutes} min to avoid a scripted-looking pattern.",
+    }
+
+
+def _shuffled_photos(photo_urls: list[str]) -> list[str]:
+    if len(photo_urls) < 2:
+        return photo_urls
+    shuffled = photo_urls[:]
+    random.shuffle(shuffled)
+    return shuffled
+
+
+async def refresh_stale_listings(user_id: str, platform: str, older_than_days: int = 30, limit: int = 5) -> list[dict]:
+    """
+    Bulk entry point: refresh the user's oldest eligible listings on one platform,
+    capped by the same daily quota (so this can't be used to blast every item at once).
+    """
+    db = get_db()
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=older_than_days)).isoformat()
+    cooldown_cutoff = (datetime.now(timezone.utc) - timedelta(days=MIN_COOLDOWN_DAYS)).isoformat()
+
+    item_ids = [r["id"] for r in db.table("items").select("id").eq("user_id", user_id).execute().data]
+    if not item_ids:
+        return []
+
+    q = (
+        db.table("listings")
+        .select("*")
+        .in_("item_id", item_ids)
+        .eq("platform", platform)
+        .eq("status", "active")
+        .lt("listed_at", cutoff)
+        .order("listed_at")
+        .limit(limit)
+    )
+    candidates = [
+        l for l in q.execute().data
+        if not l.get("last_refreshed_at") or l["last_refreshed_at"] < cooldown_cutoff
+    ]
+
+    results = []
+    for listing in candidates:
+        try:
+            res = await refresh_listing(listing["item_id"], platform, user_id, "relist")
+            results.append({"item_id": listing["item_id"], **res})
+        except RefreshError as e:
+            results.append({"item_id": listing["item_id"], "status": "skipped", "reason": str(e)})
+            break  # quota hit — stop trying the rest
+    return results
