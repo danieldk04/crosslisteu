@@ -1933,7 +1933,11 @@ function setFilter(type, value) {
   applyFilters();
 }
 
-function applyFilters() {
+const ITEMS_PAGE_SIZE = 50;
+let itemsCurrentPage = 1;
+
+function applyFilters(resetPage) {
+  if (resetPage !== false) itemsCurrentPage = 1;
   const pubFilter = document.getElementById('filter-pub').value;
   const platformFilter = document.getElementById('filter-platform').value;
   const search = document.getElementById('filter-search').value.toLowerCase().trim();
@@ -1951,8 +1955,44 @@ function applyFilters() {
     return true;
   });
 
-  document.getElementById('filter-count').textContent = `${filtered.length} of ${state.items.length}`;
-  renderItemsTable(filtered);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PAGE_SIZE));
+  if (itemsCurrentPage > totalPages) itemsCurrentPage = totalPages;
+  const start = (itemsCurrentPage - 1) * ITEMS_PAGE_SIZE;
+  const pageItems = filtered.slice(start, start + ITEMS_PAGE_SIZE);
+
+  document.getElementById('filter-count').textContent = filtered.length === state.items.length
+    ? `${filtered.length} of ${state.items.length}`
+    : `${filtered.length} of ${state.items.length} (page ${itemsCurrentPage}/${totalPages})`;
+  renderItemsTable(pageItems);
+  renderItemsPagination(totalPages, filtered.length);
+}
+
+function goToItemsPage(page) {
+  itemsCurrentPage = page;
+  applyFilters(false);
+}
+
+function renderItemsPagination(totalPages, totalFiltered) {
+  const el = document.getElementById('items-pagination');
+  if (!el) return;
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+  const p = itemsCurrentPage;
+  const btn = (page, label, disabled, active) =>
+    `<button class="btn btn-sm ${active ? 'btn-primary' : 'btn-outline'}" ${disabled ? 'disabled' : ''} onclick="goToItemsPage(${page})">${label}</button>`;
+
+  const pages = [];
+  const addPage = n => pages.push(btn(n, n, false, n === p));
+  addPage(1);
+  if (p > 3) pages.push('<span style="color:var(--muted)">…</span>');
+  for (let n = Math.max(2, p - 1); n <= Math.min(totalPages - 1, p + 1); n++) addPage(n);
+  if (p < totalPages - 2) pages.push('<span style="color:var(--muted)">…</span>');
+  if (totalPages > 1) addPage(totalPages);
+
+  el.innerHTML = `
+    ${btn(p - 1, '‹ Prev', p === 1, false)}
+    ${pages.join('')}
+    ${btn(p + 1, 'Next ›', p === totalPages, false)}
+  `;
 }
 
 function renderItemsTable(items) {
