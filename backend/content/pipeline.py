@@ -82,7 +82,7 @@ async def run_pipeline(keyword: str, region: str, pillar: str, slug: str) -> dic
             "link_terms": _link_terms_for(p),
         }
         for p in existing
-    ]
+    ] + STATIC_LINK_CANDIDATES
     body_with_links, linked_intents = apply_internal_links(generated["body_html"], candidates, intent_key)
 
     software_json_ld = {
