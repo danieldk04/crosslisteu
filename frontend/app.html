@@ -2317,6 +2317,51 @@ async function delistItem(itemId, title) {
 }
 
 // ── Refresh (bump old listings) ────────────────────────────────────
+const REFRESH_COOLDOWN_DAYS = 14;
+const REFRESH_DAILY_CAP = 8;
+
+function renderRefreshView() {
+  const vintedListings = state.listings.filter(l => l.platform === 'vinted' && l.status === 'active');
+  const now = Date.now();
+
+  const usedToday = state.listings.filter(l => {
+    if (!l.last_refreshed_at) return false;
+    const d = new Date(l.last_refreshed_at);
+    return d.toDateString() === new Date().toDateString();
+  }).length;
+  document.getElementById('refresh-quota-title').textContent =
+    `Refresh quota: ${Math.min(usedToday, REFRESH_DAILY_CAP)} / ${REFRESH_DAILY_CAP} used today`;
+
+  const rows = vintedListings.map(l => {
+    const item = state.items.find(i => i.id === l.item_id);
+    if (!item) return '';
+    const listedDate = l.listed_at ? fmtDate(l.listed_at) : '—';
+    let cooldownLabel = '<span style="color:var(--muted)">never</span>';
+    let onCooldown = false;
+    if (l.last_refreshed_at) {
+      const elapsedDays = Math.floor((now - new Date(l.last_refreshed_at).getTime()) / 86400000);
+      onCooldown = elapsedDays < REFRESH_COOLDOWN_DAYS;
+      cooldownLabel = onCooldown
+        ? `<span style="color:var(--muted)">${elapsedDays}d ago — ${REFRESH_COOLDOWN_DAYS - elapsedDays}d left</span>`
+        : `<span style="color:var(--green)">${elapsedDays}d ago</span>`;
+    }
+    return `<tr>
+      <td><div class="item-info">
+        <div class="item-photo">${item.photo_urls?.[0] ? `<img src="${item.photo_urls[0]}" style="width:40px;height:40px;border-radius:6px;object-fit:cover">` : '👗'}</div>
+        <div><div class="item-title">${esc(item.title)}</div><div class="item-meta">${item.brand || ''}${item.size ? ' · ' + item.size : ''}</div></div>
+      </div></td>
+      <td style="white-space:nowrap;font-size:12px;color:var(--muted)">${listedDate}</td>
+      <td style="white-space:nowrap;font-size:12px">${cooldownLabel}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm btn-outline" ${onCooldown ? 'disabled title="On cooldown"' : ''} onclick="refreshItem('${item.id}','${esc(item.title)}')">Refresh</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('refresh-body').innerHTML = rows ||
+    '<tr><td colspan="4"><div class="empty"><h3>No active Vinted listings</h3><p>Publish something to Vinted first — refresh only works on live listings.</p></div></td></tr>';
+}
+
 function refreshItem(itemId, title) {
   const hasVinted = state.listings.some(l => l.item_id === itemId && l.platform === 'vinted' && l.status === 'active');
   if (!hasVinted) { alert('Refresh is currently only available for active Vinted listings.'); return; }
