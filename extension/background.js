@@ -244,6 +244,17 @@ async function processJob(job, serverUrl) {
     return;
   }
 
+  // Scan: read the user's own "my listings" page, report candidates for manual review
+  if (job.action === "scan") {
+    try {
+      if (job.platform === "vinted") await bgScanVinted(job, serverUrl);
+      else await bgScanMp2dh(job, serverUrl);
+    } catch (e) {
+      await reportError(job.id, serverUrl, String(e));
+    }
+    return;
+  }
+
   // Store job for content script to pick up
   await chrome.storage.local.set({ [`job_${job.platform}`]: { ...job, serverUrl } });
 
