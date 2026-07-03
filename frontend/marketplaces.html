@@ -728,6 +728,30 @@ nav { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,.92);
 </footer>
 
 <script>
+// Scale the whole showcase (desktop + mobile together) to fit narrow screens,
+// keeping their side-by-side layout instead of stacking them.
+(function() {
+  const wrap = document.querySelector('.showcase');
+  const track = document.querySelector('.showcase-track');
+  if (!wrap || !track) return;
+  const mq = window.matchMedia('(max-width: 900px)');
+  function fitScale() {
+    if (!mq.matches) { track.style.transform = ''; wrap.style.height = ''; return; }
+    track.style.transform = '';
+    const cs = getComputedStyle(wrap);
+    const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+    const padTop = parseFloat(cs.paddingTop);
+    const padBottom = parseFloat(cs.paddingBottom);
+    const naturalWidth = track.offsetWidth;
+    const naturalHeight = track.offsetHeight;
+    const scale = (wrap.clientWidth - padX) / naturalWidth;
+    track.style.transform = `scale(${scale})`;
+    wrap.style.height = (naturalHeight * scale + padTop + padBottom) + 'px';
+  }
+  fitScale();
+  window.addEventListener('resize', fitScale);
+})();
+
 function toggleFaq(btn) {
   const item = btn.closest('.faq-item');
   const wasOpen = item.classList.contains('open');
