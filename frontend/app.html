@@ -935,21 +935,7 @@ input[type="checkbox"].row-check { width: 15px; height: 15px; cursor: pointer; a
         <p>For listings you posted directly on the platform (not via CrossList) — scan reads your own "my listings" page and adds anything found to the review list below. Nothing is imported automatically: you link each one to an existing item or fill in the missing details (purchase price, condition, color, etc.) yourself. Only Vinted is available right now — the other platforms are still in progress.</p>
       </div>
 
-      <div class="protection-card" style="margin-bottom:24px">
-        <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
-          <button class="btn btn-sm btn-outline" onclick="scanPlatform('vinted')">Scan Vinted</button>
-          <button class="btn btn-sm btn-outline" disabled title="Coming soon">Scan Marktplaats</button>
-          <span class="badge" style="margin-right:8px">Coming soon</span>
-          <button class="btn btn-sm btn-outline" disabled title="Coming soon">Scan 2dehands</button>
-          <span class="badge" style="margin-right:8px">Coming soon</span>
-          <button class="btn btn-sm btn-outline" disabled title="Coming soon">Scan eBay</button>
-          <span class="badge" style="margin-right:8px">Coming soon</span>
-          <button class="btn btn-sm btn-outline" disabled title="Coming soon">Scan Etsy</button>
-          <span class="badge" style="margin-right:8px">Coming soon</span>
-          <button class="btn btn-sm btn-outline" disabled title="Coming soon">Scan Shopify</button>
-          <span class="badge">Coming soon</span>
-        </div>
-      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:24px" id="import-scan-grid"></div>
 
       <div id="import-review-section" style="display:none;margin-bottom:28px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
