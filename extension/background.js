@@ -238,8 +238,8 @@ async function processJob(job, serverUrl) {
   // Store job for content script to pick up
   await chrome.storage.local.set({ [`job_${job.platform}`]: { ...job, serverUrl } });
 
-  const url = job.action === "delete"
-    ? getDeleteUrl(job.platform, job.payload)
+  const url = job.action === "delete" ? getDeleteUrl(job.platform, job.payload)
+    : job.action === "content_refresh" ? getEditUrl(job.platform, job.payload)
     : getMpSyiUrl(job.platform, job.payload);
   if (!url) {
     await reportError(job.id, serverUrl, "No URL configured for " + job.platform + " action=" + job.action);
