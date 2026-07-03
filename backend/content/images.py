@@ -19,20 +19,21 @@ logger = logging.getLogger(__name__)
 
 GEMINI_MODELS = ["gemini-2.5-flash-image", "gemini-3.1-flash-image"]
 
-# Eén scene per content-topic, meest-specifieke term eerst gecontroleerd
-# (dict-volgorde bepaalt matchvolgorde) zodat een combo-keyword als
-# "marktplaats naar vinted" niet per ongeluk op het verkeerde topic matcht.
+# Bewust CLOSE-UP op handen + product, geen volledige personen/gezichten —
+# AI image-modellen renderen volledige lichamen/gezichten onbetrouwbaar
+# (vervormde anatomie, "uitgerekte" proporties). Handen + object is het
+# meest betrouwbare shot-type en oogt nog steeds als echte productfotografie.
 TOPIC_PROMPTS = [
-    ("verzendlabel", "close-up of real hands holding a smartphone photographing a folded sweater laid flat on a wooden table, ring light visible at the edge of frame, product-listing photography setup, photorealistic"),
-    ("kleding", "a real person steaming a piece of clothing on a hanger against a plain wall, preparing it for an online listing photo, natural daylight, photorealistic"),
-    ("marktplaats naar vinted", "a real person photographing a folded jacket flat on a table with a smartphone, small ring light visible, clean neutral background, product-listing photography setup, photorealistic"),
-    ("vinted naar ebay", "a real person packing a folded clothing item into a poly mailer bag on a desk, a shipping label and printer visible nearby, photorealistic"),
-    ("2dehands naar vinted", "a real person photographing a folded clothing item flat on a table with a smartphone, small ring light visible, clean neutral background, photorealistic"),
-    ("marktplaats", "a real person carrying a labeled cardboard box to a car trunk for a local pickup handoff, driveway setting, daylight, photorealistic"),
-    ("ebay", "close-up of real hands applying a printed shipping label to a cardboard box on a desk covered with bubble wrap, photorealistic"),
-    ("vinted", "a real person photographing a folded jacket flat on a table with a smartphone, small ring light visible, clean neutral background, product-listing photography setup, photorealistic"),
+    ("verzendlabel", "close-up of hands applying a printed shipping label to a cardboard box, desk covered with bubble wrap, soft daylight, shallow depth of field, photorealistic"),
+    ("kleding", "close-up of hands smoothing a folded sweater flat on a wooden table, soft natural light from the side, shallow depth of field, photorealistic"),
+    ("marktplaats naar vinted", "close-up of hands holding a smartphone photographing a folded jacket laid flat on a table, small ring light glow visible at the edge of frame, shallow depth of field, photorealistic"),
+    ("vinted naar ebay", "close-up of hands folding a shirt into a poly mailer shipping bag on a desk, a printed shipping label beside it, shallow depth of field, photorealistic"),
+    ("2dehands naar vinted", "close-up of hands holding a smartphone photographing a folded clothing item laid flat on a table, small ring light glow visible, shallow depth of field, photorealistic"),
+    ("marktplaats", "close-up of hands taping shut a labeled cardboard box on a car trunk, driveway setting, daylight, shallow depth of field, photorealistic"),
+    ("ebay", "close-up of hands applying a printed shipping label to a cardboard box, desk covered with bubble wrap, soft daylight, shallow depth of field, photorealistic"),
+    ("vinted", "close-up of hands holding a smartphone photographing a folded jacket laid flat on a table, small ring light glow visible at the edge of frame, shallow depth of field, photorealistic"),
 ]
-DEFAULT_PROMPT = "a real person at a desk photographing a folded clothing item with a smartphone for an online listing, small ring light, clean neutral background, photorealistic"
+DEFAULT_PROMPT = "close-up of hands holding a smartphone photographing a folded clothing item laid flat on a table for an online listing, small ring light glow, shallow depth of field, photorealistic"
 
 
 def _prompt_for_keyword(keyword: str) -> str:
