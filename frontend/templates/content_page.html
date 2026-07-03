@@ -43,12 +43,12 @@
   .takeaways li:last-child{margin-bottom:0}
   .takeaways li::before{content:"✓";position:absolute;left:0;top:0;color:#fff;background:var(--purple);width:18px;height:18px;border-radius:50%;font-size:11px;line-height:18px;text-align:center}
 
-  .author-box{float:right;max-width:260px;width:100%;margin:0 0 24px 32px;padding:20px;border:1px solid var(--border);border-radius:14px;background:#f8fafc;text-align:center;font-size:13px;line-height:1.6;color:var(--muted)}
-  .author-box img{width:76px;height:76px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 10px}
-  .author-box .ab-label{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#94a3b8;margin-bottom:4px}
-  .author-box .ab-name{font-weight:700;font-size:16px;color:var(--text);margin-bottom:8px}
+  .author-box{display:flex;align-items:center;gap:16px;max-width:100%;margin:28px 0;padding:18px 20px;border:1px solid var(--border);border-radius:14px;background:#f8fafc;text-align:left;font-size:13px;line-height:1.6;color:var(--muted)}
+  .author-box img{width:56px;height:56px;border-radius:50%;object-fit:cover;flex-shrink:0}
+  .author-box .ab-label{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#94a3b8;margin-bottom:2px}
+  .author-box .ab-name{font-weight:700;font-size:15px;color:var(--text);margin-bottom:4px}
   .author-box p{margin:0}
-  @media(max-width:600px){.author-box{float:none;max-width:100%;margin:0 0 24px}}
+  @media(max-width:600px){.author-box{flex-direction:column;text-align:center}}
 
   .cta-box{margin-top:40px;background:linear-gradient(135deg,var(--blue) 0%,var(--mint) 100%);border-radius:16px;padding:32px;text-align:center;color:#fff}
   .cta-box h3{margin:0 0 8px;color:#fff;font-size:1.3rem}
