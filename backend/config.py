@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     ebay_webhook_url: str = "https://crosslisteu.com/api/webhooks/ebay"
 
     anthropic_api_key: str = ""
+    google_api_key: str = ""  # Gemini image-gen voor content_pages featured images
 
     cloudinary_cloud_name: str = ""
     cloudinary_api_key: str = ""
