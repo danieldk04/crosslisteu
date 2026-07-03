@@ -170,6 +170,7 @@ CREATE TABLE IF NOT EXISTS content_pages (
     faq JSONB NOT NULL DEFAULT '[]',     -- [{question, answer}, ...]
     featured_image_url TEXT,
     software_application_json_ld JSONB,
+    article_json_ld JSONB,
     competitor_research JSONB,           -- top-3 SERP snapshot + heading map + content-gap notes, kept for audit/re-runs
     related_slugs TEXT[] DEFAULT '{}',   -- intent_keys of pages linked to/from (orphan-prevention)
     status VARCHAR(20) DEFAULT 'draft',  -- draft / published
