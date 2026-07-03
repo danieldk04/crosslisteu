@@ -183,3 +183,65 @@ def generate_page_content(
         logger.error(f"Kon body/H1 niet parsen uit Claude-output voor '{keyword}'")
         return None
     return parsed
+
+
+def _build_translation_prompt(generated: dict) -> str:
+    takeaways_block = "\n".join(generated["takeaways"])
+    faq_block = "\n".join(f"Q: {f['question']}\nA: {f['answer']}" for f in generated["faq"])
+
+    return f"""Translate the following English article into natural, fluent Dutch (Netherlands) for CrossList EU, a cross-listing SaaS. Keep the exact same meaning, tone (helpful reseller talking to a colleague) and HTML structure — do not add or remove headings, links or paragraphs, just translate the text inside them. Keep all <a href="..."> URLs and platform/brand names (Marktplaats, Vinted, eBay, etc.) unchanged. Keep numbers, prices and the year 2026 unchanged.
+
+OUTPUT FORMAT — return EXACTLY this structure, nothing else, no markdown code fences:
+
+TITLE: [Dutch translation, max 60 characters]
+META_DESCRIPTION: [Dutch translation, max 155 characters]
+H1: [Dutch translation]
+QUICK_ANSWER: [Dutch translation, 40-60 words]
+TAKEAWAYS: [Dutch translation, one per line, same count as source]
+===BODY===
+[Dutch translation of the full HTML body, same tags and links, translated text only]
+===FAQ===
+[Dutch translation, same Q:/A: format, same number of pairs]
+
+SOURCE TITLE: {generated['title']}
+SOURCE META_DESCRIPTION: {generated['meta_description']}
+SOURCE H1: {generated['h1']}
+SOURCE QUICK_ANSWER: {generated['quick_answer']}
+SOURCE TAKEAWAYS:
+{takeaways_block}
+SOURCE BODY:
+{generated['body_html']}
+SOURCE FAQ:
+{faq_block}
+"""
+
+
+def translate_to_dutch(generated: dict) -> dict | None:
+    """Translates an already-generated English article into Dutch, preserving HTML structure and links."""
+    if not settings.anthropic_api_key:
+        logger.error("ANTHROPIC_API_KEY ontbreekt — kan niet vertalen")
+        return None
+
+    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+    prompt = _build_translation_prompt(generated)
+
+    try:
+        message = client.messages.create(
+            model=MODEL,
+            max_tokens=8000,
+            messages=[{"role": "user", "content": prompt}],
+        )
+    except Exception as e:
+        logger.error(f"Claude vertaal-fout: {e}")
+        return None
+
+    raw = message.content[0].text if message.content else ""
+    if not raw:
+        logger.error("Lege Claude-vertaalrespons")
+        return None
+
+    parsed = _parse_output(raw)
+    if not parsed["body_html"] or not parsed["h1"]:
+        logger.error("Kon vertaalde body/H1 niet parsen")
+        return None
+    return parsed
