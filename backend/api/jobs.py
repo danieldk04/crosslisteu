@@ -111,6 +111,7 @@ def _store_scan_results(db, job, scraped: list[dict]):
             "price": row.get("price"),
             "photo_url": row.get("photo_url"),
             "suggested_item_id": best_id if best_score >= 0.9 else None,
+            "platform_listed_at": row.get("platform_listed_at"),
             "status": "pending",
         }, on_conflict="user_id,platform,platform_listing_id").execute()
 
