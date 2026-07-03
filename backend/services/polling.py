@@ -1,5 +1,5 @@
 """
-Polling service for platforms without webhooks (primarily Vinted).
+Polling service for platforms without webhooks (Marktplaats, 2dehands).
 Runs on a configurable interval via APScheduler.
 """
 import logging
