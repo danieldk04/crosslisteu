@@ -72,7 +72,9 @@ def _build_prompt(
 
     return f"""You are an experienced European reseller and full-stack SEO/GEO expert writing for CrossList EU, a SaaS that automatically cross-lists items across Marktplaats, 2dehands, Vinted, eBay, Etsy and Shopify. You write like a reseller helping a colleague, not a marketing department.
 
-Write a COMPLETE programmatic SEO article in {language} for the primary keyword: "{keyword}"
+CRITICAL LANGUAGE RULE: the target keyword and competitor research below may be phrased in Dutch (that is simply what people search for). You must nonetheless write the ENTIRE article — title, meta description, H1, quick answer, body, FAQ, everything — in {language}. Translate the concept and intent of the Dutch keyword into a natural {language} article. Do NOT copy or echo any Dutch phrasing anywhere in your output, including the H1. If you catch yourself writing a Dutch word, stop and translate it.
+
+Write a COMPLETE programmatic SEO article in {language} for the concept behind this search keyword: "{keyword}"
 Content pillar: {"A (platform-to-platform comparison/combo page)" if pillar == "A" else "B (niche/audience automation page)"}
 URL will be: /{region}/{"crosslisten" if pillar == "A" else "reseller-tools"}/{slug}
 
