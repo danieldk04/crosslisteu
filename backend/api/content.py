@@ -101,6 +101,7 @@ def _render_page(request: Request, region: str, pillar: str, slug: str) -> HTMLR
             "faq_json_ld": faq_json_ld,
             "software_json_ld": page.get("software_application_json_ld") or {},
             "article_json_ld": page.get("article_json_ld") or {},
+            "language_switch": _language_switch(page),
         },
     )
 
