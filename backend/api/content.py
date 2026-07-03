@@ -3,7 +3,6 @@ Server-side rendered programmatic SEO/GEO pages. All content and metadata
 must be in the initial HTML — no client-side rendering — so these routes
 render Jinja2 templates directly from `content_pages`, no JS involved.
 """
-import uuid
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request
