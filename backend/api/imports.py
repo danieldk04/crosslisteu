@@ -3,11 +3,23 @@ from backend.database import get_db
 from backend.api.deps import get_current_user
 from backend.models import ItemCreate
 from datetime import datetime, timezone
+from difflib import SequenceMatcher
 import uuid
 
 router = APIRouter(prefix="/imports", tags=["imports"])
 
 SCANNABLE_PLATFORMS = {"vinted", "marktplaats", "2dehands"}
+MATCH_THRESHOLD = 0.9
+
+
+def _best_match(title: str, items: list[dict]) -> str | None:
+    """Titles are published verbatim to the platform, so a genuine match scores near 1.0."""
+    best_id, best_score = None, 0.0
+    for it in items:
+        score = SequenceMatcher(None, (title or "").lower(), (it.get("title") or "").lower()).ratio()
+        if score > best_score:
+            best_id, best_score = it["id"], score
+    return best_id if best_score >= MATCH_THRESHOLD else None
 
 
 @router.post("/scan/{platform}")
