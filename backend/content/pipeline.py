@@ -89,7 +89,7 @@ def _save_page_row(
         {
             "intent_key": f'{p["region"]}:{p["pillar"]}:{p["slug"]}',
             "title": p["title"],
-            "url_path": _url_path(p["region"], p["pillar"], p["slug"]),
+            "url_path": _url_path(p.get("language", "en"), p["pillar"], p["slug"]),
             "link_terms": _link_terms_for(p),
         }
         for p in existing
@@ -100,7 +100,7 @@ def _save_page_row(
     featured_image_url = existing_row[0].get("featured_image_url") if existing_row else None
 
     now_iso = datetime.now(timezone.utc).isoformat()
-    canonical = f"{SITE_URL}{_url_path(region, pillar, slug)}"
+    canonical = f"{SITE_URL}{_url_path(language, pillar, slug)}"
     article_json_ld = {
         "@context": "https://schema.org",
         "@type": "Article",
