@@ -861,6 +861,38 @@ input[type="checkbox"].row-check { width: 15px; height: 15px; cursor: pointer; a
       </div>
     </div>
 
+    <!-- ── REFRESH VIEW ─────────────────────────────────────────────── -->
+    <div id="view-refresh" class="view">
+      <div class="view-header">
+        <h1>Refresh</h1>
+        <p>Bump old Vinted listings that sank in "Newest" — a safe content edit or a legitimate delete + delayed recreate. Rate-limited on purpose: 1x per listing per 14 days, max 8 refreshes/day/account. Not a bot-engagement trick, and it isn't guaranteed to change ranking.</p>
+      </div>
+
+      <div class="protections-summary">
+        <div class="protections-summary-icon">⬆️</div>
+        <div>
+          <div class="protections-summary-title" id="refresh-quota-title">Refresh quota: loading…</div>
+          <div class="protections-summary-sub">Resets daily. Kept low so refresh activity looks like normal shop upkeep, not a script.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin:16px 0 20px">
+        <button class="btn btn-outline" onclick="refreshStaleListings()">Refresh oldest Vinted listings (bulk)</button>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Live since</th>
+            <th>Last refreshed</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="refresh-body"></tbody>
+      </table>
+    </div>
+
     <!-- ── ACCOUNT / SUBSCRIPTION VIEW ─────────────────────────────── -->
     <div id="view-prijs" class="view">
       <div style="max-width:600px;margin:0 auto">
