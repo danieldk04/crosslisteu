@@ -19,6 +19,17 @@ from backend.services.image_upload import upload_image
 
 logger = logging.getLogger(__name__)
 
+SITE_URL = "https://crosslisteu.com"
+
+# Altijd-beschikbare interne linkkandidaten, ook als er nog geen andere
+# content_pages bestaan — zo heeft zelfs de allereerste pagina al zinvolle
+# interne links in plaats van een orphan page.
+STATIC_LINK_CANDIDATES = [
+    {"intent_key": "static:home", "title": "CrossList EU", "url_path": "/", "link_terms": ["CrossList EU"]},
+    {"intent_key": "static:register", "title": "Start gratis", "url_path": "/register", "link_terms": ["crosslist-tool", "cross-listing tool"]},
+    {"intent_key": "static:marketplaces", "title": "Ondersteunde platforms", "url_path": "/marketplaces", "link_terms": ["Marktplaats", "Vinted", "eBay", "Etsy", "Shopify"]},
+]
+
 
 def _url_path(region: str, pillar: str, slug: str) -> str:
     folder = "crosslisten" if pillar == "A" else "reseller-tools"
