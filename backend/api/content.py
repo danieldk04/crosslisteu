@@ -2,6 +2,11 @@
 Server-side rendered programmatic SEO/GEO pages. All content and metadata
 must be in the initial HTML — no client-side rendering — so these routes
 render Jinja2 templates directly from `content_pages`, no JS involved.
+
+URL scheme is LANGUAGE-based, not region-based: English (the default) has no
+prefix (/crosslisten/{slug}), only a genuine translation gets a language
+prefix (/nl/crosslisten/{slug}). See backend/content/pipeline.py's
+`_url_path()` for the canonical implementation this mirrors.
 """
 from pathlib import Path
 
@@ -25,24 +30,37 @@ def _require_admin(x_admin_secret: str | None) -> None:
     """
     if not settings.secret_key or settings.secret_key == "change-me" or x_admin_secret != settings.secret_key:
         raise HTTPException(status_code=401, detail="unauthorized")
+
+
 templates = Jinja2Templates(directory=str(Path(__file__).parent.parent.parent / "frontend" / "templates"))
 
 REGIONS = {"nl", "be-nl", "be-fr", "fr", "de"}
+LANGUAGES = {"nl", "fr", "de"}  # non-English language prefixes this site currently serves
 SITE_URL = "https://crosslisteu.com"
 
 
-def _get_page(region: str, pillar: str, slug: str) -> dict | None:
-    db = get_db()
-    intent_key = f"{region}:{pillar}:{slug}"
-    result = db.table("content_pages").select("*").eq("intent_key", intent_key).eq("status", "published").execute()
-    return result.data[0] if result.data else None
-
-
-def _hreflang_variants(pillar: str, slug: str) -> list[dict]:
-    db = get_db()
+def _url_path(language: str, pillar: str, slug: str) -> str:
     folder = "crosslisten" if pillar == "A" else "reseller-tools"
-    rows = db.table("content_pages").select("region").eq("pillar", pillar).eq("slug", slug).eq("status", "published").execute().data or []
-    return [{"region": r["region"], "url": f"{SITE_URL}/{r['region']}/{folder}/{slug}"} for r in rows]
+    if language and language != "en":
+        suffix = f"-{language}"
+        public_slug = slug[: -len(suffix)] if slug.endswith(suffix) else slug
+        return f"/{language}/{folder}/{public_slug}"
+    return f"/{folder}/{slug}"
+
+
+def _get_page(language: str, pillar: str, slug: str) -> dict | None:
+    db = get_db()
+    db_slug = slug if language == "en" else f"{slug}-{language}"
+    result = (
+        db.table("content_pages")
+        .select("*")
+        .eq("pillar", pillar)
+        .eq("slug", db_slug)
+        .eq("language", language)
+        .eq("status", "published")
+        .execute()
+    )
+    return result.data[0] if result.data else None
 
 
 def _language_switch(page: dict) -> dict | None:
@@ -50,33 +68,28 @@ def _language_switch(page: dict) -> dict | None:
     Returns the URL of the sibling-language page if one exists, so the
     template can render an EN/NL toggle. Works in both directions: an
     English row finds its Dutch companion via translation_of pointing at it;
-    a Dutch row finds its English source directly via its own translation_of.
+    a translated row finds its English source directly via its own translation_of.
     """
     db = get_db()
-    folder = "crosslisten" if page["pillar"] == "A" else "reseller-tools"
 
     if page.get("translation_of"):
-        source_intent = page["translation_of"]
-        source_region, source_pillar, source_slug = source_intent.split(":")
-        return {"language": "en", "url": f"/{source_region}/{folder}/{source_slug}"}
+        source_region, source_pillar, source_slug = page["translation_of"].split(":")
+        return {"language": "en", "url": _url_path("en", source_pillar, source_slug)}
 
     own_intent = f"{page['region']}:{page['pillar']}:{page['slug']}"
-    sibling = db.table("content_pages").select("region,pillar,slug,language").eq("translation_of", own_intent).eq("status", "published").execute().data
+    sibling = db.table("content_pages").select("pillar,slug,language").eq("translation_of", own_intent).eq("status", "published").execute().data
     if sibling:
         s = sibling[0]
-        return {"language": "nl", "url": f"/{s['region']}/{folder}/{s['slug']}"}
+        return {"language": s["language"], "url": _url_path(s["language"], s["pillar"], s["slug"])}
     return None
 
 
-def _render_page(request: Request, region: str, pillar: str, slug: str) -> HTMLResponse:
-    if region not in REGIONS:
-        raise HTTPException(status_code=404, detail="Unknown region")
-    page = _get_page(region, pillar, slug)
+def _render_page(request: Request, language: str, pillar: str, slug: str) -> HTMLResponse:
+    page = _get_page(language, pillar, slug)
     if not page:
         raise HTTPException(status_code=404, detail="Page not found")
 
-    folder = "crosslisten" if pillar == "A" else "reseller-tools"
-    canonical = f"{SITE_URL}/{region}/{folder}/{slug}"
+    canonical = f"{SITE_URL}{_url_path(language, pillar, slug)}"
 
     faq_json_ld = {
         "@context": "https://schema.org",
@@ -91,29 +104,48 @@ def _render_page(request: Request, region: str, pillar: str, slug: str) -> HTMLR
         ],
     }
 
+    language_switch = _language_switch(page)
+    hreflang_variants = [{"region": page.get("language", "en"), "url": canonical}]
+    if language_switch:
+        hreflang_variants.append({"region": language_switch["language"], "url": f"{SITE_URL}{language_switch['url']}"})
+
     return templates.TemplateResponse(
         request,
         "content_page.html",
         {
             "page": page,
             "canonical": canonical,
-            "hreflang_variants": _hreflang_variants(pillar, slug),
+            "hreflang_variants": hreflang_variants,
             "faq_json_ld": faq_json_ld,
             "software_json_ld": page.get("software_application_json_ld") or {},
             "article_json_ld": page.get("article_json_ld") or {},
-            "language_switch": _language_switch(page),
+            "language_switch": language_switch,
         },
     )
 
 
-@router.get("/{region}/crosslisten/{slug}", response_class=HTMLResponse)
-async def combo_page(request: Request, region: str, slug: str):
-    return _render_page(request, region, "A", slug)
+@router.get("/crosslisten/{slug}", response_class=HTMLResponse)
+async def combo_page_en(request: Request, slug: str):
+    return _render_page(request, "en", "A", slug)
 
 
-@router.get("/{region}/reseller-tools/{slug}", response_class=HTMLResponse)
-async def niche_page(request: Request, region: str, slug: str):
-    return _render_page(request, region, "B", slug)
+@router.get("/reseller-tools/{slug}", response_class=HTMLResponse)
+async def niche_page_en(request: Request, slug: str):
+    return _render_page(request, "en", "B", slug)
+
+
+@router.get("/{language}/crosslisten/{slug}", response_class=HTMLResponse)
+async def combo_page_lang(request: Request, language: str, slug: str):
+    if language not in LANGUAGES:
+        raise HTTPException(status_code=404, detail="Unknown language")
+    return _render_page(request, language, "A", slug)
+
+
+@router.get("/{language}/reseller-tools/{slug}", response_class=HTMLResponse)
+async def niche_page_lang(request: Request, language: str, slug: str):
+    if language not in LANGUAGES:
+        raise HTTPException(status_code=404, detail="Unknown language")
+    return _render_page(request, language, "B", slug)
 
 
 def _reading_minutes(body_html: str) -> int:
@@ -123,14 +155,14 @@ def _reading_minutes(body_html: str) -> int:
     return max(1, round(words / 200))
 
 
-def _render_blog_index(request: Request, region: str | None, canonical: str) -> HTMLResponse:
+def _render_blog_index(request: Request, canonical: str) -> HTMLResponse:
+    # The blog index only ever lists primary (English) articles — a Dutch
+    # translation is reachable via the language toggle on its English page,
+    # never as its own index card (that would look like duplicate content).
     db = get_db()
-    q = db.table("content_pages").select("*").eq("status", "published").is_("translation_of", "null")
-    if region:
-        q = q.eq("region", region)
-    rows = q.order("published_at", desc=True).execute().data or []
+    rows = db.table("content_pages").select("*").eq("status", "published").is_("translation_of", "null").order("published_at", desc=True).execute().data or []
     for r in rows:
-        r["url_path"] = f"/{r['region']}/{'crosslisten' if r['pillar'] == 'A' else 'reseller-tools'}/{r['slug']}"
+        r["url_path"] = _url_path(r.get("language", "en"), r["pillar"], r["slug"])
         r["reading_minutes"] = _reading_minutes(r.get("body_html"))
 
     item_list_json_ld = {
@@ -145,31 +177,23 @@ def _render_blog_index(request: Request, region: str | None, canonical: str) -> 
     return templates.TemplateResponse(
         request,
         "blog_index.html",
-        {"pages": rows, "region": region or "nl", "canonical": canonical, "item_list_json_ld": item_list_json_ld},
+        {"pages": rows, "region": "nl", "canonical": canonical, "item_list_json_ld": item_list_json_ld},
     )
 
 
 @router.get("/blog", response_class=HTMLResponse)
 async def blog_index_default(request: Request):
-    """Region-neutral canonical blog URL — used everywhere in nav/footer."""
-    return _render_blog_index(request, None, f"{SITE_URL}/blog")
-
-
-@router.get("/{region}/blog", response_class=HTMLResponse)
-async def blog_index(request: Request, region: str):
-    if region not in REGIONS:
-        raise HTTPException(status_code=404, detail="Unknown region")
-    return _render_blog_index(request, region, f"{SITE_URL}/{region}/blog")
+    return _render_blog_index(request, f"{SITE_URL}/blog")
 
 
 @router.get("/sitemap.xml")
 async def content_sitemap():
     db = get_db()
-    rows = db.table("content_pages").select("region,pillar,slug,updated_at").eq("status", "published").execute().data or []
+    rows = db.table("content_pages").select("language,pillar,slug,updated_at").eq("status", "published").execute().data or []
     urls = []
     for r in rows:
-        folder = "crosslisten" if r["pillar"] == "A" else "reseller-tools"
-        urls.append(f"<url><loc>{SITE_URL}/{r['region']}/{folder}/{r['slug']}</loc><lastmod>{r['updated_at']}</lastmod></url>")
+        loc = f"{SITE_URL}{_url_path(r.get('language', 'en'), r['pillar'], r['slug'])}"
+        urls.append(f"<url><loc>{loc}</loc><lastmod>{r['updated_at']}</lastmod></url>")
     xml = f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{"".join(urls)}</urlset>'
     return HTMLResponse(content=xml, media_type="application/xml")
 
