@@ -143,6 +143,30 @@ class EtsyPlatform(PlatformBase):
             )
             return r.status_code in (200, 204)
 
+    async def renew_listing(self, platform_listing_id: str, credentials: dict) -> dict:
+        """
+        Official Etsy renewal: PATCH the listing's state to 'active'. Etsy charges the
+        normal listing fee and gives the listing a fresh "listed" timestamp — this is
+        Etsy's own renewal mechanism (same one their web UI "Renew" button uses), not
+        a workaround. Works for 'sold_out' and 'expired' listings; a currently-active
+        listing doesn't need renewing.
+        """
+        token = self._token(credentials)
+        shop_id = await self._get_shop_id(token)
+        async with httpx.AsyncClient() as c:
+            r = await c.patch(
+                f"{ETSY_BASE}/application/shops/{shop_id}/listings/{platform_listing_id}",
+                json={"state": "active", "quantity": 1},
+                headers=self._headers(token),
+            )
+            if r.status_code not in (200, 201):
+                raise RuntimeError(f"Etsy renew failed {r.status_code}: {r.text}")
+            data = r.json()
+            return {
+                "platform_listing_id": str(data.get("listing_id", platform_listing_id)),
+                "state": data.get("state"),
+            }
+
     async def get_listing_status(self, platform_listing_id: str, credentials: dict) -> str:
         token = self._token(credentials)
         async with httpx.AsyncClient() as c:
