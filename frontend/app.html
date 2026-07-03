@@ -2625,6 +2625,7 @@ function refreshItem(itemId, title, platform) {
 }
 
 async function doRefresh(itemId, platform, strategy) {
+  setBusy(true, 'Queuing refresh…');
   try {
     const r = await apiFetch(`${API}/api/listings/refresh`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -2632,17 +2633,20 @@ async function doRefresh(itemId, platform, strategy) {
     });
     const data = await r.json();
     if (!r.ok) throw new Error(data.detail || 'Refresh failed');
-    alert(data.message || `Refresh queued (${data.strategy}).`);
+    showToast(data.message || `Refresh queued (${data.strategy}).`);
     await loadAll();
     if (document.getElementById('view-refresh')?.classList.contains('active')) renderRefreshView();
   } catch (e) {
     alert('Refresh error: ' + e.message);
+  } finally {
+    setBusy(false);
   }
 }
 
 async function refreshStaleListings(platform) {
   const label = PLATFORM_LABELS[platform] || platform;
   if (!confirm(`Refresh your oldest active ${label} listings (30+ days old)? This queues a legitimate delete+recreate for up to 5 items, rate-limited and delayed to avoid a scripted pattern.`)) return;
+  setBusy(true, `Queuing ${label} refreshes…`);
   try {
     const r = await apiFetch(`${API}/api/listings/refresh-stale`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -2656,6 +2660,8 @@ async function refreshStaleListings(platform) {
     if (document.getElementById('view-refresh')?.classList.contains('active')) renderRefreshView();
   } catch (e) {
     alert('Bulk refresh error: ' + e.message);
+  } finally {
+    setBusy(false);
   }
 }
 
