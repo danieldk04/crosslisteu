@@ -289,14 +289,18 @@ tr:last-child td { border-bottom: none; }
 <div class="cursor-dot" id="cursor"></div>
 <script>
 const items = [
-  { emoji: "🧥", title: "Nike Tech Fleece Jacket", meta: "Size M · Like new", price: "€48", status: ["s-active","s-active","s-active","s-none"] },
-  { emoji: "👟", title: "Adidas Samba OG", meta: "Size 42 · Worn", price: "€65", status: ["s-active","s-active","s-pending","s-none"] },
-  { emoji: "👜", title: "Vintage Leather Bag", meta: "Undamaged", price: "€35", status: ["s-active","s-none","s-active","s-active"] },
-  { emoji: "👗", title: "Zara Summer Dress Floral", meta: "Size S · New with tags", price: "€22", status: ["s-active","s-active","s-active","s-none"] },
-  { emoji: "🧢", title: "New Era Cap 9FIFTY", meta: "One size", price: "€18", status: ["s-active","s-none","s-none","s-active"] },
+  { emoji: "🧥", title: "Nike Tech Fleece Jacket", meta: "Size M · Like new", price: "€48", status: ["s-active","s-active","s-active","s-none","s-none","s-none"] },
+  { emoji: "👟", title: "Adidas Samba OG", meta: "Size 42 · Worn", price: "€65", status: ["s-active","s-active","s-pending","s-active","s-none","s-none"] },
+  { emoji: "👜", title: "Vintage Leather Bag", meta: "Undamaged", price: "€35", status: ["s-active","s-none","s-active","s-none","s-active","s-active"] },
+  { emoji: "👗", title: "Zara Summer Dress Floral", meta: "Size S · New with tags", price: "€22", status: ["s-active","s-active","s-active","s-none","s-active","s-none"] },
+  { emoji: "🧢", title: "New Era Cap 9FIFTY", meta: "One size", price: "€18", status: ["s-active","s-none","s-none","s-active","s-none","s-active"] },
 ];
-const labels = ["MP","2DH","VIN","SHOP"];
+const platformDomains = ["marktplaats.nl","2dehands.be","vinted.nl","ebay.com","etsy.com","shopify.com"];
+const labels = ["MP","2DH","VIN","EBAY","ETSY","SHOP"];
 const icons = { "s-active": "✓", "s-pending": "…", "s-error": "!", "s-none": "" };
+function platformIcon(i) {
+  return `<img src="https://www.google.com/s2/favicons?sz=64&domain=${platformDomains[i]}" alt="${labels[i]}">`;
+}
 
 const rowsEl = document.getElementById('demo-rows');
 rowsEl.innerHTML = items.map((it, ri) => `
