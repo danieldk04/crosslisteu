@@ -607,8 +607,23 @@ async function bgDeleteVinted(job, serverUrl) {
         }
         return "";
       };
-      if (!out.color) out.color = scopeRow(["Colour", "Color", "Kleur"]);
-      out.material = scopeRow(["Material", "Materiaal"]);
+      // Broader row scrape (the original approach that reliably found Grey/Wool)
+      // — used only as a fallback for colour/material, which are single-word
+      // values easy to sanity-check, so junk like "Menu" is filtered out.
+      const rowValue = (labels) => {
+        const rows = [...document.querySelectorAll('[data-testid*="item-attributes"] *, dl div, div[class*="Cell"], li, tr')];
+        for (const lab of labels) {
+          const re = new RegExp("^\\s*" + lab + "\\s*[:\\-]?\\s*(.+)$", "i");
+          for (const el of rows) {
+            const m = (el.textContent || "").trim().match(re);
+            const v = m && m[1] ? m[1].trim() : "";
+            if (v && v.length < 30 && !/menu|home|catalog|view|favourite|€|\d{2,}|\bcm\b/i.test(v)) return v;
+          }
+        }
+        return "";
+      };
+      if (!out.color) out.color = scopeRow(["Colour", "Color", "Kleur"]) || rowValue(["Colour", "Color", "Kleur"]);
+      out.material = scopeRow(["Material", "Materiaal"]) || rowValue(["Material", "Materiaal"]);
       // Category + gender from the breadcrumb (e.g. Women / Clothing / Jumpers & sweaters / ...).
       const crumbs = [...document.querySelectorAll('nav a, [class*="breadcrumb" i] a, [data-testid*="breadcrumb"] a')]
         .map(a => a.textContent.trim()).filter(Boolean);
