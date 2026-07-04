@@ -145,6 +145,15 @@ async def complete_job(job_id: str, body: dict, user_id: str = Depends(get_curre
                 cap_photos = captured.get("photo_urls") or []
                 if len(cap_photos) > len(payload.get("photo_urls") or []):
                     payload["photo_urls"] = cap_photos
+                # Price: the captured value is the real live Vinted price. The
+                # dashboard's jittered price can be wrong for imported items, so
+                # trust the captured one when present.
+                cap_price = captured.get("price")
+                if cap_price is not None:
+                    try:
+                        payload["price"] = float(cap_price)
+                    except (TypeError, ValueError):
+                        pass
                 db.table("jobs").update({"payload": payload}).eq("id", paired[0]["id"]).execute()
 
     elif job["action"] == "content_refresh":
