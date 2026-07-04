@@ -48,6 +48,12 @@ async def get_pending_jobs(platform: str = None, user_id: str = Depends(get_curr
                     "error_message": "Relist aborted: delist of the old listing failed, so no new listing was created (would have duplicated it).",
                 }).eq("item_id", j["item_id"]).eq("platform", j["platform"]).execute()
                 continue
+            # Delete not confirmed "done" yet (still pending/claimed, e.g. Chrome
+            # was closed and just reopened) — hold the create job rather than
+            # risk it firing before the old listing is actually gone. It stays
+            # "pending" and will be re-checked on the next poll.
+            if paired_delete and paired_delete[0]["status"] != "done":
+                continue
         ready.append(j)
 
     return ready[:5]
