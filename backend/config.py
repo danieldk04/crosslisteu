@@ -47,5 +47,25 @@ class Settings(BaseSettings):
     polling_interval: int = 300
     owner_email: str = "dkresellacademy@gmail.com"
 
+    # Google Search Console — service account JSON (as a raw JSON string, not a file path)
+    # for the content pipeline's keyword prioritization + internal-linking signal.
+    gsc_service_account_json: str = ""
+    gsc_site_url: str = "https://crosslisteu.com"
+
+    # Google Ads API — search-volume check before a keyword enters the content queue.
+    # Optional: pipeline runs without volume filtering if these are blank.
+    google_ads_developer_token: str = ""
+    google_ads_client_id: str = ""
+    google_ads_client_secret: str = ""
+    google_ads_refresh_token: str = ""
+    google_ads_login_customer_id: str = ""
+
+    # Best-effort post-publish notification email (non-blocking — publish never waits on this).
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from_email: str = ""
+
 
 settings = Settings()
