@@ -17,7 +17,40 @@ async def get_pending_jobs(platform: str = None, user_id: str = Depends(get_curr
     now = datetime.now(timezone.utc).isoformat()
     # Jobs with a future scheduled_for (used to jitter relist recreates) aren't due yet.
     due = [j for j in result.data if not j.get("scheduled_for") or j["scheduled_for"] <= now]
-    return due[:5]
+
+    # A relist's "create" job (scheduled_for set) must never fire if the delete
+    # job it's paired with actually failed — otherwise the old listing stays
+    # live on the platform and this would create a duplicate. Hold/fail those
+    # instead of handing them to the extension.
+    ready = []
+    for j in due:
+        if j["action"] == "create" and j.get("scheduled_for"):
+            paired_delete = (
+                db.table("jobs")
+                .select("status")
+                .eq("item_id", j["item_id"])
+                .eq("platform", j["platform"])
+                .eq("action", "delete")
+                .lte("created_at", j["created_at"])
+                .order("created_at", desc=True)
+                .limit(1)
+                .execute()
+                .data
+            )
+            if paired_delete and paired_delete[0]["status"] == "error":
+                db.table("jobs").update({
+                    "status": "error",
+                    "result": {"error": "Skipped — the paired delist failed, so the old listing is still live; creating a new one would duplicate it."},
+                    "done_at": now,
+                }).eq("id", j["id"]).execute()
+                db.table("listings").update({
+                    "status": "error",
+                    "error_message": "Relist aborted: delist of the old listing failed, so no new listing was created (would have duplicated it).",
+                }).eq("item_id", j["item_id"]).eq("platform", j["platform"]).execute()
+                continue
+        ready.append(j)
+
+    return ready[:5]
 
 
 @router.post("/{job_id}/claim")
