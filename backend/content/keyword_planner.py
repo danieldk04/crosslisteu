@@ -38,14 +38,15 @@ def _build_prompt(existing_keywords: list[str]) -> str:
     existing_block = "\n".join(f"- {k}" for k in existing_keywords) or "(none yet)"
     return f"""You are a programmatic SEO strategist for CrossList EU, a SaaS that cross-lists items across exactly these platforms: {', '.join(PLATFORMS)}. Never propose a combination involving any other platform.
 
-Propose 5 new content page ideas we have not covered yet. Mix two types:
+Propose 5 new content page ideas we have not covered yet. Roughly rotate across all three types below — don't cluster all 5 in one type, and don't skip Pillar C:
 - Pillar A (platform combo): "{{platform}} to {{platform}} crosslisting" style, e.g. "vinted to ebay crosslisting" — pick pairs resellers actually care about.
 - Pillar B (niche/audience): "{{niche}} selling automation" style, e.g. "sneaker reselling automation", "vintage clothing crosslisting".
+- Pillar C (honest competitor comparison): "CrossList EU vs {{competitor}}" style, comparing CrossList EU against one named competitor from this list only: {', '.join(COMPETITORS)}. Never invent a competitor name outside this list.
 
 ALREADY COVERED (do not repeat these or close variants):
 {existing_block}
 
-For each idea, decide if it should ALSO get a Dutch translation: only if the primary keyword concept centers on Marktplaats or 2dehands specifically (they're Dutch/Belgian-market platforms, so Dutch searchers actively search in Dutch for these). Platform combos involving only Vinted/eBay/Etsy/Shopify should stay English-only.
+For each idea, decide if it should ALSO get a Dutch translation: only if the primary keyword concept centers on Marktplaats or 2dehands specifically (they're Dutch/Belgian-market platforms, so Dutch searchers actively search in Dutch for these). Platform combos involving only Vinted/eBay/Etsy/Shopify, and all Pillar C comparisons, should stay English-only (these are English-language search markets).
 
 Return ONLY a JSON array, no prose, no markdown fences, in this exact shape:
 [
