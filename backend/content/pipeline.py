@@ -104,7 +104,12 @@ def _save_page_row(
             "link_terms": _link_terms_for(p),
         }
         for p in existing
-    ] + STATIC_LINK_CANDIDATES
+    ]
+    # Prioritize linking to pages that already get real Search Console traffic —
+    # falls back to the existing (unordered) sequence if GSC isn't configured.
+    clicks_by_url = {p["url"]: p["clicks"] for p in get_top_pages(days=90, row_limit=200)}
+    candidates.sort(key=lambda c: clicks_by_url.get(f"https://crosslisteu.com{c['url_path']}", 0), reverse=True)
+    candidates += STATIC_LINK_CANDIDATES
     body_with_links, linked_intents = apply_internal_links(generated["body_html"], candidates, intent_key)
 
     existing_row = db.table("content_pages").select("id,featured_image_url").eq("intent_key", intent_key).execute().data
