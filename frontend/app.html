@@ -1914,7 +1914,8 @@ function renderPlatformMatrix(itemId) {
     } else if (l && (l.status === 'pending' || l.status === 'queued')) {
       cls = 's-pending'; badge = '…'; tip = `${PLATFORM_LABELS[p]}: publishing…`;
     } else if (l && l.status === 'error') {
-      cls = 's-error'; badge = '!'; tip = `${PLATFORM_LABELS[p]}: failed — publish again`;
+      cls = 's-error'; badge = '!';
+      tip = l.error_message ? `${PLATFORM_LABELS[p]}: ${l.error_message}` : `${PLATFORM_LABELS[p]}: failed — publish again`;
     }
     const badgeEl = badge ? `<span class="pm-dot-badge">${badge}</span>` : '';
     return `<div class="pm-dot" title="${tip}">
