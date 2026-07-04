@@ -60,6 +60,50 @@ async def get_pending_jobs(platform: str = None, user_id: str = Depends(get_curr
     return ready[:5]
 
 
+@router.get("/relist-status")
+async def relist_status(user_id: str = Depends(get_current_user)):
+    """
+    In-progress relists for the dashboard's Refresh view: any scheduled recreate
+    ("create" job with a future/pending scheduled_for) plus the state of its
+    paired delete, so the UI can show "old listing removed, new one in ~X min".
+    """
+    db = get_db()
+    create_jobs = (
+        db.table("jobs")
+        .select("item_id,platform,status,scheduled_for,created_at")
+        .eq("user_id", user_id)
+        .eq("action", "create")
+        .in_("status", ["pending", "claimed"])
+        .execute()
+        .data
+    )
+    out = []
+    for j in create_jobs:
+        if not j.get("scheduled_for"):
+            continue  # only relist recreates carry a scheduled_for
+        paired = (
+            db.table("jobs")
+            .select("status")
+            .eq("user_id", user_id)
+            .eq("item_id", j["item_id"])
+            .eq("platform", j["platform"])
+            .eq("action", "delete")
+            .lte("created_at", j["created_at"])
+            .order("created_at", desc=True)
+            .limit(1)
+            .execute()
+            .data
+        )
+        out.append({
+            "item_id": j["item_id"],
+            "platform": j["platform"],
+            "recreate_at": j["scheduled_for"],
+            "recreate_status": j["status"],
+            "delete_status": paired[0]["status"] if paired else None,
+        })
+    return out
+
+
 @router.post("/{job_id}/claim")
 async def claim_job(job_id: str, user_id: str = Depends(get_current_user)):
     db = get_db()
