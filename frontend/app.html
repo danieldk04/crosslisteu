@@ -883,6 +883,28 @@ input[type="checkbox"].row-check { width: 15px; height: 15px; cursor: pointer; a
         </div>
       </div>
 
+      <!-- Live in-progress relists (populated by renderRefreshView) -->
+      <div id="relist-inprogress"></div>
+
+      <!-- How a relist actually works — transparency for the user -->
+      <details id="relist-explainer" style="margin:14px 0 4px;border:1px solid var(--border);border-radius:12px;background:var(--card,#fff);overflow:hidden">
+        <summary style="cursor:pointer;padding:14px 16px;font-weight:700;font-size:13px;list-style:none;display:flex;align-items:center;gap:8px">
+          <span style="font-size:15px">ℹ️</span> What actually happens when you relist (and what stays open)
+        </summary>
+        <div style="padding:0 16px 16px;font-size:12.5px;color:var(--muted);line-height:1.6">
+          <p style="margin:0 0 10px"><b>The "bump" comes from a fresh listing date.</b> Vinted &amp; Marktplaats sort "Newest" by when a listing was created. A relist <b>deletes the old listing now</b> and <b>recreates it after a randomised delay (45–240 min)</b>, so it gets a brand-new date and climbs back to the top — while looking like normal, organic activity instead of a scripted burst.</p>
+          <p style="margin:0 0 10px"><b>The recreate is a faithful copy.</b> Right before deleting, we snapshot the full live listing (all photos, description, brand, size, condition, colour, material, category) straight from the platform, so the new listing matches the old one.</p>
+          <p style="margin:0 0 10px"><b>Photos are re-encoded, not re-used as-is.</b> Each photo is lightly re-processed (tiny crop + imperceptible tone shift + re-encode) so the platform sees genuinely new images, not a duplicate upload — with no visible quality change.</p>
+          <div style="display:flex;gap:10px;align-items:flex-start;background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.2);border-radius:10px;padding:11px 13px;margin-top:12px">
+            <span style="font-size:15px">🖥️</span>
+            <div>
+              <div style="font-weight:700;color:var(--text,#111);margin-bottom:3px">Keep Chrome running until the recreate is done</div>
+              The extension does the delete and the delayed recreate. <b>Chrome must stay open</b> (a background window is fine — it doesn't need focus) so the scheduled recreate can fire. You do <b>not</b> need to keep this dashboard tab open, and you don't need to keep the Vinted/Marktplaats tab open. If Chrome is fully closed during the wait, the recreate simply runs the next time you open Chrome.
+            </div>
+          </div>
+        </div>
+      </details>
+
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin:16px 0 24px">
         <div class="protection-card">
           <div style="font-weight:700;font-size:13px;margin-bottom:6px">Vinted &amp; Marktplaats / 2dehands</div>
