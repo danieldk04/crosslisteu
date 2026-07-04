@@ -16,6 +16,7 @@ def start_scheduler():
     from backend.services.crosslist import relist_expiring_marktplaats
 
     from backend.services.billing import expire_trials
+    from backend.services.analytics_report import send_weekly_report
 
     _scheduler = AsyncIOScheduler()
     _scheduler.add_job(
