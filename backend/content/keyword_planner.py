@@ -22,6 +22,10 @@ MODEL = "claude-opus-4-8"
 PLATFORMS = ["Marktplaats", "2dehands", "Vinted", "eBay", "Etsy", "Shopify"]
 NL_PLATFORM_TERMS = ("marktplaats", "2dehands")
 
+# Real competing cross-listing tools — used only for Pillar C (honest comparison
+# pages). Never invent a competitor name that isn't in this list.
+COMPETITORS = ["Vendoo", "List Perfectly", "Crosslist", "Zenlister", "OneShop"]
+
 
 def _slugify(text: str) -> str:
     text = text.lower().strip()
