@@ -28,6 +28,7 @@ async def get_pending_jobs(platform: str = None, user_id: str = Depends(get_curr
             paired_delete = (
                 db.table("jobs")
                 .select("status")
+                .eq("user_id", user_id)
                 .eq("item_id", j["item_id"])
                 .eq("platform", j["platform"])
                 .eq("action", "delete")
