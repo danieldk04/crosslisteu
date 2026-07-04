@@ -319,6 +319,7 @@ async def delist_all_platforms(item_id: str, user_id: str) -> list[dict]:
     for listing in ext_active:
         payload = {
             **item,
+            "title": _last_listed_title(db, item_id, listing["platform"], item.get("title", "")),
             "platform_listing_id": listing["platform_listing_id"],
             "platform_listing_url": listing["platform_listing_url"],
         }
