@@ -197,4 +197,9 @@ async def run_pipeline(keyword: str, region: str, pillar: str, slug: str, nl_slu
         else:
             logger.warning(f"NL-vertaling mislukt voor '{keyword}' — Engelse pagina blijft zonder companion")
 
+    try:
+        notify_published(keyword, result["url_path"], result["action"], schema_warnings)
+    except Exception as e:
+        logger.error(f"Publicatie-melding mislukt (niet-blokkerend): {e}")
+
     return result
