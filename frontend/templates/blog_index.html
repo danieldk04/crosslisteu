@@ -84,8 +84,30 @@
   {% if not pages %}
   <p class="empty-state">No guides published yet for this region.</p>
   {% endif %}
+  <p class="empty-state" id="no-match-state" hidden>No guides in this category yet.</p>
 </main>
 
 {% include "_footer.html" %}
+<script>
+(function(){
+  var chips = document.querySelectorAll('.cat-chip');
+  var rows = document.querySelectorAll('.post-row[data-pillar]');
+  var noMatch = document.getElementById('no-match-state');
+  chips.forEach(function(chip){
+    chip.addEventListener('click', function(){
+      chips.forEach(function(c){ c.classList.remove('active'); });
+      chip.classList.add('active');
+      var filter = chip.dataset.filter;
+      var visible = 0;
+      rows.forEach(function(row){
+        var show = filter === 'all' || row.dataset.pillar === filter;
+        row.style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+      noMatch.hidden = visible !== 0;
+    });
+  });
+})();
+</script>
 </body>
 </html>
