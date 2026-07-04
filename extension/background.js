@@ -134,18 +134,33 @@ function getDeleteUrl(platform, payload) {
     if (payload?.platform_listing_url) return payload.platform_listing_url;
     return "https://www.2dehands.be";
   }
-  if (platform === "vinted") return payload?.platform_listing_id
-    ? `https://www.vinted.com/items/${payload.platform_listing_id}`
-    : null;
+  if (platform === "vinted") {
+    // A Vinted account lives on ONE country domain (e.g. vinted.nl) and the
+    // item + its /api/v2 endpoints only exist on that same origin. Opening
+    // vinted.com for a .nl item shows a page but its API 404s — which the
+    // delete-verification would misread as "already deleted". So always use
+    // the stored listing URL (which carries the real .nl/.be/… origin).
+    if (payload?.platform_listing_url) return payload.platform_listing_url;
+    return payload?.platform_listing_id
+      ? `https://www.vinted.com/items/${payload.platform_listing_id}`
+      : null;
+  }
   return null;
 }
 
 function getEditUrl(platform, payload) {
   // Content-refresh only supported for Vinted today — light in-place edit
   // (price/photo-order nudge) to refresh the listing's "updated" signal.
-  if (platform === "vinted") return payload?.platform_listing_id
-    ? `https://www.vinted.com/items/${payload.platform_listing_id}/edit`
-    : null;
+  // Derive the edit URL from the stored listing URL's real origin (see the
+  // domain note in getDeleteUrl) rather than hardcoding vinted.com.
+  if (platform === "vinted") {
+    if (!payload?.platform_listing_id) return null;
+    let origin = "https://www.vinted.com";
+    if (payload.platform_listing_url) {
+      try { origin = new URL(payload.platform_listing_url).origin; } catch (e) {}
+    }
+    return `${origin}/items/${payload.platform_listing_id}/edit`;
+  }
   return null;
 }
 
