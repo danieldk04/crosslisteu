@@ -662,9 +662,12 @@ async function bgDeleteVinted(job, serverUrl) {
 
     const completeHeaders = await getAuthHeaders();
     await fetch(`${serverUrl}/api/jobs/${job.id}/complete`, {
-      method: "POST", headers: completeHeaders, body: JSON.stringify({}),
+      method: "POST", headers: completeHeaders,
+      // Hand the captured listing snapshot to the backend so it can enrich the
+      // paired relist recreate job (imported items otherwise lack this data).
+      body: JSON.stringify({ captured_listing: snapshot }),
     });
-    console.log(`[CrossList] bgDeleteVinted success: listing ${listingId}`);
+    console.log(`[CrossList] bgDeleteVinted success: listing ${listingId}`, snapshot);
   } finally {
     setTimeout(() => chrome.tabs.remove(tabId).catch(() => {}), 2500);
   }
