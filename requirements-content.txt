@@ -10,3 +10,6 @@ supabase==2.7.4
 pydantic==2.9.2
 pydantic-settings==2.5.2
 python-dotenv==1.0.1
+google-api-python-client==2.149.0
+google-auth==2.35.0
+google-ads==26.0.0
