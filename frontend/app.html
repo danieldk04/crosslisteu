@@ -2710,10 +2710,15 @@ function updateRelistNavBadge() {
 }
 
 // Live countdown tick — re-renders the in-progress panel every second while visible.
-let _relistTicker = null;
+let _relistTicker = null, _relistTick = 0;
 function ensureRelistTicker() {
   if (_relistTicker) return;
   _relistTicker = setInterval(() => {
+    _relistTick++;
+    // Re-fetch from the server every 20s to catch delete→done and completion.
+    if (_relistTick % 20 === 0 && document.getElementById('view-refresh')?.classList.contains('active')) {
+      loadRelistStatus();
+    }
     if (!(state.relistStatus || []).length) return;
     if (document.getElementById('view-refresh')?.classList.contains('active')) renderRelistInProgress();
   }, 1000);
