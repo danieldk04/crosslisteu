@@ -615,13 +615,17 @@
       "| found", initial.length, "options:", initial.map((c) => c.text.slice(0, 50)));
     let choice = best(initial);
 
-    // 2) Otherwise type the strongest English hint to filter the catalogue.
+    // 2) Otherwise type each hint in turn to filter the catalogue until one
+    //    surfaces a usable option (the captured-category hint is tried too).
     if (!choice && hints.length) {
-      fillInput(inp, hints[0]);
-      const deadline = Date.now() + 3500;
-      while (Date.now() < deadline && !choice) {
-        await sleep(250);
-        choice = best(collectChoices());
+      for (const h of hints) {
+        fillInput(inp, h);
+        const deadline = Date.now() + 3500;
+        while (Date.now() < deadline && !choice) {
+          await sleep(250);
+          choice = best(collectChoices());
+        }
+        if (choice) break;
       }
     }
 
