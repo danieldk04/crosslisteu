@@ -582,6 +582,33 @@ async function bgDeleteVinted(job, serverUrl) {
               !/views|favourites|favorieten|weergaven|€|\bcm\b/i.test(el.textContent));
         if (cand && cand.textContent.trim()) out.description = cand.textContent.trim().slice(0, 1000);
       }
+      // Colour + material: the wardrobe object often omits these, but scraping
+      // the item's OWN attribute rows worked. Scope to the details container
+      // that holds "Condition"/"Material" so we never pick up "Member's items".
+      const scopeRow = (labels) => {
+        // Find the attribute table/list: the ancestor that contains a leaf
+        // element whose text is exactly "Material" or "Condition".
+        let container = null;
+        for (const el of document.querySelectorAll('*')) {
+          if (el.children.length === 0 && /^(material|condition|colour|color)$/i.test(el.textContent.trim())) {
+            container = el.closest('dl, ul, table, [class*="Details" i], [data-testid*="attributes" i]') || el.parentElement?.parentElement;
+            if (container) break;
+          }
+        }
+        const root = container || document;
+        for (const lab of labels) {
+          for (const el of root.querySelectorAll('*')) {
+            if (el.children.length === 0 && new RegExp("^\\s*" + lab + "\\s*$", "i").test(el.textContent)) {
+              const sib = el.nextElementSibling || el.parentElement?.nextElementSibling;
+              const v = (sib?.textContent || "").trim();
+              if (v && v.length < 40 && !/^(menu|home|catalog)$/i.test(v)) return v;
+            }
+          }
+        }
+        return "";
+      };
+      if (!out.color) out.color = scopeRow(["Colour", "Color", "Kleur"]);
+      out.material = scopeRow(["Material", "Materiaal"]);
       // Category + gender from the breadcrumb (e.g. Women / Clothing / Jumpers & sweaters / ...).
       const crumbs = [...document.querySelectorAll('nav a, [class*="breadcrumb" i] a, [data-testid*="breadcrumb"] a')]
         .map(a => a.textContent.trim()).filter(Boolean);
