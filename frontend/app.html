@@ -1579,7 +1579,7 @@ function showView(name) {
   if (name === 'items') { clearSelection(); applyFilters(); }
   if (name === 'analytics') { renderAnalytics(); }
   if (name === 'platforms') { renderPlatforms(); }
-  if (name === 'refresh') { renderRefreshView(); }
+  if (name === 'refresh') { renderRefreshView(); loadRelistStatus(); }
   if (name === 'import') { renderImportScanButtons(); loadImportCandidates(); }
 }
 
