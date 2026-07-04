@@ -282,34 +282,63 @@
     await sleep(2000);
   }
 
+  // Find the seller's "Delete" control on the current page, trying several
+  // layers of heuristics since Vinted's exact markup/testids drift over time
+  // and we have no live DOM to pin an exact selector against. Returns the
+  // clickable element, or null if nothing plausible was found.
+  function findDeleteEntryPoint() {
+    // Layer 1: a directly-visible "Delete" button/link on the page (some
+    // Vinted layouts show Edit/Delete as direct buttons, no dropdown).
+    let el = [...document.querySelectorAll('button, a, [role="menuitem"], [role="button"]')]
+      .find(e => e.offsetParent !== null && (/^\s*delete\s*$/i.test(e.textContent) || e.dataset.testid?.includes("delete")));
+    if (el) return el;
+
+    // Layer 2: open a kebab/"..."/actions dropdown, then look inside it.
+    const actionsBtn = document.querySelector(
+      '[data-testid="item-actions-button"], [data-testid="item-menu-button"], ' +
+      '[data-testid="item-page-actions-dropdown-button"], [data-testid*="kebab"], ' +
+      'button[aria-label*="more" i], button[aria-label*="actions" i], button[aria-label*="options" i]'
+    ) || [...document.querySelectorAll('button')].find(b =>
+      b.offsetParent !== null && b.querySelector('svg') && !b.textContent.trim() &&
+      /kebab|dots|more|menu/i.test(b.className + " " + (b.getAttribute("aria-label") || ""))
+    );
+    if (actionsBtn) return { __needsOpen: actionsBtn };
+    return null;
+  }
+
   async function deleteListingVinted(listingId) {
     // We're already on https://www.vinted.com/items/{id}
     // Wait for the item page to load, then find the seller action menu.
     await waitForEl('[data-testid="item-details"], .item-details, main', 15000);
     await sleep(1000);
 
-    // Vinted shows a "..." or "Edit" menu for the seller on their own item page.
-    // Try common testid patterns for the actions dropdown. This must be found —
-    // without it, searching the *whole* document for a "delete"-looking button
-    // below risks clicking an unrelated element (e.g. a wishlist heart icon or
-    // a cookie-banner button) and then falsely reporting success.
-    const actionsBtn = document.querySelector(
-      '[data-testid="item-actions-button"], [data-testid="item-menu-button"], ' +
-      'button[aria-label*="more"], button[aria-label*="actions"], ' +
-      '[data-testid="item-page-actions-dropdown-button"]'
-    );
-    if (!actionsBtn) throw new Error("Item actions menu button not found on Vinted item page for ID " + listingId + " — Vinted may have changed its page layout");
-    actionsBtn.click();
-    await sleep(600);
+    let entry = findDeleteEntryPoint();
 
-    // Scope the "Delete" search to the menu/dialog that just opened (not the
-    // whole page) so it can't match an unrelated button elsewhere on the page.
-    const menu = document.querySelector('[role="menu"], [role="listbox"], [data-testid*="dropdown"], [data-testid*="modal"]') || document;
-    const deleteEl = [...menu.querySelectorAll('button, a, [role="menuitem"]')]
-      .find(el => /^\s*delete\s*$/i.test(el.textContent) || el.dataset.testid?.includes("delete"))
-      || [...document.querySelectorAll('button, a, [role="menuitem"], [data-testid*="delete"]')]
-        .find(el => /delete/i.test(el.textContent) || el.dataset.testid?.includes("delete"));
-    if (!deleteEl) throw new Error("Delete option not found on Vinted item page for ID " + listingId);
+    // Layer 3 fallback: the edit page is a confirmed-working URL (used by
+    // content-refresh) and often carries its own "Delete listing" control
+    // even when the view page's dropdown couldn't be located.
+    if (!entry) {
+      window.location.href = `https://www.vinted.com/items/${listingId}/edit`;
+      await waitForEl('input[data-testid="price-input--input"], input[data-testid="title--input"], main', 15000);
+      await sleep(1000);
+      entry = findDeleteEntryPoint();
+    }
+
+    if (!entry) throw new Error("Delete control not found on Vinted item/edit page for ID " + listingId + " — Vinted may have changed its page layout");
+
+    let deleteEl;
+    if (entry.__needsOpen) {
+      entry.__needsOpen.click();
+      await sleep(600);
+      const menu = document.querySelector('[role="menu"], [role="listbox"], [data-testid*="dropdown"], [data-testid*="modal"]') || document;
+      deleteEl = [...menu.querySelectorAll('button, a, [role="menuitem"]')]
+        .find(el => /^\s*delete\s*$/i.test(el.textContent) || el.dataset.testid?.includes("delete"))
+        || [...document.querySelectorAll('button, a, [role="menuitem"], [data-testid*="delete"]')]
+          .find(el => /delete/i.test(el.textContent) || el.dataset.testid?.includes("delete"));
+      if (!deleteEl) throw new Error("Delete option not found in Vinted actions menu for ID " + listingId);
+    } else {
+      deleteEl = entry;
+    }
     deleteEl.click();
     await sleep(800);
 
