@@ -309,26 +309,58 @@
     return null;
   }
 
+  // Discover the logged-in member id from the item page (you are the seller of
+  // your own item). Needed for the wardrobe endpoint, which is the ONLY item
+  // API we've confirmed works reliably on the country domain (the single-item
+  // /api/v2/items/{id} endpoint 404s even for a live own-item, so we can't
+  // trust it for verification).
+  async function getVintedUserId() {
+    let id = null;
+    for (const a of document.querySelectorAll('a[href*="/member/"]')) {
+      const m = (a.getAttribute("href") || "").match(/\/member\/(\d+)/);
+      if (m) { id = m[1]; break; }
+    }
+    if (id) return id;
+    // Fall back to opening the account menu, which exposes /member/{id}.
+    document.querySelector('#user-menu-button, [data-testid="user-menu-button"]')?.click();
+    await sleep(600);
+    for (const a of document.querySelectorAll('a[href*="/member/"]')) {
+      const m = (a.getAttribute("href") || "").match(/\/member\/(\d+)/);
+      if (m) { id = m[1]; break; }
+    }
+    return id;
+  }
+
+  // Is this listing id currently present in the user's own wardrobe (i.e. still
+  // live)? Returns true/false, or null if we couldn't read the wardrobe at all.
+  async function isInWardrobe(userId, listingId) {
+    try {
+      const res = await fetch(`/api/v2/wardrobe/${userId}/items?order=newest_first&page=1&per_page=200`, { headers: { Accept: "application/json" } });
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (data.code && data.code !== 0) return null;
+      return (data.items || []).some(it => String(it.id) === String(listingId));
+    } catch (e) {
+      return null;
+    }
+  }
+
   async function deleteListingVinted(listingId) {
     // We're on the item page on its real country origin (e.g. vinted.nl) —
     // getDeleteUrl now navigates to the stored listing URL, so location.origin
-    // is the domain where this item AND the /api/v2 endpoints actually live.
-    // Guard against a stale .com item that never resolves: the API must know
-    // this item on THIS origin, otherwise our later 404-means-deleted check
-    // would be meaningless (it would 404 simply because we're on the wrong
-    // domain — the exact false-success bug we're fixing).
+    // is the domain where this item AND the wardrobe API actually live.
     await waitForEl('[data-testid="item-details"], .item-details, main', 15000);
     await sleep(1000);
 
-    let preCheck;
-    try {
-      preCheck = await fetch(`/api/v2/items/${listingId}`, { headers: { Accept: "application/json" } });
-    } catch (e) {
-      throw new Error(`Could not reach Vinted item API for ID ${listingId} on ${location.origin}: ${e}`);
-    }
-    if (preCheck.status === 404 || preCheck.status === 410) {
-      throw new Error(`Vinted item ${listingId} does not exist on ${location.origin} — wrong domain or already gone; refusing to report a delete we cannot verify.`);
-    }
+    // Establish ground truth BEFORE deleting: the item must be present in the
+    // user's own wardrobe on this origin. If we can't confirm that, we refuse
+    // to proceed rather than click blindly and risk a false success.
+    const userId = await getVintedUserId();
+    if (!userId) throw new Error("Could not determine your Vinted member id on " + location.origin + " — make sure you're logged into this Vinted account.");
+
+    const presentBefore = await isInWardrobe(userId, listingId);
+    if (presentBefore === null) throw new Error(`Could not read your Vinted wardrobe on ${location.origin} to verify item ${listingId} — aborting to avoid an unverified delete.`);
+    if (presentBefore === false) throw new Error(`Vinted item ${listingId} is not in your wardrobe on ${location.origin} — it may already be gone or belong to a different account; nothing to delete.`);
 
     let entry = findDeleteEntryPoint();
 
