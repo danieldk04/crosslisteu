@@ -60,8 +60,8 @@ REFRESH_CAPABLE_PLATFORMS = set(PLATFORM_STRATEGIES.keys())
 # behavior indistinguishable from a normal seller tidying up their shop.
 MIN_COOLDOWN_DAYS = 14          # can't refresh the same listing more than 1x/14d
 MAX_REFRESHES_PER_USER_PER_DAY = 8
-RELIST_DELAY_MIN_MINUTES = 45   # recreate happens 45min-4h after delete
-RELIST_DELAY_MAX_MINUTES = 240
+RELIST_DELAY_MIN_MINUTES = 2    # TEMP TEST VALUE — restore to 45 after validating
+RELIST_DELAY_MAX_MINUTES = 3    # TEMP TEST VALUE — restore to 240 after validating
 CONTENT_PRICE_JITTER_PCT = 0.02  # +/-2% nudge, rounded to a sane price
 
 
