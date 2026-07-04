@@ -175,6 +175,8 @@ async def run_pipeline(keyword: str, region: str, pillar: str, slug: str, nl_slu
     if not generated:
         return {"success": False, "error": "content generation failed"}
 
+    schema_warnings = validate_page(generated)
+
     result = _save_page_row(
         db, region=region, pillar=pillar, slug=slug, keyword=keyword,
         language="en", translation_of=None, generated=generated, research=research,
