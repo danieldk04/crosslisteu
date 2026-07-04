@@ -14,7 +14,9 @@ from datetime import datetime, timezone
 from backend.content.generator import generate_page_content, needs_dutch_translation, translate_to_dutch
 from backend.content.linking import apply_internal_links
 from backend.content.research import research_competitors
+from backend.content.schema_validate import validate_page
 from backend.database import get_db
+from backend.services.email import notify_published
 
 logger = logging.getLogger(__name__)
 
