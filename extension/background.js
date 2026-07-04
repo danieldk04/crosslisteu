@@ -531,6 +531,74 @@ async function bgDeleteVinted(job, serverUrl) {
     if (before.present === null) throw new Error(`Could not read your Vinted wardrobe to verify item ${listingId} — aborting to avoid an unverified delete.`);
     if (before.present === false) throw new Error(`Vinted item ${listingId} is not in your wardrobe — it may already be gone or belong to a different account; nothing to delete.`);
 
+    // 1b) Snapshot the FULL live listing BEFORE deleting. Imported items carry
+    //     almost no data in the dashboard, so we recover everything (all photos,
+    //     description, brand, size, condition, colour, material, category) from
+    //     Vinted itself and feed it into the paired recreate job. Combine the
+    //     wardrobe item object (photos, brand, size, catalog) with DOM scraping
+    //     (description, attribute rows, category breadcrumb) — best-effort per
+    //     field. If this is a relist, complete_job merges it into the create job.
+    const snapshot = await execInTab(tabId, async (userId, lid) => {
+      const out = { photo_urls: [], description: "", brand: "", size: "", condition: "", color: "", material: "", category: "", gender: "" };
+      // Wardrobe object for this item — richest structured source.
+      try {
+        const res = await fetch(`/api/v2/wardrobe/${userId}/items?order=newest_first&page=1&per_page=200`, { headers: { Accept: "application/json" } });
+        if (res.ok) {
+          const data = await res.json();
+          const it = (data.items || []).find(x => String(x.id) === String(lid));
+          if (it) {
+            const photos = (it.photos || []).map(p => p.full_size_url || p.url).filter(Boolean);
+            if (photos.length) out.photo_urls = photos;
+            else if (it.photo?.url) out.photo_urls = [it.photo.url];
+            out.brand = it.brand_title || it.brand_dto?.title || "";
+            out.size = it.size_title || it.size || "";
+            out.condition = it.status || "";
+            if (it.description) out.description = it.description;
+          }
+        }
+      } catch (e) {}
+      // DOM scraping for anything the wardrobe object omits.
+      const rowValue = (label) => {
+        const rows = [...document.querySelectorAll('[data-testid*="item-attributes"] *, dl div, div[class*="Cell"], li')];
+        for (const el of rows) {
+          const t = el.textContent || "";
+          const re = new RegExp("^\\s*" + label + "\\s*[:\\-]?\\s*(.+)$", "i");
+          const m = t.trim().match(re);
+          if (m && m[1] && m[1].trim().length < 60) return m[1].trim();
+        }
+        // Fallback: a label element next to its value.
+        for (const el of document.querySelectorAll('*')) {
+          if (el.children.length === 0 && new RegExp("^\\s*" + label + "\\s*$", "i").test(el.textContent)) {
+            const sib = el.nextElementSibling || el.parentElement?.nextElementSibling;
+            const v = sib?.textContent?.trim();
+            if (v && v.length < 60) return v;
+          }
+        }
+        return "";
+      };
+      if (!out.brand) out.brand = rowValue("Brand") || rowValue("Merk");
+      if (!out.size) out.size = rowValue("Size") || rowValue("Maat");
+      if (!out.condition) out.condition = rowValue("Condition") || rowValue("Staat");
+      out.color = rowValue("Colour") || rowValue("Color") || rowValue("Kleur");
+      out.material = rowValue("Material") || rowValue("Materiaal");
+      if (!out.description) {
+        const d = document.querySelector('[itemprop="description"], [data-testid*="description"]');
+        if (d && d.textContent.trim()) out.description = d.textContent.trim();
+      }
+      // Category + gender from the breadcrumb (e.g. Women / Clothing / Jumpers & sweaters / ...).
+      const crumbs = [...document.querySelectorAll('nav a, [class*="breadcrumb" i] a, [data-testid*="breadcrumb"] a')]
+        .map(a => a.textContent.trim()).filter(Boolean);
+      if (crumbs.length) {
+        const g = crumbs[0].toLowerCase();
+        if (/women|dames/.test(g)) out.gender = "dames";
+        else if (/men|heren/.test(g)) out.gender = "heren";
+        // The most specific meaningful crumb (skip Home/Catalog and the item title itself).
+        const meaningful = crumbs.filter(c => !/^(home|catalog|vinted)$/i.test(c));
+        if (meaningful.length >= 2) out.category = meaningful[meaningful.length - 1];
+      }
+      return out;
+    }, [before.userId, listingId]);
+
     // 2) Click Delete, then confirm. "Confirm and delete" is multi-word, so
     //    match on containing confirm/delete and never the Cancel button.
     const clicked = await execInTab(tabId, async () => {
