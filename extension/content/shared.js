@@ -348,9 +348,19 @@ window.CL = (() => {
       await runInMainWorld("FILL_DESC", { selector: _descriptionSelector, text: _pendingDescription });
     }
 
+    // Submit button differs per platform:
+    //  - Marktplaats/2dehands: [data-testid="place-listing-submit-button"] wrapper.
+    //  - Vinted (/items/new and /edit): [data-testid="upload-form-save-button"]
+    //    ("Upload" / "Save"). Must NOT grab upload-form-save-draft-button ("Save draft").
     const submitContainer = qs('[data-testid="place-listing-submit-button"]');
-    const btn = submitContainer?.querySelector("button") || qs('button[type="submit"]');
-    if (!btn) throw new Error("Plaats-knop niet gevonden");
+    const btn = submitContainer?.querySelector("button")
+      || qs('[data-testid="upload-form-save-button"]')
+      || qs('button[type="submit"]')
+      || [...document.querySelectorAll("button")].find((b) =>
+           b.offsetParent !== null &&
+           b.dataset.testid !== "upload-form-save-draft-button" &&
+           /^(plaats(en)?|upload|opslaan|publiceer(en)?|publish|save)$/i.test((b.textContent || "").trim()));
+    if (!btn) throw new Error("Submit/Plaats-knop niet gevonden");
     btn.scrollIntoView({ block: "center" });
     await sleep(800); // Lexical commit is async — give it time before submit fires
     btn.click();
