@@ -338,7 +338,7 @@ def _patterns(seo: dict, channels: dict, signups: dict, social: dict, categories
 # ---------------------------------------------------------------------------
 # Publieke API
 # ---------------------------------------------------------------------------
-def build_report(today: date | None = None) -> dict:
+def build_report(today: date | None = None, include_social: bool = False) -> dict:
     win = _windows(today)
     seo = _seo_section(win)
     channels = _channels_section(win)
@@ -347,11 +347,20 @@ def build_report(today: date | None = None) -> dict:
     signups = _signups_section(win)
     patterns = _patterns(seo, channels, signups, social, categories)
 
+    # On-platform post-prestaties (Apify) — traag, dus alleen bij de zondagse mail en
+    # bij de handmatige dashboard-knop. Anders alleen de koppelstatus doorgeven.
+    if include_social:
+        social_content = social_scrape.weekly(*win["this"])
+        patterns = patterns + social_scrape.patterns(social_content)
+    else:
+        social_content = {"connected": social_scrape.is_configured(), "deferred": True}
+
     report = {
         "period": {"this": win["this"], "prev": win["prev"]},
         "seo": seo,
         "channels": channels,
         "social": social,
+        "social_content": social_content,
         "categories": categories,
         "signups": signups,
         "patterns": patterns,
