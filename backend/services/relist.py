@@ -85,6 +85,30 @@ def _check_and_increment_quota(db, user_id: str) -> None:
         db.table("refresh_quota").insert({"user_id": user_id, "day": today, "count": 1}).execute()
 
 
+def rollback_refresh(rollback: dict, user_id: str) -> None:
+    """
+    Undo the optimistic bookkeeping a refresh does at enqueue time when the
+    extension job later fails. Without this, a failed content-refresh or a
+    failed relist-delete leaves the listing on its 14-day cooldown and a quota
+    slot spent — punishing the user for a refresh that never actually ran.
+    """
+    if not rollback:
+        return
+    db = get_db()
+    listing_id = rollback.get("listing_id")
+    if listing_id:
+        db.table("listings").update({
+            "last_refreshed_at": rollback.get("prior_last_refreshed_at"),
+            "refresh_count": rollback.get("prior_refresh_count") or 0,
+        }).eq("id", listing_id).execute()
+    day = rollback.get("day")
+    if day:
+        row = db.table("refresh_quota").select("count").eq("user_id", user_id).eq("day", day).execute()
+        if row.data:
+            new_count = max(0, (row.data[0].get("count") or 0) - 1)
+            db.table("refresh_quota").update({"count": new_count}).eq("user_id", user_id).eq("day", day).execute()
+
+
 def _check_cooldown(listing: dict) -> None:
     last = listing.get("last_refreshed_at")
     if not last:
