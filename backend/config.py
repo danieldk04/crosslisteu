@@ -66,6 +66,16 @@ class Settings(BaseSettings):
     # Token dat het /analytics dashboard beschermt (?token=...). Leeg = dashboard uit.
     analytics_dashboard_token: str = ""
 
+    # Apify — wekelijkse scrape van de eigen social-profielen (TikTok/Instagram/
+    # YouTube/Pinterest) voor per-post prestaties in het marketingrapport.
+    # Leeg = social-sectie blijft leeg / 'niet gekoppeld'. De handles zijn de
+    # publieke gebruikersnamen; comma-gescheiden override kan via env.
+    apify_token: str = ""
+    social_tiktok: str = "crosslisteu"
+    social_instagram: str = "crosslisteu"
+    social_youtube: str = "@CrosslistEU"
+    social_pinterest: str = "CrosslistEU"
+
     # Google Ads API — search-volume check before a keyword enters the content queue.
     # Optional: pipeline runs without volume filtering if these are blank.
     google_ads_developer_token: str = ""
