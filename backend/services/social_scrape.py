@@ -156,43 +156,74 @@ def _fetch_instagram(handle: str, limit: int) -> list[dict]:
 
 
 def _fetch_youtube(handle: str, limit: int) -> list[dict]:
-    items = _run_actor("grow_media/youtube-channel-video-scraper", {
-        "channelHandle": handle if handle.startswith("@") else f"@{handle}",
-        "maxResults": limit,
-        "sortOrder": "latest",
-        "videoType": "all",
-    })
-    out = []
-    for it in items:
-        out.append(_norm(
-            "YouTube", id=_first(it, ["id", "videoId", "url"], ""),
-            text=_first(it, ["title", "text"], ""),
-            url=_first(it, ["url", "videoUrl"], ""),
-            date=_first(it, ["date", "publishedAt", "uploadDate", "publishDate"], ""),
-            views=_first(it, ["viewCount", "views", "numberOfViews"], 0),
-            likes=_first(it, ["likes", "likeCount", "numberOfLikes"], 0),
-            comments=_first(it, ["comments", "commentsCount", "commentCount", "numberOfComments"], 0),
-            duration=_first(it, ["duration", "durationSeconds", "lengthSeconds"], 0),
-        ))
+    # De actor accepteert alleen 'short' óf 'long' per run; onze content zijn Shorts,
+    # maar we halen beide op zodat lange video's ook meetellen. Gededupt op id.
+    h = handle if handle.startswith("@") else f"@{handle}"
+    seen, out = set(), []
+    for vtype in ("short", "long"):
+        items = _run_actor("grow_media/youtube-channel-video-scraper", {
+            "channelHandle": h, "maxResults": limit, "sortOrder": "latest", "videoType": vtype,
+        })
+        for it in items:
+            vid = _first(it, ["id", "url"], "")
+            if vid in seen:
+                continue
+            seen.add(vid)
+            out.append(_norm(
+                "YouTube", id=vid,
+                text=_first(it, ["title"], ""),
+                url=_first(it, ["url"], ""),
+                date=_first(it, ["date", "publishedAt"], ""),
+                views=_first(it, ["viewCount"], 0) or _deep(it, "statistics.viewCount", 0),
+                likes=_first(it, ["likes"], 0) or _deep(it, "statistics.likeCount", 0),
+                comments=_first(it, ["commentsCount"], 0) or _deep(it, "statistics.commentCount", 0),
+                duration=_first(it, ["durationSeconds"], 0),
+            ))
     return out
 
 
 def _fetch_pinterest(handle: str, limit: int) -> list[dict]:
-    # Best-effort: Pinterest-scrapers geven doorgaans saves/repins + comments, geen
-    # 'views'. Faalt zacht naar leeg als de actor niets bruikbaars teruggeeft.
-    items = _run_actor("apify/pinterest-scraper", {
-        "startUrls": [{"url": f"https://www.pinterest.com/{handle}/"}],
-        "maxItems": limit,
+    # Pinterest geeft saves (repin_count) + comments, geen 'views'. Het profiel zelf
+    # komt ook als item terug (entity_type != 'pin') — die slaan we over.
+    items = _run_actor("fatihtahta/pinterest-scraper-search", {
+        "startUrls": [f"https://www.pinterest.com/{handle}/"],
+        "limit": limit,
     })
     out = []
     for it in items:
+        if it.get("entity_type") == "profile" or not _deep(it, "pin.title", ""):
+            continue
+        saves = _deep(it, "pin.repin_count", 0) or _deep(it, "pin.aggregated_pin_data.aggregated_stats.saves", 0)
         out.append(_norm(
-            "Pinterest", id=_first(it, ["id", "pinId", "url"], ""),
-            text=_first(it, ["title", "description", "grid_title"], ""),
-            url=_first(it, ["url", "link", "pinUrl"], ""),
-            date=_first(it, ["created_at", "date", "createdAt"], ""),
-            saves=_first(it, ["repin_count", "saveCount", "saves", "repinCount"], 0),
-            comments=_first(it, ["comment_count", "commentCount", "comments"], 0),
+            "Pinterest", id=_first(it, ["id"], ""),
+            text=_deep(it, "pin.title", "") or _deep(it, "pin.description", ""),
+            url=_first(it, ["url"], "") or _deep(it, "pin.link", ""),
+            date=_deep(it, "pin.created_at", ""),
+            saves=saves, comments=_deep(it, "pin.comment_count", 0),
+        ))
+    return out
+
+
+def _fetch_threads(handle: str, limit: int) -> list[dict]:
+    # Best-effort: de Threads-actor is wisselvallig (faalt soms). Faalt dan zacht naar leeg.
+    items = _run_actor("futurizerush/meta-threads-scraper", {
+        "mode": "user", "usernames": [handle.lstrip("@")], "max_posts": max(10, limit),
+    })
+    out = []
+    for it in items:
+        if it.get("record_type") not in (None, "post", "thread") and it.get("is_reply"):
+            continue
+        if not it.get("post_url"):
+            continue
+        out.append(_norm(
+            "Threads", id=_first(it, ["post_code", "post_url"], ""),
+            text=_first(it, ["text_content"], ""),
+            url=_first(it, ["post_url"], ""),
+            date=_first(it, ["created_at_timestamp", "created_at"], ""),
+            views=_first(it, ["view_count"], 0),
+            likes=_first(it, ["like_count"], 0),
+            comments=_first(it, ["reply_count"], 0),
+            shares=_first(it, ["repost_count", "share_count"], 0),
         ))
     return out
 
@@ -202,6 +233,7 @@ _ADAPTERS = {
     "Instagram": (_fetch_instagram, lambda: settings.social_instagram),
     "YouTube": (_fetch_youtube, lambda: settings.social_youtube),
     "Pinterest": (_fetch_pinterest, lambda: settings.social_pinterest),
+    "Threads": (_fetch_threads, lambda: settings.social_threads),
 }
 
 
