@@ -61,17 +61,27 @@ def _to_int(v) -> int:
 
 
 def _iso_date(v) -> str:
-    """Normaliseert diverse datumvormen naar 'YYYY-MM-DD' (leeg als onparseerbaar)."""
+    """Normaliseert diverse datumvormen naar 'YYYY-MM-DD' (leeg als onparseerbaar):
+    Unix-timestamp, ISO 8601 (2026-07-04T…), en RFC 2822 (Pinterest: 'Sat, 04 Jul …')."""
     if not v:
         return ""
-    s = str(v)
-    # Unix-timestamp?
+    s = str(v).strip()
+    # Unix-timestamp (seconden of milliseconden)?
     if s.isdigit() and len(s) >= 10:
         try:
-            return datetime.fromtimestamp(int(s[:10]), tz=timezone.utc).strftime("%Y-%m-%d")
+            ts = int(s[:13]) / 1000 if len(s) >= 13 else int(s[:10])
+            return datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%d")
         except (ValueError, OSError):
             return ""
-    return s[:10]
+    # Al ISO (YYYY-MM-DD…)?
+    if len(s) >= 10 and s[4] == "-" and s[7] == "-":
+        return s[:10]
+    # RFC 2822 (bv. Pinterest 'Sat, 04 Jul 2026 08:02:02 +0000')?
+    try:
+        from email.utils import parsedate_to_datetime
+        return parsedate_to_datetime(s).strftime("%Y-%m-%d")
+    except (ValueError, TypeError, IndexError):
+        return ""
 
 
 def _run_actor(actor: str, payload: dict, timeout: int = 90) -> list[dict]:
