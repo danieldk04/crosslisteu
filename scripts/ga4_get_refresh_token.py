@@ -86,9 +86,10 @@ def main() -> int:
               "(Google geeft alleen bij de eerste consent een refresh token).")
         return 1
 
-    print("\n✅ Gelukt! Zet deze twee waarden in Railway (of .env):\n")
-    print(f"ga4_property_id=544205472")
-    print(f"ga4_refresh_token={creds.refresh_token}\n")
+    print("\n✅ Gelukt! Zet deze waarden in Railway (of .env):\n")
+    print(f"GA4_PROPERTY_ID=544205472")
+    print(f"GA4_REFRESH_TOKEN={creds.refresh_token}")
+    print(f"GSC_REFRESH_TOKEN={creds.refresh_token}   # zelfde token, dekt ook Search Console\n")
     return 0
 
 
