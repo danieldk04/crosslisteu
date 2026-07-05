@@ -246,12 +246,18 @@ def _store_scan_results(db, job, scraped: list[dict]):
 @router.post("/{job_id}/error")
 async def fail_job(job_id: str, body: dict, user_id: str = Depends(get_current_user)):
     db = get_db()
-    job = db.table("jobs").select("item_id,platform,action").eq("id", job_id).eq("user_id", user_id).single().execute().data
+    job = db.table("jobs").select("item_id,platform,action,payload").eq("id", job_id).eq("user_id", user_id).single().execute().data
     db.table("jobs").update({
         "status": "error",
         "result": body,
         "done_at": datetime.now(timezone.utc).isoformat(),
     }).eq("id", job_id).execute()
+    # A content-refresh or relist-delete bumped the listing's cooldown + daily
+    # quota at enqueue time; since the job failed, give both back.
+    rollback = (job or {}).get("payload", {}).get("_refresh_rollback") if job else None
+    if rollback:
+        from backend.services.relist import rollback_refresh
+        rollback_refresh(rollback, user_id)
     if job and job["action"] == "create":
         db.table("listings").update({
             "status": "error",
