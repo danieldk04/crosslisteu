@@ -22,7 +22,12 @@ SCOPES = ["https://www.googleapis.com/auth/webmasters.readonly"]
 
 
 def _get_service():
-    if not (settings.gsc_client_id and settings.gsc_client_secret and settings.gsc_refresh_token):
+    # De OAuth-client wordt gedeeld met Google Ads (zelfde Cloud-project). In Railway
+    # staan alleen de GOOGLE_ADS_* varianten, dus val daarop terug voor client id/secret.
+    client_id = settings.gsc_client_id or settings.google_ads_client_id
+    client_secret = settings.gsc_client_secret or settings.google_ads_client_secret
+    refresh_token = settings.gsc_refresh_token
+    if not (client_id and client_secret and refresh_token):
         return None
     try:
         from google.oauth2.credentials import Credentials
@@ -30,10 +35,10 @@ def _get_service():
 
         credentials = Credentials(
             token=None,
-            refresh_token=settings.gsc_refresh_token,
+            refresh_token=refresh_token,
             token_uri="https://oauth2.googleapis.com/token",
-            client_id=settings.gsc_client_id,
-            client_secret=settings.gsc_client_secret,
+            client_id=client_id,
+            client_secret=client_secret,
             scopes=SCOPES,
         )
         return build("searchconsole", "v1", credentials=credentials, cache_discovery=False)
