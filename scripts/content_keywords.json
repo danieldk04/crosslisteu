@@ -15,7 +15,7 @@
       "pillar": "A",
       "slug": "vinted-to-ebay",
       "priority": 2,
-      "status": "pending"
+      "status": "published"
     },
     {
       "keyword": "2dehands to vinted crosslisting 2026",
@@ -68,6 +68,15 @@
       "action": "created",
       "url_path": "/crosslisting/marktplaats-to-vinted",
       "published_at": "2026-07-03T21:40:00.000000+00:00"
+    },
+    {
+      "keyword": "vinted to ebay crosslisting 2026",
+      "slug": "vinted-to-ebay",
+      "region": "nl",
+      "pillar": "A",
+      "action": "updated",
+      "url_path": "/crosslisting/vinted-to-ebay",
+      "published_at": "2026-07-05T10:05:28.231141+00:00"
     }
   ]
 }
