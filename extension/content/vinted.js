@@ -267,33 +267,36 @@
     send("JOB_ERROR", null, String(e));
   }
 
-  // Light in-place edit: nudge price and re-order photos, then save.
-  // Does NOT touch title/description/category — this is a refresh, not a rewrite,
-  // so it can't misrepresent the item and can't look like a duplicate listing.
+  // Light in-place edit: re-order the photos (a real change Vinted re-indexes on)
+  // WITHOUT touching the seller's price, title, description or category — so it
+  // can't misrepresent the item, change what it's listed for, or look like a
+  // duplicate listing. Price is only filled if the page shows €0 (imports).
   async function refreshListingVinted(item) {
     await waitForEl('input[data-testid="price-input--input"], input[data-testid="title--input"]', 20000);
-    await sleep(500);
+    await sleep(800);
     const priceEl = qs('input[data-testid="price-input--input"]');
     if (!priceEl) throw new Error("Vinted edit: price field not found on the edit page");
 
-    // Decide a VALID target price. Prefer the dashboard's (jittered) price, but
-    // if that's missing/invalid fall back to whatever price the Vinted edit page
-    // already shows — never write €0, which trips Vinted's ">= 1.0" validation.
+    // Do NOT change a valid price the seller already has on Vinted. Only fill the
+    // price when the page shows €0/blank (typical for imported items), using the
+    // dashboard price, so the save isn't blocked by Vinted's ">= 1.0" rule.
     const pageNow = _num(priceEl.value);
-    let target = Number(item.price);
-    if (!(isFinite(target) && target >= 1)) target = (isFinite(pageNow) && pageNow >= 1) ? pageNow : NaN;
-    if (!(isFinite(target) && target >= 1)) {
-      throw new Error("Vinted refresh aborted: no valid price to set (dashboard price is missing and the listing shows €0). Set a price on the item first.");
+    if (!(isFinite(pageNow) && pageNow >= 1)) {
+      const target = Number(item.price);
+      if (!(isFinite(target) && target >= 1)) {
+        throw new Error("Vinted refresh aborted: the listing shows €0 and there's no dashboard price to fall back on. Set a price on the item first.");
+      }
+      const ok = await fillPriceVinted(target);
+      if (!ok) throw new Error("Vinted refresh aborted: the listing had no price and it couldn't be filled from the dashboard.");
     }
 
-    // Nudge the price by the smallest sane amount if the target equals what's
-    // already there, so the edit is a real change Vinted will accept/re-rank.
-    if (isFinite(pageNow) && Math.abs(pageNow - target) < 0.01) {
-      target = Math.round((target + 1) * 100) / 100;
+    // The actual, price-safe refresh: re-order the uploaded photos. This is the
+    // only edit we make, and we verify it truly changed the on-page order — if
+    // it didn't, we throw rather than save-and-report-success on a no-op.
+    const reordered = await reorderPhotosVinted();
+    if (!reordered) {
+      throw new Error("Vinted refresh: couldn't re-order the photos (no draggable photo tiles found, or Vinted didn't accept the drag), so nothing was changed. Use refresh 2 (relist) instead.");
     }
-
-    const ok = await fillPriceVinted(target);
-    if (!ok) throw new Error("Vinted refresh aborted: could not enter a valid price (the field stayed empty/€0 after typing).");
 
     // Save/update button — Vinted's edit page uses the same testid as create ("Save"/"Update").
     const saveBtn = [...document.querySelectorAll('button[data-testid], button')]
