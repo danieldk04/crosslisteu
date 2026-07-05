@@ -282,6 +282,37 @@ function copyUtm(){
 ['uPlatform','uDest','uContent','uCampaign'].forEach(id=>document.getElementById(id).addEventListener('input',buildUtm));
 buildUtm();
 
+function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+async function loadSocial(){
+  const btn=document.getElementById('socBtn'), note=document.getElementById('socNote'), out=document.getElementById('socResult');
+  const token=new URLSearchParams(location.search).get('token')||'';
+  btn.disabled=true; btn.textContent='Bezig met scrapen…'; note.textContent='Dit kan ~10-30s duren.'; out.innerHTML='';
+  try{
+    const r=await fetch('/api/analytics/social?token='+encodeURIComponent(token));
+    const d=await r.json();
+    if(!r.ok){note.textContent='❌ Mislukt: '+(d.detail||r.status);return;}
+    if(!d.connected){note.textContent='⚠️ Apify nog niet gekoppeld (APIFY_TOKEN ontbreekt in Railway).';return;}
+    note.textContent='';
+    let html='';
+    if(d.insights&&d.insights.length){html+='<div class="insights"><ul>'+d.insights.map(i=>'<li>'+esc(i)+'</li>').join('')+'</ul></div>';}
+    if(d.per_platform&&d.per_platform.length){
+      html+='<table><tr><th>Platform</th><th class="num">Posts</th><th class="num">Views</th><th class="num">Engagement</th></tr>';
+      html+=d.per_platform.map(p=>'<tr><td>'+esc(p.platform)+'</td><td class="num">'+p.posts_count+'</td><td class="num">'+p.views+'</td><td class="num">'+p.engagement+'</td></tr>').join('');
+      html+='</table>';
+    }
+    if(d.top_posts&&d.top_posts.length){
+      html+='<h3 style="font-size:14px;margin:18px 0 8px">Beste posts van de week</h3>';
+      html+='<table><tr><th>Platform</th><th>Post</th><th class="num">Views</th><th class="num">Likes</th><th class="num">Comments</th><th class="num">Eng.%</th></tr>';
+      html+=d.top_posts.map(p=>'<tr><td>'+esc(p.platform)+'</td><td class="trunc" title="'+esc(p.text)+'"><a href="'+esc(p.url)+'" target="_blank" rel="noopener">'+esc(p.text||p.url)+'</a></td><td class="num">'+p.views+'</td><td class="num">'+p.likes+'</td><td class="num">'+p.comments+'</td><td class="num">'+p.engagement_rate+'%</td></tr>').join('');
+      html+='</table>';
+    }
+    if(d.total_posts===0){html+='<p class="empty">Nog geen posts met bereik in deze week ('+esc(d.period&&d.period[0])+'–'+esc(d.period&&d.period[1])+'). Blijf posten — de data groeit met je account mee.</p>';}
+    if(d.errors&&d.errors.length){html+='<p class="note">⚠️ '+d.errors.length+' platform(s) gaven een fout; de rest is verwerkt.</p>';}
+    out.innerHTML=html;
+  }catch(e){note.textContent='❌ Fout: '+e;}
+  finally{btn.disabled=false; btn.textContent='📊 Laad social-postprestaties';}
+}
+
 async function sendReport(){
   const btn=document.getElementById('sendBtn'), note=document.getElementById('sendNote');
   const token=new URLSearchParams(location.search).get('token')||'';
