@@ -20,6 +20,7 @@ from datetime import date, timedelta
 
 from backend.services import search_console as gsc
 from backend.services import ga4
+from backend.services import social_scrape
 
 logger = logging.getLogger(__name__)
 
