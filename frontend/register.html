@@ -133,6 +133,21 @@ async function doRegister(e) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || 'Registration failed');
+    // Stuur het sign_up-event naar GA4 zodat je het als key event (conversie) kunt
+    // markeren. GA4 koppelt de conversie automatisch aan de sessiebron (TikTok/Reddit/
+    // blog/…), zodat het dashboard 'meest waardevolle kanaal/platform' op écht klanten
+    // baseert. utm_content wordt meegestuurd voor postniveau-attributie.
+    try {
+      const utm = new URLSearchParams(location.search);
+      if (typeof gtag === 'function') {
+        gtag('event', 'sign_up', {
+          method: 'email',
+          utm_source: utm.get('utm_source') || undefined,
+          utm_campaign: utm.get('utm_campaign') || undefined,
+          utm_content: utm.get('utm_content') || undefined,
+        });
+      }
+    } catch (e) { /* tracking mag nooit de registratie blokkeren */ }
     document.getElementById('form').style.display = 'none';
     document.getElementById('success').style.display = 'block';
   } catch (err) {
