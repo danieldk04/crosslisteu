@@ -327,29 +327,28 @@
     throw new Error("Vinted refresh: clicked Save but the edit form never closed — the update could not be verified.");
   }
 
-  // Locate the uploaded-photo tiles on the edit page. Vinted's markup/testids
-  // drift, so map every visible thumbnail <img> up to its nearest draggable /
-  // list-item ancestor and de-dupe. Returns the tile elements in document order.
+  // Locate the uploaded-photo tiles on the edit page. Verified live against
+  // Vinted's edit DOM (2026-07): the photos live in [data-testid="media-upload-grid"]
+  // and each draggable tile is a ".u-cursor-grab" wrapping [data-testid="image-wrapper-N"].
+  // Scoping to that grid is essential — a broad img search also matches the site
+  // logo and the account avatar, which must never be treated as photo tiles.
   function findPhotoTiles() {
-    const imgs = [...document.querySelectorAll(
-      '[data-testid*="photo" i] img, [data-testid*="image" i] img, ' +
-      '[class*="photo" i] img, [class*="media" i] img, [class*="Image" i] img'
-    )].filter((im) => im.offsetParent !== null && im.clientWidth > 24 && im.clientHeight > 24);
-    const tiles = [];
-    const seen = new Set();
-    for (const im of imgs) {
-      let el = im;
-      for (let d = 0; d < 6 && el && el !== document.body; d++) {
-        if (el.getAttribute?.("draggable") === "true" ||
-            el.getAttribute?.("role") === "listitem" ||
-            /(^|[\s_-])(sortable|draggable|photo|media|thumbnail)/i.test(el.className || "")) {
-          break;
-        }
-        el = el.parentElement;
-      }
-      if (el && el !== document.body && !seen.has(el)) { seen.add(el); tiles.push(el); }
+    const grid = document.querySelector('[data-testid="media-upload-grid"], .media-select__grid');
+    if (grid) {
+      const grabs = [...grid.querySelectorAll('.u-cursor-grab')]
+        .filter((t) => t.offsetParent !== null && t.querySelector("img"));
+      if (grabs.length >= 2) return grabs;
+      // Same grid, but pin to the numbered image wrappers if the grab class drifts.
+      const wraps = [...grid.querySelectorAll('[data-testid^="image-wrapper-"]')]
+        .filter((t) => t.offsetParent !== null && t.querySelector("img"));
+      if (wraps.length >= 2) return wraps;
     }
-    return tiles;
+    // Last-resort fallback if the grid testid changes: any draggable tile with an
+    // <img>, but NOT scoped to a header/nav so we skip the logo/avatar.
+    const loose = [...document.querySelectorAll('.u-cursor-grab, [draggable="true"]')]
+      .filter((t) => t.offsetParent !== null && t.querySelector?.("img") &&
+                     !t.closest("header, nav, [class*='header' i], [class*='Header' i]"));
+    return loose.length >= 2 ? loose : [];
   }
 
   // Signature of the current photo order (last chars of each src) so we can prove
