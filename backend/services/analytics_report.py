@@ -130,6 +130,98 @@ def _channels_section(win: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Social media per platform (GA4-bron → platform) + post-niveau (UTM)
+# ---------------------------------------------------------------------------
+def _social_section(win: dict) -> dict:
+    """Splitst het verkeer uit naar social platform (TikTok / Instagram / YouTube /
+    Pinterest / Reddit / …) — iets wat GA4's default-kanaalgroep NIET doet — plus
+    post-niveau attributie voor links die je met UTM's hebt getagd."""
+    if not ga4.is_configured():
+        return {"connected": False}
+
+    this_s, this_e = win["this"]
+    prev_s, prev_e = win["prev"]
+
+    def _by_platform(rows: list[dict]) -> dict:
+        agg: dict[str, dict] = {}
+        for r in rows:
+            plat = ga4.platform_of(r.get("sessionSource", ""))
+            if not plat:
+                continue
+            a = agg.setdefault(plat, {"platform": plat, "sessions": 0, "newUsers": 0, "conversions": 0})
+            a["sessions"] += r.get("sessions", 0)
+            a["newUsers"] += r.get("newUsers", 0)
+            a["conversions"] += r.get("conversions", 0)
+        return agg
+
+    now = _by_platform(ga4.traffic_sources(this_s, this_e))
+    prev = _by_platform(ga4.traffic_sources(prev_s, prev_e))
+    platforms = []
+    for plat, a in now.items():
+        a["sessions_delta"] = _pct_delta(a["sessions"], prev.get(plat, {}).get("sessions", 0))
+        a["conv_rate"] = round(a["conversions"] / a["sessions"] * 100, 1) if a["sessions"] else 0.0
+        platforms.append(a)
+    platforms.sort(key=lambda x: x["sessions"], reverse=True)
+
+    posts = ga4.social_posts(this_s, this_e)
+    for p in posts:
+        p["platform"] = ga4.platform_of(p.get("sessionSource", "")) or p.get("sessionSource", "")
+
+    return {
+        "connected": True,
+        "platforms": platforms,
+        "posts": posts[:15],
+        "has_utm_data": bool(posts),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Blog-prestaties per categorie (contentpijler uit de URL)
+# ---------------------------------------------------------------------------
+def _category_of(url_or_path: str) -> str:
+    """Leidt de contentcategorie af uit het URL-pad, zodat we per soort content
+    (niet per losse pagina) kunnen zien wat aanslaat — beslissingswaardig voor
+    'welke soort artikelen moet ik meer maken'."""
+    p = (url_or_path or "").replace(SITE_URL, "")
+    # taalprefix wegstrippen (/nl/…, /fr/…, /de/…)
+    for lang in ("/nl/", "/fr/", "/de/"):
+        if p.startswith(lang):
+            p = "/" + p[len(lang):]
+            break
+    if p in ("", "/"):
+        return "Homepage"
+    if p.startswith("/vs/") or "/vergelijking/" in p:
+        return "Vergelijkingen"
+    if "/reseller-tools/" in p:
+        return "Reseller-tools"
+    if "/crosslisting/" in p or "/crosslisten/" in p:
+        return "Crosslisting-guides"
+    if p.startswith("/blog"):
+        return "Blog-index"
+    return "Overig"
+
+
+def _blog_categories(seo: dict) -> list[dict]:
+    """Groepeert de GSC-pagina's per categorie: clicks/impressies + week-over-week."""
+    agg: dict[str, dict] = {}
+    for p in seo.get("top_pages", []):
+        cat = _category_of(p["url"])
+        a = agg.setdefault(cat, {"category": cat, "clicks": 0, "impressions": 0,
+                                 "clicks_prev": 0, "pages": 0})
+        a["clicks"] += p["clicks"]
+        a["impressions"] += p["impressions"]
+        a["clicks_prev"] += p.get("clicks_prev", 0)
+        a["pages"] += 1
+    out = []
+    for a in agg.values():
+        a["clicks_delta"] = _pct_delta(a["clicks"], a["clicks_prev"])
+        a["ctr"] = round(a["clicks"] / a["impressions"] * 100, 1) if a["impressions"] else 0.0
+        out.append(a)
+    out.sort(key=lambda x: x["clicks"], reverse=True)
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Signups
 # ---------------------------------------------------------------------------
 def _signups_section(win: dict) -> dict:
