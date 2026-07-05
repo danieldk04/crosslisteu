@@ -101,9 +101,11 @@
     {% endif %}
     <h1>{{ page.h1 }}</h1>
     <div class="featured-image-wrap">
-      {% if page.featured_image_url %}
-      <img src="{{ page.featured_image_url }}" alt="{{ page.h1 }}" loading="eager" onerror="this.style.display='none'">
-      {% endif %}
+      <div class="featured-hero">
+        <span class="fh-logo">∞</span>
+        <span class="fh-cat">{{ {'A': 'Platform comparison', 'B': 'Reseller guide', 'C': 'Vs. competitor'}.get(page.pillar, 'Reseller guide') }}</span>
+        <div class="fh-rule"></div>
+      </div>
     </div>
     <blockquote>{{ page.quick_answer }}</blockquote>
 
