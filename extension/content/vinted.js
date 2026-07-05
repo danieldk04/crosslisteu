@@ -399,24 +399,33 @@
     fire("dragend", src, r1);
   }
 
-  // Re-order the listing's photos by moving the first photo to the end. Verifies
-  // the on-page order actually changed; returns false if it couldn't (so the
-  // caller can fail honestly instead of saving a no-op).
+  // Re-order the listing's photos WITHOUT ever moving the first (main) photo —
+  // that's usually the most important one, so we leave it pinned in place and
+  // only shuffle the rest. We move the SECOND photo to the end. This needs at
+  // least 3 photos (with 2, any change would touch the first). Verifies the
+  // order actually changed AND that photo #1 is unchanged; returns false if it
+  // couldn't, so the caller fails honestly instead of saving a no-op.
   async function reorderPhotosVinted() {
     let tiles = findPhotoTiles();
-    if (tiles.length < 2) return false;
+    if (tiles.length < 3) return false; // can't reorder photos 2..N and keep #1 fixed
     const before = photoOrderSig();
+    const firstBefore = before.split("|")[0];
 
-    // Try pointer drag first, then HTML5 drag as a fallback.
-    await pointerDragTile(tiles[0], tiles[tiles.length - 1]);
+    const changedAndFirstIntact = () => {
+      const sig = photoOrderSig();
+      return sig !== before && sig.split("|")[0] === firstBefore;
+    };
+
+    // Move the second photo to the end (pointer drag first, HTML5 as fallback).
+    await pointerDragTile(tiles[1], tiles[tiles.length - 1]);
     await sleep(700);
-    if (photoOrderSig() !== before) return true;
+    if (changedAndFirstIntact()) return true;
 
     tiles = findPhotoTiles();
-    if (tiles.length < 2) return false;
-    await html5DragTile(tiles[0], tiles[tiles.length - 1]);
+    if (tiles.length < 3) return false;
+    await html5DragTile(tiles[1], tiles[tiles.length - 1]);
     await sleep(700);
-    return photoOrderSig() !== before;
+    return changedAndFirstIntact();
   }
 
   // Find the seller's "Delete" control on the current page, trying several
