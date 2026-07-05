@@ -483,7 +483,7 @@ def render_email(report: dict) -> tuple[str, str]:
 def send_weekly_report() -> None:
     """Scheduler-entrypoint: bouw + mail het rapport. Non-blocking, logt fouten."""
     try:
-        report = build_report()
+        report = build_report(include_social=True)
         subject, body = render_email(report)
         from backend.services.email import send_email
         send_email(subject, body)
