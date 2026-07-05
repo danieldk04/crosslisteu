@@ -116,7 +116,7 @@ def get_top_pages(days: int = 90, row_limit: int = 200) -> list[dict]:
         response = (
             service.searchanalytics()
             .query(
-                siteUrl=settings.gsc_site_url,
+                siteUrl=_resolve_site_url(service),
                 body={
                     "startDate": start.isoformat(),
                     "endDate": end.isoformat(),
@@ -157,7 +157,7 @@ def get_queries_for_page(page_url: str, days: int = 90, row_limit: int = 25) -> 
         response = (
             service.searchanalytics()
             .query(
-                siteUrl=settings.gsc_site_url,
+                siteUrl=_resolve_site_url(service),
                 body={
                     "startDate": start.isoformat(),
                     "endDate": end.isoformat(),
@@ -197,7 +197,7 @@ def get_impressions_for_query(keyword: str, days: int = 90) -> int:
         response = (
             service.searchanalytics()
             .query(
-                siteUrl=settings.gsc_site_url,
+                siteUrl=_resolve_site_url(service),
                 body={
                     "startDate": start.isoformat(),
                     "endDate": end.isoformat(),
@@ -246,7 +246,7 @@ def query_window(
     try:
         response = (
             service.searchanalytics()
-            .query(siteUrl=settings.gsc_site_url, body=body)
+            .query(siteUrl=_resolve_site_url(service), body=body)
             .execute()
         )
     except Exception as e:
