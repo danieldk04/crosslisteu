@@ -44,7 +44,10 @@ async def publish_listing(
     background_tasks: BackgroundTasks,
     user_id: str = Depends(get_current_user),
 ):
-    results = await publish_to_platforms(body.item_id, body.platforms, user_id)
+    try:
+        results = await publish_to_platforms(body.item_id, body.platforms, user_id)
+    except CrosslistValidationError as e:
+        raise HTTPException(status_code=422, detail={"missing_fields": e.missing})
     return {"results": results}
 
 
