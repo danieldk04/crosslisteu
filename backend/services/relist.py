@@ -221,11 +221,11 @@ async def refresh_listing(item_id: str, platform: str, user_id: str, strategy: s
             "payload": payload,
         }).execute().data[0]
 
-        db.table("listings").update({
+        _update_listing_refresh_state(db, listing["id"], {
             "last_refreshed_at": now.isoformat(),
             "refresh_count": (listing.get("refresh_count") or 0) + 1,
             "last_refresh_strategy": "content",
-        }).eq("id", listing["id"]).execute()
+        })
 
         return {"strategy": "content", "job_id": job["id"], "status": "queued"}
 
