@@ -126,13 +126,10 @@ def seed(db, user_id: str):
             }
             db.table("listings").insert(listing_row).execute()
 
-    # Active "pro" subscription so nothing is gated in the demo.
-    db.table("subscriptions").upsert({
-        "user_id": user_id,
-        "status": "active",
-        "plan": "pro",
-        "current_period_end": (now + timedelta(days=365)).isoformat(),
-    }, on_conflict="user_id").execute()
+    # Subscriptions RLS requires a real authenticated (per-user) session, which this
+    # script doesn't have — the backend's own /api/billing/status endpoint lazily
+    # creates a 7-day "trialing" subscription the first time the demo account logs
+    # in and hits it, which is enough to unlock the dashboard for a demo/recording.
 
     print(f"Seeded {len(ITEMS)} items with cross-listed platform listings + sales history.")
 
