@@ -2922,6 +2922,20 @@ function renderRefreshView() {
       }
     }
 
+    let modeCell;
+    if (l.last_refreshed_at) {
+      const modeLabel = l.last_refresh_strategy === 'relist'
+        ? '<span style="background:rgba(37,99,235,.12);color:#1d4ed8;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:999px">Mode 2 · relist</span>'
+        : l.last_refresh_strategy === 'content'
+          ? '<span style="background:rgba(34,197,94,.12);color:#15803d;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:999px">Mode 1 · content</span>'
+          : '<span style="background:var(--muted-bg,#f1f5f9);color:var(--muted);font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:999px">mode unknown</span>';
+      modeCell = `<div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start">${modeLabel}<span style="font-size:11px;color:var(--muted)">${fmtDate(l.last_refreshed_at)}</span></div>`;
+    } else {
+      modeCell = '<span style="color:var(--muted);font-size:12px">never refreshed</span>';
+    }
+    const photoCount = item.photo_urls?.length || 0;
+    const photoCell = `<span style="font-size:12px;color:${photoCount > 20 ? '#b45309' : 'var(--muted)'}">${photoCount}${photoCount > 20 ? ' (only 20 uploaded)' : ''}</span>`;
+
     return `<tr>
       <td><div class="item-info">
         <div class="item-photo">${item.photo_urls?.[0] ? `<img src="${item.photo_urls[0]}" style="width:40px;height:40px;border-radius:6px;object-fit:cover">` : '👗'}</div>
@@ -2929,13 +2943,14 @@ function renderRefreshView() {
       </div></td>
       <td style="white-space:nowrap;font-size:12px">${label}</td>
       <td style="white-space:nowrap">${statusCell}</td>
-      <td style="white-space:nowrap;font-size:12px;color:var(--muted)">${l.last_refreshed_at ? fmtDate(l.last_refreshed_at) : '—'}</td>
+      <td style="white-space:nowrap">${modeCell}</td>
+      <td style="white-space:nowrap">${photoCell}</td>
       <td style="white-space:nowrap">${actionCell}</td>
     </tr>`;
   }).join('');
 
   document.getElementById('refresh-body').innerHTML = rows ||
-    '<tr><td colspan="5"><div class="empty"><h3>Nothing to refresh</h3><p>Publish to Vinted, Marktplaats, 2dehands or Etsy first — or wait for an eBay listing to end.</p></div></td></tr>';
+    '<tr><td colspan="6"><div class="empty"><h3>Nothing to refresh</h3><p>Publish to Vinted, Marktplaats, 2dehands or Etsy first — or wait for an eBay listing to end.</p></div></td></tr>';
 }
 
 function refreshItem(itemId, title, platform) {
