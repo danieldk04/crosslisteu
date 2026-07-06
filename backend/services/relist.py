@@ -272,6 +272,7 @@ async def refresh_listing(item_id: str, platform: str, user_id: str, strategy: s
         "status": "relisting",
         "last_refreshed_at": now.isoformat(),
         "refresh_count": (listing.get("refresh_count") or 0) + 1,
+        "last_refresh_strategy": "relist",
     }).eq("id", listing["id"]).execute()
 
     logger.info(f"Queued relist for item {item_id} on {platform}, recreate scheduled in {delay_minutes}min")
