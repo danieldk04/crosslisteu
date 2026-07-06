@@ -40,7 +40,7 @@
       "pillar": "A",
       "slug": "vinted-to-etsy",
       "priority": 5,
-      "status": "pending"
+      "status": "published"
     },
     {
       "keyword": "crosslist eu vs vendoo",
@@ -95,6 +95,15 @@
       "action": "created",
       "url_path": "/reseller-tools/vinted-clothing-automation",
       "published_at": "2026-07-06T11:30:46.552071+00:00"
+    },
+    {
+      "keyword": "vinted to etsy crosslisting 2026",
+      "slug": "vinted-to-etsy",
+      "region": "nl",
+      "pillar": "A",
+      "action": "created",
+      "url_path": "/crosslisting/vinted-to-etsy",
+      "published_at": "2026-07-06T11:57:46.541901+00:00"
     }
   ]
 }
