@@ -310,6 +310,7 @@ async def refresh_listing(item_id: str, platform: str, user_id: str, strategy: s
         "strategy": "relist",
         "status": "queued",
         "recreate_scheduled_for": scheduled_for,
+        "new_price": relist_price,
         "message": f"Old listing removed now; new listing will be created in ~{delay_minutes} min to avoid a scripted-looking pattern.",
     }
 
