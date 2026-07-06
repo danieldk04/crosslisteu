@@ -2103,11 +2103,16 @@ function renderItemsTable(items) {
     const checked = selectedIds.has(item.id) ? 'checked' : '';
     const rowClass = selectedIds.has(item.id) ? 'selected' : '';
     const pubDate = publishedAt(item.id);
+    const missingByPlatform = missingFieldsAllPlatforms(item);
+    const missingCount = Object.keys(missingByPlatform).length;
+    const missingBadge = missingCount
+      ? `<div class="missing-data-badge" title="${esc(Object.entries(missingByPlatform).map(([p, f]) => `${PLATFORM_LABELS[p] || p}: ${f.join(', ')}`).join(' · '))}">⚠ Missing data for ${missingCount} platform${missingCount !== 1 ? 's' : ''}</div>`
+      : '';
     return `<tr class="${rowClass}" id="row-${item.id}">
       <td class="col-check"><input type="checkbox" class="row-check" ${checked} onchange="toggleRowSelect('${item.id}',this.checked)"></td>
       <td><div class="item-info">
         <div class="item-photo">${item.photo_urls?.[0] ? `<img src="${item.photo_urls[0]}" style="width:40px;height:40px;border-radius:6px;object-fit:cover">` : '👗'}</div>
-        <div><div class="item-title">${esc(item.title)}</div><div class="item-meta">${item.brand || '—'}${item.size ? ' · ' + item.size : ''}</div></div>
+        <div><div class="item-title">${esc(item.title)}</div><div class="item-meta">${item.brand || '—'}${item.size ? ' · ' + item.size : ''}</div>${missingBadge}</div>
       </div></td>
       <td><strong>€${item.price}</strong></td>
       <td class="hide-mobile">${conditionLabel(item.condition)}</td>
