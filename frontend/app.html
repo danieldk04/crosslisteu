@@ -901,14 +901,6 @@ input[type="checkbox"].row-check { width: 15px; height: 15px; cursor: pointer; a
       <!-- Live in-progress relists (populated by renderRefreshView) -->
       <div id="relist-inprogress"></div>
 
-      <!-- Bulk refresh actions -->
-      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:16px 0 12px">
-        <span style="font-size:12px;font-weight:700;color:var(--muted);margin-right:2px">Bulk refresh stale listings:</span>
-        <button class="btn btn-sm btn-outline" onclick="refreshStaleListings('vinted')">Vinted</button>
-        <button class="btn btn-sm btn-outline" onclick="refreshStaleListings('marktplaats')">Marktplaats</button>
-        <button class="btn btn-sm btn-outline" onclick="refreshStaleListings('2dehands')">2dehands</button>
-      </div>
-
       <!-- How a relist actually works — full transparency + risk disclosure -->
       <details id="relist-explainer" style="margin:0 0 24px;border:1px solid var(--border);border-radius:12px;background:var(--card,#fff);overflow:hidden">
         <summary style="cursor:pointer;padding:14px 16px;font-weight:700;font-size:13px;list-style:none;display:flex;align-items:center;gap:8px">
