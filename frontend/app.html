@@ -2775,13 +2775,24 @@ function updateRelistNavBadge() {
 // tracker for relists that are mid-flight (old listing deleted, new one not
 // live yet) — so a deleted-but-not-yet-recreated listing is never a mystery.
 let refreshActiveTab = 'listings';
+let refreshStatusFilter = '';
 function switchRefreshTab(tab) {
   refreshActiveTab = tab;
   document.getElementById('refresh-tab-btn-listings').classList.toggle('active', tab === 'listings');
   document.getElementById('refresh-tab-btn-inprogress').classList.toggle('active', tab === 'inprogress');
+  document.getElementById('refresh-tab-btn-other').classList.toggle('active', tab === 'other');
   document.getElementById('refresh-tab-listings').style.display = tab === 'listings' ? '' : 'none';
   document.getElementById('refresh-tab-inprogress').style.display = tab === 'inprogress' ? '' : 'none';
+  document.getElementById('refresh-tab-other').style.display = tab === 'other' ? '' : 'none';
   if (tab === 'inprogress') renderRelistInProgress();
+  if (tab === 'other') renderRefreshView();
+}
+
+// Filters the Vinted table by refresh status: never refreshed / on cooldown / ready.
+function setRefreshStatusFilter(status) {
+  refreshStatusFilter = status;
+  document.querySelectorAll('.refresh-status-chip').forEach(b => b.classList.toggle('active', b.dataset.status === status));
+  renderRefreshView();
 }
 
 // Live countdown tick — re-renders the in-progress panel every second while visible.
