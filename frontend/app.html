@@ -913,8 +913,19 @@ input[type="checkbox"].row-check { width: 15px; height: 15px; cursor: pointer; a
         </div>
       </div>
 
-      <!-- Live in-progress relists (populated by renderRefreshView) -->
-      <div id="relist-inprogress"></div>
+      <!-- Refresh sub-tabs: normal listing table vs. dedicated relist tracker -->
+      <div style="display:flex;gap:6px;margin:16px 0 14px;border-bottom:1px solid var(--border)">
+        <button id="refresh-tab-btn-listings" class="refresh-subtab active" onclick="switchRefreshTab('listings')">All listings</button>
+        <button id="refresh-tab-btn-inprogress" class="refresh-subtab" onclick="switchRefreshTab('inprogress')">Relists in progress<span id="refresh-tab-badge" style="display:none"></span></button>
+      </div>
+
+      <!-- ═══ TAB: Relists in progress — tracks delete→recreate step-by-step ═══ -->
+      <div id="refresh-tab-inprogress" style="display:none">
+        <div id="relist-inprogress"></div>
+      </div>
+
+      <!-- ═══ TAB: All listings ═══ -->
+      <div id="refresh-tab-listings">
 
       <!-- How a relist actually works — full transparency -->
       <details id="relist-explainer" style="margin:0 0 24px;border:1px solid var(--border);border-radius:12px;background:var(--card,#fff);overflow:hidden">
