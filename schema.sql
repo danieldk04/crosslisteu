@@ -112,6 +112,10 @@ ALTER TABLE listings ADD COLUMN IF NOT EXISTS refresh_count INT DEFAULT 0;
 -- 404 is often a stale/expired polling session, not a genuinely removed listing.
 ALTER TABLE listings ADD COLUMN IF NOT EXISTS not_found_count INT DEFAULT 0;
 
+-- Which refresh mode was last used ('content' = in-place edit, 'relist' = delete
+-- + recreate), so the dashboard can show the user exactly what happened last.
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS last_refresh_strategy VARCHAR(20);
+
 -- Jobs can be scheduled for the future (used to jitter the "recreate" half of
 -- a relist so delete→create doesn't fire back-to-back like a script).
 ALTER TABLE jobs ADD COLUMN IF NOT EXISTS scheduled_for TIMESTAMPTZ;
