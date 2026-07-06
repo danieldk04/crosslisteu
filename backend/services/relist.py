@@ -152,11 +152,15 @@ def _update_listing_refresh_state(db, listing_id: str, fields: dict) -> None:
             raise
 
 
-async def refresh_listing(item_id: str, platform: str, user_id: str, strategy: str) -> dict:
+async def refresh_listing(item_id: str, platform: str, user_id: str, strategy: str, new_price: float | None = None) -> dict:
     """
     Queue a refresh for one listing.
     strategy: "content" (safe edit-in-place, Vinted only) or
               "relist" (delete + scheduled recreate, Vinted/Marktplaats/2dehands).
+    new_price: optional explicit price for a "relist" — e.g. the user accepting the
+               10-15% price-drop suggestion. Ignored for "content" (that strategy is
+               documented as never touching price). When given, it also becomes the
+               item's new base price, so it sticks instead of reverting on the next refresh.
     """
     allowed = PLATFORM_STRATEGIES.get(platform, set())
     if strategy not in allowed:
