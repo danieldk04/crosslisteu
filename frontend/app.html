@@ -2149,19 +2149,31 @@ async function doBulkCrosslist() {
   closeModal('modal-bulk-crosslist');
   setBusy(true, `Publishing 0 / ${ids.length}…`);
   let done = 0, errors = 0;
+  const blockedItems = [];
   for (const id of ids) {
     try {
       const res = await apiFetch(`${API}/api/items/${id}/crosslist`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ platforms: selected }),
       });
-      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const missingMsg = formatMissingFieldsError(data);
+        if (missingMsg) {
+          const title = state.items.find(i => i.id === id)?.title || id;
+          blockedItems.push(`${title} — ${Object.entries(data.detail.missing_fields).map(([p, f]) => `${PLATFORM_LABELS[p] || p}: ${f.join(', ')}`).join('; ')}`);
+        }
+        throw new Error(missingMsg || data.detail || 'Publish failed');
+      }
       done++;
     } catch { errors++; }
     document.getElementById('cl-busy-text').textContent = `Publishing ${done + errors} / ${ids.length}…`;
   }
   setBusy(false);
   showToast(`${done} item${done !== 1 ? 's' : ''} queued for publishing${errors ? `, ${errors} error(s)` : ''}.`);
+  if (blockedItems.length) {
+    alert(`${blockedItems.length} item(s) couldn't be published — missing data:\n\n${blockedItems.join('\n')}\n\nFill these in first, then try again.`);
+  }
   clearSelection();
   await loadAll();
 }
