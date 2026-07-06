@@ -59,19 +59,15 @@ def photo_url(seed: str, n: int) -> str:
     return f"https://picsum.photos/seed/crosslisteu-{seed}-{n}/600/600"
 
 
+# SUPABASE_KEY here is the anon key, not service_role, so auth.admin.* (list/create
+# with email_confirm) isn't reachable — 403s. The account was created once via a
+# plain sign_up (needs the usual email-confirmation click) and its id is fixed here
+# so re-seeds don't need admin access at all.
+DEMO_USER_ID = "ce6efe8f-a845-46ed-a363-93ec8cc05297"
+
+
 def get_or_create_demo_user(db):
-    existing = db.auth.admin.list_users()
-    for u in existing:
-        if u.email == DEMO_EMAIL:
-            print(f"Reusing existing demo user {u.id}")
-            return u.id
-    res = db.auth.admin.create_user({
-        "email": DEMO_EMAIL,
-        "password": DEMO_PASSWORD,
-        "email_confirm": True,
-    })
-    print(f"Created demo user {res.user.id}")
-    return res.user.id
+    return DEMO_USER_ID
 
 
 def seed(db, user_id: str):
