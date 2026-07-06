@@ -98,6 +98,9 @@ async def crosslist_item(item_id: str, body: dict, user_id: str = Depends(get_cu
     platforms = body.get("platforms", [])
     if not platforms:
         raise HTTPException(status_code=400, detail="No platforms specified")
-    from backend.services.crosslist import publish_to_platforms
-    results = await publish_to_platforms(item_id, platforms, user_id)
+    from backend.services.crosslist import publish_to_platforms, CrosslistValidationError
+    try:
+        results = await publish_to_platforms(item_id, platforms, user_id)
+    except CrosslistValidationError as e:
+        raise HTTPException(status_code=422, detail={"missing_fields": e.missing})
     return {"item_id": item_id, "results": results}
