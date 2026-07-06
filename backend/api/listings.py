@@ -92,17 +92,25 @@ async def mark_listing_active(body: dict, user_id: str = Depends(get_current_use
 @router.post("/refresh")
 async def refresh_one_listing(body: dict, user_id: str = Depends(get_current_user)):
     """
-    Refresh a single listing. body: {item_id, platform, strategy: "content"|"relist"}
+    Refresh a single listing. body: {item_id, platform, strategy: "content"|"relist", new_price?: number}
     "content" = safe in-place edit (price/photo-order nudge).
     "relist"  = legitimate delete + recreate, rate-limited and delayed to avoid a spam pattern.
+    new_price is only applied for "relist" — e.g. accepting the 10-15% price-drop
+    suggestion shown in the dashboard to improve the odds of a sale.
     """
     item_id = body.get("item_id")
     platform = body.get("platform")
     strategy = body.get("strategy", "content")
+    new_price = body.get("new_price")
     if not item_id or not platform:
         raise HTTPException(status_code=400, detail="item_id and platform required")
+    if new_price is not None:
+        try:
+            new_price = float(new_price)
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="new_price must be a number")
     try:
-        result = await refresh_listing(item_id, platform, user_id, strategy)
+        result = await refresh_listing(item_id, platform, user_id, strategy, new_price=new_price)
         return result
     except RefreshError as e:
         raise HTTPException(status_code=429, detail=str(e))
