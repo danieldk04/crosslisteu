@@ -3480,6 +3480,38 @@ function renderAnalytics() {
           <span class="an-platform-val">€${avg.toFixed(0)}</span>
         </li>`).join('');
   }
+
+  // Active vs inactive listings per platform (all platforms, regardless of period filter)
+  const platformCounts = {};
+  for (const p of PLATFORMS) platformCounts[p] = { active: 0, inactive: 0 };
+  for (const l of state.listings) {
+    if (!platformCounts[l.platform]) platformCounts[l.platform] = { active: 0, inactive: 0 };
+    if (l.status === 'active') platformCounts[l.platform].active++;
+    else platformCounts[l.platform].inactive++;
+  }
+  const platLabels = PLATFORMS.map(p => PLATFORM_LABELS[p] || p);
+  const activeData = PLATFORMS.map(p => platformCounts[p].active);
+  const inactiveData = PLATFORMS.map(p => platformCounts[p].inactive);
+
+  if (_anChartListingsPlatform) _anChartListingsPlatform.destroy();
+  _anChartListingsPlatform = new Chart(document.getElementById('an-chart-listings-platform'), {
+    type: 'bar',
+    data: {
+      labels: platLabels,
+      datasets: [
+        { label: 'Active', data: activeData, backgroundColor: '#34d399', borderRadius: 4, stack: 's' },
+        { label: 'Inactive', data: inactiveData, backgroundColor: '#cbd5e1', borderRadius: 4, stack: 's' },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { font: { size: 11 }, boxWidth: 10 } } },
+      scales: {
+        y: { beginAtZero: true, stacked: true, ticks: { stepSize: 1, font: { size: 10 } }, grid: { color: '#f1f5f9' } },
+        x: { stacked: true, ticks: { font: { size: 10 } }, grid: { display: false } },
+      },
+    },
+  });
 }
 </script>
 </body>
