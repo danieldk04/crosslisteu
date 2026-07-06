@@ -3212,20 +3212,34 @@ async function doCrosslist() {
   btn.textContent = 'Adding to queue…';
   setBusy(true, 'Publishing…');
   try {
-    await apiFetch(`${API}/api/items/${state.crosslistItemId}/crosslist`, {
+    const res = await apiFetch(`${API}/api/items/${state.crosslistItemId}/crosslist`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ platforms: selected }),
     });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(formatMissingFieldsError(data) || data.detail || 'Publish failed');
     closeModal('modal-crosslist');
     showToast(`Queued for ${selected.map(p => PLATFORM_LABELS[p]).join(', ')} — extension will publish within 15 seconds`);
     await loadAll();
   } catch(e) {
     btn.disabled = false;
     btn.textContent = 'Publish';
-    alert('Error: ' + e.message);
+    alert(e.message);
   } finally {
     setBusy(false);
   }
+}
+
+// Turns the backend's {missing_fields: {platform: [field, ...]}} 422 body into a
+// clear "here's exactly what to fill in" message — crosslisting is blocked until
+// this data exists, rather than silently publishing a half-empty listing.
+function formatMissingFieldsError(data) {
+  const missing = data && data.detail && data.detail.missing_fields;
+  if (!missing) return null;
+  const lines = Object.entries(missing).map(([platform, fields]) =>
+    `${PLATFORM_LABELS[platform] || platform}: ${fields.join(', ')}`
+  );
+  return `Can't publish yet — this item is missing:\n\n${lines.join('\n')}\n\nFill these in on the item first, then try again.`;
 }
 
 // Global busy lock — blocks the whole dashboard (overlay + disabled buttons) while
