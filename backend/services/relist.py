@@ -260,11 +260,19 @@ async def refresh_listing(item_id: str, platform: str, user_id: str, strategy: s
     delay_minutes = random.randint(RELIST_DELAY_MIN_MINUTES, RELIST_DELAY_MAX_MINUTES)
     scheduled_for = (now + timedelta(minutes=delay_minutes)).isoformat()
 
-    create_payload = {
-        **item,
+    if new_price is not None:
+        if new_price <= 0:
+            raise RefreshError("Price must be greater than 0")
+        relist_price = round(new_price, 2)
+        db.table("items").update({"price": relist_price}).eq("id", item_id).execute()
+    else:
         # Slight variation so the new listing isn't byte-identical to the old one —
         # legitimate reasons (price update, reordered photos), not spoofing.
-        "price": _jittered_price(float(item.get("price") or 0)) or item.get("price"),
+        relist_price = _jittered_price(float(item.get("price") or 0)) or item.get("price")
+
+    create_payload = {
+        **item,
+        "price": relist_price,
         "photo_urls": _shuffled_photos(item.get("photo_urls") or []),
     }
     # A Vinted account lives on ONE country domain (e.g. vinted.nl). The create
