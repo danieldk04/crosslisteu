@@ -48,7 +48,7 @@
       "pillar": "C",
       "slug": "crosslisteu-vs-vendoo",
       "priority": 6,
-      "status": "pending"
+      "status": "published"
     },
     {
       "keyword": "crosslist eu vs list perfectly",
@@ -104,6 +104,15 @@
       "action": "created",
       "url_path": "/crosslisting/vinted-to-etsy",
       "published_at": "2026-07-06T11:57:46.541901+00:00"
+    },
+    {
+      "keyword": "crosslist eu vs vendoo",
+      "slug": "crosslisteu-vs-vendoo",
+      "region": "nl",
+      "pillar": "C",
+      "action": "created",
+      "url_path": "/vs/crosslisteu-vs-vendoo",
+      "published_at": "2026-07-07T10:48:05.114784+00:00"
     }
   ]
 }
