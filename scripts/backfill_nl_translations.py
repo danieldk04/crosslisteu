@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 async def main():
     from backend.content.generator import translate_to_dutch
-    from backend.content.pipeline import _save_page_row, _url_path
+    from backend.content.pipeline import _save_page_row
     from backend.database import get_db
 
     db = get_db()
