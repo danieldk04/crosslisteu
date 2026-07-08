@@ -30,6 +30,42 @@ def needs_dutch_translation(keyword: str, region: str) -> bool:
     return region in ("nl", "be-nl") and any(t in keyword.lower() for t in NL_PLATFORM_TERMS)
 
 
+# Real, manually-captured CrossList EU screenshots (from the seeded demo account) —
+# never AI-generated, per the "no auto-generated blog images" rule. Re-capture and
+# swap these paths whenever the dashboard UI changes meaningfully.
+CROSSLIST_SCREENSHOTS = {
+    "dashboard": {
+        "src": "/assets/comparisons/dashboard-overview.png",
+        "alt": "CrossList EU dashboard showing items cross-listed across Marktplaats, 2dehands, Vinted, eBay and Shopify",
+        "caption": "CrossList EU's dashboard — every item published across all connected platforms from one place.",
+    },
+    "items": {
+        "src": "/assets/comparisons/items-crosslisted.png",
+        "alt": "CrossList EU items list with per-platform status and missing-data warnings before publishing",
+        "caption": "CrossList EU blocks publishing until required fields are filled in per platform — no half-empty listings.",
+    },
+}
+
+# Publicly-hosted marketing screenshots competitors show on their own sites —
+# hotlinked (never re-hosted) so there's no copyright/storage question, standard
+# practice for honest comparison content. Verify these URLs still resolve
+# periodically; if one 404s, drop that competitor's image rather than guess a new one.
+COMPETITOR_SCREENSHOTS = {
+    "vendoo": {
+        "src": "https://cdn.prod.website-files.com/5f622c6681d34140afb9d542/6a206d0df658ff951485abb4_CROSSLISTING%20features%20images%403x.webp",
+        "alt": "Vendoo crosslisting feature screenshot (via vendoo.co)",
+        "caption": "Vendoo's crosslisting screen (source: vendoo.co) — built around eBay/Poshmark/Depop/Mercari, no Marktplaats or 2dehands.",
+    },
+}
+
+
+def _competitor_key_in(keyword: str) -> str | None:
+    for key in COMPETITOR_SCREENSHOTS:
+        if key in keyword.lower():
+            return key
+    return None
+
+
 AI_CLICHES = [
     "in today's fast-paced world", "in the dynamic world of", "crucial", "it is important to remember",
     "moreover", "in conclusion", "to sum up", "seamless", "unlock", "leverage", "delve into",
