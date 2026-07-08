@@ -101,6 +101,25 @@ def _competitor_key_in(keyword: str) -> str | None:
     return None
 
 
+def _local_screenshots_on_disk() -> list[dict]:
+    """
+    Filters CROSSLIST_SCREENSHOTS down to entries whose file actually exists in
+    frontend/assets/comparisons right now. A screenshot that got renamed, moved
+    or deleted (without this dict being updated in the same commit) would
+    otherwise silently ship as a broken <img> on every future article — this
+    is the guard against that, checked fresh on every generation instead of
+    trusting the dict blindly.
+    """
+    on_disk = []
+    for shot in CROSSLIST_SCREENSHOTS:
+        local_path = FRONTEND_DIR / shot["src"].lstrip("/")
+        if local_path.is_file():
+            on_disk.append(shot)
+        else:
+            logger.warning(f"Comparison screenshot missing on disk, skipping: {local_path}")
+    return on_disk
+
+
 def _figure_html(img: dict) -> str:
     return (
         f'<figure style="margin:24px 0"><img src="{img["src"]}" alt="{img["alt"]}" '
