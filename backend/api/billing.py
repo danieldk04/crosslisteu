@@ -156,6 +156,36 @@ async def customer_portal(user_id: str = Depends(get_current_user)):
     return {"url": session.url}
 
 
+@router.post("/admin/comp-account")
+async def comp_account(email: str, user=Depends(get_current_user_full)):
+    """Grants a free-forever account to the given email. Owner-only."""
+    if not _is_owner_email(user.email):
+        raise HTTPException(status_code=403, detail="Niet toegestaan")
+
+    db = get_db()
+    target = None
+    page = 1
+    while True:
+        result = db.auth.admin.list_users(page=page, per_page=200)
+        if not result:
+            break
+        target = next((u for u in result if u.email and u.email.lower() == email.lower()), None)
+        if target or len(result) < 200:
+            break
+        page += 1
+
+    if not target:
+        raise HTTPException(status_code=404, detail="Geen account gevonden met dit e-mailadres — laat de gebruiker eerst registreren")
+
+    _get_or_create_subscription(target.id)
+    db.table("subscriptions").update({
+        "status": "active",
+        "plan": "pro",
+    }).eq("user_id", target.id).execute()
+
+    return {"ok": True, "user_id": target.id, "email": target.email}
+
+
 @router.post("/webhook")
 async def stripe_webhook(request: Request, stripe_signature: str = Header(None)):
     if not settings.stripe_webhook_secret:
