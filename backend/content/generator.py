@@ -66,6 +66,39 @@ def _competitor_key_in(keyword: str) -> str | None:
     return None
 
 
+def _figure_html(img: dict) -> str:
+    return (
+        f'<figure style="margin:24px 0"><img src="{img["src"]}" alt="{img["alt"]}" '
+        f'loading="lazy" style="width:100%;border-radius:10px;border:1px solid #e2e8f0">'
+        f'<figcaption style="font-size:13px;color:#64748b;margin-top:8px;text-align:center">{img["caption"]}</figcaption></figure>'
+    )
+
+
+def inject_comparison_screenshots(body_html: str, pillar: str, keyword: str) -> str:
+    """
+    Pillar C only: sandwiches the Claude-generated comparison table between a real
+    CrossList EU screenshot (before) and the named competitor's own public marketing
+    screenshot (after) — visual proof, not just claims. No-ops if there's no <table>
+    to anchor to, or no matching competitor screenshot on file.
+    """
+    if pillar != "C" or "<table" not in body_html:
+        return body_html
+
+    competitor_key = _competitor_key_in(keyword)
+    our_shot = _figure_html(CROSSLIST_SCREENSHOTS["items"])
+    table_start = body_html.find("<table")
+    body_html = body_html[:table_start] + our_shot + body_html[table_start:]
+
+    if competitor_key:
+        competitor_shot = _figure_html(COMPETITOR_SCREENSHOTS[competitor_key])
+        table_end = body_html.find("</table>")
+        if table_end != -1:
+            insert_at = table_end + len("</table>")
+            body_html = body_html[:insert_at] + competitor_shot + body_html[insert_at:]
+
+    return body_html
+
+
 AI_CLICHES = [
     "in today's fast-paced world", "in the dynamic world of", "crucial", "it is important to remember",
     "moreover", "in conclusion", "to sum up", "seamless", "unlock", "leverage", "delve into",
