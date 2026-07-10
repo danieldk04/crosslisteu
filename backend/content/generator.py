@@ -23,6 +23,20 @@ TRANSLATE_MODEL = "claude-haiku-4-5-20251001"
 CURRENT_YEAR = 2026
 FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend"
 
+
+def _extract_text(message) -> str:
+    """Join all text blocks from a Claude response.
+
+    Newer models (Sonnet 5 / the 5 family) can return a thinking block as the
+    first content block, so blindly reading content[0].text yields empty/errors.
+    """
+    parts = []
+    for block in message.content or []:
+        text = getattr(block, "text", None)
+        if text:
+            parts.append(text)
+    return "".join(parts).strip()
+
 # Every article is written in English first (zie CLAUDE-memory: "Language:
 # English only"). EVERY article — every pillar, every region — additionally
 # gets an auto-translated Dutch companion page, so nothing is EN-only or
