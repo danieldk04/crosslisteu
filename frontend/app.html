@@ -1669,6 +1669,52 @@ function missingFieldsAllPlatforms(item) {
   }
   return out;
 }
+
+// Context-aware "missing data" hint. Instead of a blunt "missing data for N
+// platforms", it tells you exactly what's wrong and whether it's fixable:
+//  - description gone + source listing delisted  → calm note, fix by hand
+//  - description missing but still on the platform → warn (a re-scan can fetch it)
+//  - only Marktplaats/2dehands extras missing     → gentle "add details" nudge
+// Returns '' when the item is fully publish-ready.
+function smartMissingBadge(item) {
+  const missingByPlatform = missingFieldsAllPlatforms(item);
+  if (!Object.keys(missingByPlatform).length) return '';
+
+  const noDesc = !String(item.description || '').trim();
+  const noPhotos = !(item.photo_urls && item.photo_urls.length);
+  // Fields that only block Marktplaats/2dehands (easily filled via Edit).
+  const detailSet = new Set();
+  for (const [p, fields] of Object.entries(missingByPlatform)) {
+    if (p === 'marktplaats' || p === '2dehands') fields.forEach(f => { if (f !== 'description' && f !== 'photos') detailSet.add(f); });
+  }
+  const details = [...detailSet];
+
+  const listings = state.listings.filter(l => l.item_id === item.id);
+  const anyActive = listings.some(l => l.status === 'active');
+  const sourceDelisted = !anyActive && listings.some(l => l.status === 'delisted');
+
+  const fullTip = esc(Object.entries(missingByPlatform).map(([p, f]) => `${PLATFORM_LABELS[p] || p}: ${f.join(', ')}`).join(' · '));
+  const chip = (bg, color, icon, text, tip) =>
+    `<div class="missing-data-badge" style="background:${bg};color:${color};border-color:${color}33" title="${tip}">${icon} ${text}</div>`;
+
+  // Photos genuinely missing is the most blocking — surface it first.
+  if (noPhotos) return chip('#fef2f2', '#dc2626', '⚠', 'No photos — add at least one', fullTip);
+
+  if (noDesc) {
+    if (sourceDelisted)
+      return chip('#f8fafc', '#64748b', '✎', 'Add a description (original listing removed)', 'This item was imported but its source listing is no longer live, so a re-scan can\'t fetch the text. Add it via Edit.');
+    return chip('#fff7ed', '#c2410c', '⚠', 'No description yet — needed on every platform', fullTip);
+  }
+
+  if (details.length) {
+    const labels = details.join(', ');
+    return chip('#fffbeb', '#b45309', '⚠', `Add ${labels} for Marktplaats & 2dehands`, fullTip);
+  }
+
+  // Fallback (some other platform-specific gap) — keep it informative.
+  const n = Object.keys(missingByPlatform).length;
+  return chip('#fffbeb', '#b45309', '⚠', `Missing data for ${n} platform${n !== 1 ? 's' : ''}`, fullTip);
+}
 const PLATFORM_LABELS = { marktplaats: 'Marktplaats', '2dehands': '2dehands', ebay: 'eBay', etsy: 'Etsy', shopify: 'Shopify', vinted: 'Vinted' };
 const PLATFORM_DOMAINS = { marktplaats: 'marktplaats.nl', '2dehands': '2dehands.be', vinted: 'vinted.nl', ebay: 'ebay.com', etsy: 'etsy.com', shopify: 'shopify.com' };
 const PLATFORM_EMOJI_FALLBACK = { marktplaats: '🇳🇱', '2dehands': '🇧🇪', vinted: '👕', ebay: '🛒', etsy: '🎨', shopify: '🏪' };
