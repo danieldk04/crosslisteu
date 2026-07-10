@@ -251,11 +251,12 @@ async def bulk_import_candidates(body: dict = None, user_id: str = Depends(get_c
     linked, created, failed = 0, 0, 0
     now = datetime.now(timezone.utc).isoformat()
     items = db.table("items").select("id,title").eq("user_id", user_id).execute().data or []
+    listings_by_id = _listings_by_platform_id(db, items)
 
     for cand in candidates:
         try:
             listed_at = cand.get("platform_listed_at") or now
-            match_id = _best_match(cand.get("title"), items)
+            match_id, _reason = _match_candidate(cand, items, listings_by_id)
             if match_id:
                 existing = db.table("listings").select("id").eq("item_id", match_id).eq("platform", cand["platform"]).execute()
                 if existing.data:
