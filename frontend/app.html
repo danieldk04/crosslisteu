@@ -2172,11 +2172,7 @@ function renderItemsTable(items) {
     const checked = selectedIds.has(item.id) ? 'checked' : '';
     const rowClass = selectedIds.has(item.id) ? 'selected' : '';
     const pubDate = publishedAt(item.id);
-    const missingByPlatform = missingFieldsAllPlatforms(item);
-    const missingCount = Object.keys(missingByPlatform).length;
-    const missingBadge = missingCount
-      ? `<div class="missing-data-badge" title="${esc(Object.entries(missingByPlatform).map(([p, f]) => `${PLATFORM_LABELS[p] || p}: ${f.join(', ')}`).join(' · '))}">⚠ Missing data for ${missingCount} platform${missingCount !== 1 ? 's' : ''}</div>`
-      : '';
+    const missingBadge = smartMissingBadge(item);
     return `<tr class="${rowClass}" id="row-${item.id}">
       <td class="col-check"><input type="checkbox" class="row-check" ${checked} onchange="toggleRowSelect('${item.id}',this.checked)"></td>
       <td><div class="item-info">
