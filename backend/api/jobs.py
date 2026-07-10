@@ -261,18 +261,47 @@ def _store_scan_results(db, job, scraped: list[dict]):
             score = SequenceMatcher(None, title.lower(), (it.get("title") or "").lower()).ratio()
             if score > best_score:
                 best_id, best_score = it["id"], score
-        db.table("import_candidates").upsert({
+
+        # `photo_urls` (the full ordered list) is the source of truth; keep the
+        # single `photo_url` populated too for the old thumbnail/UI path.
+        photo_urls = row.get("photo_urls") or ([row["photo_url"]] if row.get("photo_url") else [])
+        photo_url = row.get("photo_url") or (photo_urls[0] if photo_urls else None)
+
+        base = {
             "user_id": job["user_id"],
             "platform": job["platform"],
             "platform_listing_id": platform_listing_id,
             "platform_listing_url": row.get("platform_listing_url"),
             "title": title,
             "price": row.get("price"),
-            "photo_url": row.get("photo_url"),
+            "photo_url": photo_url,
             "suggested_item_id": best_id if best_score >= 0.9 else None,
             "platform_listed_at": row.get("platform_listed_at"),
             "status": "pending",
-        }, on_conflict="user_id,platform,platform_listing_id").execute()
+        }
+        # Full snapshot columns — only present once the schema migration has run.
+        # If they don't exist yet, PostgREST rejects the whole upsert, so retry
+        # with just the base fields so scanning never breaks on an un-migrated DB.
+        rich = {
+            "photo_urls": photo_urls or None,
+            "description": (row.get("description") or None),
+            "brand": (row.get("brand") or None),
+            "size": (row.get("size") or None),
+            "condition": (row.get("condition") or None),
+            "category": (row.get("category") or None),
+            "gender": (row.get("gender") or None),
+            "color": (row.get("color") or None),
+            "material": (row.get("material") or None),
+        }
+        try:
+            db.table("import_candidates").upsert(
+                {**base, **rich}, on_conflict="user_id,platform,platform_listing_id"
+            ).execute()
+        except Exception as e:
+            logger.warning(f"Scan store: rich upsert failed ({e}); falling back to base fields. Run the import_candidates ALTER migration.")
+            db.table("import_candidates").upsert(
+                base, on_conflict="user_id,platform,platform_listing_id"
+            ).execute()
 
 
 @router.post("/{job_id}/error")
