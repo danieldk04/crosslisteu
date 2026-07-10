@@ -326,7 +326,7 @@ def generate_page_content(
 
     try:
         message = client.messages.create(
-            model=MODEL,
+            model=GEN_MODEL,
             max_tokens=8000,
             messages=[{"role": "user", "content": prompt}],
         )
