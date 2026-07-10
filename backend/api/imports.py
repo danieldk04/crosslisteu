@@ -42,7 +42,8 @@ _COLORS = [
 _CATEGORY_RULES = [
     (("blazer", "suit", "pak", "tuxedo"), {"heren": "heren pakken"}),
     (("turtleneck", "half zip", "half-zip", "jumper", "sweater", "knitted", "knit",
-      "pullover", "cardigan", "fleece", "zip vest", "gilet", "bodywarmer", "vest"),
+      "pullover", "cardigan", "fleece", "zip vest", "gilet", "bodywarmer", "vest",
+      "spencer", "tank top"),
      {"heren": "heren truien", "dames": "truien", "unisex": "unisex truien"}),
     (("hoodie", "sweatshirt"),
      {"heren": "heren hoodies", "dames": "hoodies", "unisex": "unisex truien"}),
