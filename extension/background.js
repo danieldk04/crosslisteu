@@ -909,15 +909,25 @@ async function bgScanVinted(job, serverUrl) {
                   out._pageStatus = pageRes.status;
                   if (pageRes.ok) {
                     const html = await pageRes.text();
-                    let m = html.match(/<meta[^>]+(?:property|name)=["'](?:og:description|description)["'][^>]+content=["']([^"']+)["']/i);
-                    if (!m) m = html.match(/"description":"((?:[^"\\]|\\.)*)"/);
-                    if (m && m[1]) {
-                      try { out.description = JSON.parse('"' + m[1].replace(/"/g, '\\"') + '"'); }
-                      catch (e2) { out.description = m[1]; }
-                      out._src = "page";
-                      break;
+                    const decode = s => { try { return JSON.parse('"' + s.replace(/"/g, '\\"') + '"'); } catch (e2) { return s; } };
+                    // The embedded JSON often contains SEVERAL "description":"…"
+                    // fields — the first is frequently an empty SEO/catalog stub.
+                    // Collect them all and keep the longest non-empty one, so an
+                    // early `"description":""` no longer makes us give up.
+                    let best = "";
+                    for (const mm of html.matchAll(/"description":"((?:[^"\\]|\\.)*)"/g)) {
+                      const val = decode(mm[1]);
+                      if (val && val.length > best.length) best = val;
                     }
-                    break; // page loaded but no description found — retrying won't help
+                    // og:description as a secondary source (usually a shorter
+                    // teaser, so only use it if the JSON gave us nothing).
+                    if (!best) {
+                      const og = html.match(/<meta[^>]+(?:property|name)=["'](?:og:description|description)["'][^>]+content=["']([^"']+)["']/i);
+                      if (og && og[1]) best = decode(og[1]);
+                    }
+                    out._pageDescLen = best.length;
+                    if (best) { out.description = best; out._src = "page"; break; }
+                    break; // page loaded but genuinely no description text found
                   } else if (pageRes.status !== 429 && pageRes.status < 500) {
                     break;
                   }
