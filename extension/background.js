@@ -847,9 +847,16 @@ async function bgScanVinted(job, serverUrl) {
     // A quick call every ~200ms keeps the worker alive. The whole enrichment is
     // wrapped so ANY failure just ships the list-only data — the scan always
     // completes.
+    const total = result.items.length;
+    await reportProgress(serverUrl, job.id, {
+      stage: "enriching", message: `Found ${total} listings — fetching full details…`,
+      current: 0, total,
+    });
     let enriched = 0;
     try {
       const sleep = ms => new Promise(r => setTimeout(r, ms));
+      const startedAt = Date.now();
+      let idx = 0;
       for (const it of result.items) {
         let d = null;
         try {
