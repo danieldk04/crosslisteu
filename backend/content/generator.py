@@ -410,7 +410,7 @@ def translate_to_dutch(generated: dict) -> dict | None:
         logger.error(f"Claude vertaal-fout: {e}")
         return None
 
-    raw = message.content[0].text if message.content else ""
+    raw = _extract_text(message)
     if not raw:
         logger.error("Lege Claude-vertaalrespons")
         return None
