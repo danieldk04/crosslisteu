@@ -948,6 +948,12 @@ async function bgScanVinted(job, serverUrl) {
             debug: `detail HTTP ${d._status ?? "?"}${d._err ? " err:" + d._err : ""} · ${d._tries || 1} tr · desc ${(d.description || "").length} chars (${d._src || "api"})`,
           });
         }
+        // Collect a compact record for every item that ended up with no
+        // description, so we can see exactly what Vinted returned for the
+        // stubborn ones (deterministic failures, not throttling).
+        if (d && !d.description) {
+          noDesc.push(`${it.platform_listing_id}(api${d._status ?? "?"}/pg${d._pageStatus ?? "-"}${d._pageDescLen != null ? ":" + d._pageDescLen : ""})`);
+        }
         if (d) {
           enriched++;
           if (d.description) it.description = d.description;
