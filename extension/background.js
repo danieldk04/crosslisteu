@@ -861,25 +861,59 @@ async function bgScanVinted(job, serverUrl) {
         let d = null;
         try {
           d = await execInTab(tabId, async (id) => {
+            // Try the JSON detail endpoint first (same-origin, carries the full
+            // description that the wardrobe list omits). `credentials:include` +
+            // localize=false mirrors what Vinted's own SPA sends.
+            const out = { _status: null, _err: null, description: "", color: "", material: "", brand: "", size: "", condition: "", photo_urls: [] };
             try {
-              const res = await fetch(`/api/v2/items/${id}`, { headers: { Accept: "application/json" } });
-              if (!res.ok) return null;
-              const data = await res.json();
-              const item = data.item || data;
-              if (!item) return null;
-              const photos = (item.photos || []).map(p => p.full_size_url || p.url).filter(Boolean);
-              return {
-                description: item.description || "",
-                color: item.color1 || item.color1_title || item.colour || "",
-                material: item.material || item.material_title || "",
-                brand: item.brand_title || item.brand_dto?.title || item.brand || "",
-                size: item.size_title || item.size || "",
-                condition: item.status || item.status_title || "",
-                photo_urls: photos,
-              };
-            } catch (e) { return null; }
+              const res = await fetch(`/api/v2/items/${id}?localize=false`, {
+                headers: { Accept: "application/json" }, credentials: "include",
+              });
+              out._status = res.status;
+              if (res.ok) {
+                const data = await res.json();
+                const item = data.item || data || {};
+                out.description = item.description || item.description_text || "";
+                out.color = item.color1 || item.color1_title || item.colour || "";
+                out.material = item.material || item.material_title || "";
+                out.brand = item.brand_title || item.brand_dto?.title || item.brand || "";
+                out.size = item.size_title || item.size || "";
+                out.condition = item.status || item.status_title || "";
+                out.photo_urls = (item.photos || []).map(p => p.full_size_url || p.url).filter(Boolean);
+              }
+            } catch (e) { out._err = String(e && e.message || e); }
+            // Fallback: if the API gave us no description, scrape it from the
+            // public item page. Vinted renders the description into the page's
+            // meta description / embedded JSON, which is reliable even when the
+            // JSON API misbehaves.
+            if (!out.description) {
+              try {
+                const pageRes = await fetch(`/items/${id}`, { credentials: "include" });
+                if (pageRes.ok) {
+                  const html = await pageRes.text();
+                  let m = html.match(/<meta[^>]+(?:property|name)=["'](?:og:description|description)["'][^>]+content=["']([^"']+)["']/i);
+                  if (!m) m = html.match(/"description":"((?:[^"\\]|\\.)*)"/);
+                  if (m && m[1]) {
+                    try { out.description = JSON.parse('"' + m[1].replace(/"/g, '\\"') + '"'); }
+                    catch (e2) { out.description = m[1]; }
+                    out._src = "page";
+                  }
+                }
+              } catch (e) { /* fallback best-effort */ }
+            }
+            return out;
           }, [it.platform_listing_id]);
         } catch (e) { d = null; }
+        // One-time diagnostic on the first item so we can see exactly what Vinted
+        // returned (visible in the service-worker console AND surfaced to the UI).
+        if (idx === 0 && d) {
+          console.log("[CrossList] detail-debug", { status: d._status, err: d._err, descLen: (d.description || "").length, src: d._src || "api" });
+          await reportProgress(serverUrl, job.id, {
+            stage: "enriching", message: `Found ${total} listings — fetching full details…`,
+            current: 0, total,
+            debug: `detail HTTP ${d._status ?? "?"}${d._err ? " err:" + d._err : ""} · desc ${(d.description || "").length} chars (${d._src || "api"})`,
+          });
+        }
         if (d) {
           enriched++;
           if (d.description) it.description = d.description;
