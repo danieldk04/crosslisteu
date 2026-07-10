@@ -2808,11 +2808,28 @@ function renderImportReview(candidates) {
 
   const itemOptions = state.items.map(i => `<option value="${i.id}">${esc(i.title)}</option>`).join('');
 
-  document.getElementById('import-review-body').innerHTML = candidates.map(c => `
+  document.getElementById('import-review-body').innerHTML = candidates.map(c => {
+    // Show what the scan actually captured, so it's obvious per row whether the
+    // rich details (description, extra photos, colour, …) came through.
+    const nPhotos = Array.isArray(c.photo_urls) ? c.photo_urls.length : (c.photo_url ? 1 : 0);
+    const descLen = (c.description || '').trim().length;
+    const chips = [
+      descLen ? `📝 desc` : `<span style="color:#dc2626">no desc</span>`,
+      `🖼️ ${nPhotos} photo${nPhotos === 1 ? '' : 's'}`,
+      c.brand ? `🏷️ ${esc(c.brand)}` : null,
+      c.size ? `📏 ${esc(c.size)}` : null,
+      c.color ? `🎨 ${esc(c.color)}` : null,
+      c.condition ? `⭐ ${esc(c.condition)}` : null,
+    ].filter(Boolean).join(' · ');
+    return `
     <tr>
       <td><div class="item-info">
         <div class="item-photo">${c.photo_url ? `<img src="${c.photo_url}" style="width:40px;height:40px;border-radius:6px;object-fit:cover">` : '👗'}</div>
-        <div><div class="item-title">${esc(c.title || 'Untitled')}</div><div class="item-meta">${PLATFORM_LABELS[c.platform] || c.platform}${c.price ? ' · €' + c.price : ''}</div></div>
+        <div>
+          <div class="item-title">${esc(c.title || 'Untitled')}</div>
+          <div class="item-meta">${PLATFORM_LABELS[c.platform] || c.platform}${c.price ? ' · €' + c.price : ''}</div>
+          <div class="item-meta" style="margin-top:2px;font-size:11px">${chips}</div>
+        </div>
       </div></td>
       <td style="min-width:200px">
         <select id="import-match-${c.id}">
