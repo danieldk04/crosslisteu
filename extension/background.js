@@ -241,6 +241,18 @@ async function getAuthHeaders() {
   });
 }
 
+// Post a small live-progress update for a running job so the dashboard can show
+// the user exactly what's happening. Fire-and-forget: never let a progress ping
+// (or its failure) slow down or break the actual scan.
+async function reportProgress(serverUrl, jobId, progress) {
+  try {
+    const headers = await getAuthHeaders();
+    await fetch(`${serverUrl}/api/jobs/${jobId}/progress`, {
+      method: "POST", headers, body: JSON.stringify(progress),
+    });
+  } catch (e) { /* progress is best-effort */ }
+}
+
 async function pollJobs() {
   const serverUrl = await getServerUrl();
   const headers = await getAuthHeaders();
