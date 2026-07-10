@@ -823,50 +823,58 @@ async function bgScanVinted(job, serverUrl) {
 
     // The wardrobe LIST endpoint omits description + colour/material and
     // sometimes the photos array. Fetch each item's detail (same-origin, cheap)
-    // to fill those in, so an import lands fully populated. Best-effort per item:
-    // any failure or rate-limit just leaves that candidate with the list data.
-    const ids = result.items.map(it => it.platform_listing_id);
-    const details = await execInTab(tabId, async (ids) => {
-      const sleep = ms => new Promise(r => setTimeout(r, ms));
-      const out = {};
-      for (const id of ids) {
-        try {
-          const res = await fetch(`/api/v2/items/${id}`, { headers: { Accept: "application/json" } });
-          if (!res.ok) { await sleep(250); continue; }
-          const data = await res.json();
-          const it = data.item || data;
-          if (!it) continue;
-          const photos = (it.photos || []).map(p => p.full_size_url || p.url).filter(Boolean);
-          out[String(id)] = {
-            description: it.description || "",
-            color: it.color1 || it.color1_title || it.colour || "",
-            material: it.material || it.material_title || "",
-            brand: it.brand_title || it.brand_dto?.title || it.brand || "",
-            size: it.size_title || it.size || "",
-            condition: it.status || it.status_title || "",
-            photo_urls: photos,
-          };
-        } catch (e) {}
-        await sleep(250); // gentle on Vinted's rate limiter
-      }
-      return out;
-    }, [ids]);
-
+    // to fill those in, so an import lands fully populated.
+    //
+    // CRITICAL: do this as one short executeScript PER ITEM, driven from the
+    // service worker — not a single 50s executeScript. An MV3 service worker
+    // that sits idle awaiting one long call gets terminated by Chrome before it
+    // returns, which would abort the whole scan (no /complete, no candidates).
+    // A quick call every ~200ms keeps the worker alive. The whole enrichment is
+    // wrapped so ANY failure just ships the list-only data — the scan always
+    // completes.
     let enriched = 0;
-    for (const it of result.items) {
-      const d = details && details[it.platform_listing_id];
-      if (!d) continue;
-      enriched++;
-      if (d.description) it.description = d.description;
-      if (d.color) it.color = d.color;
-      if (d.material) it.material = d.material;
-      if (d.brand && !it.brand) it.brand = d.brand;
-      if (d.size && !it.size) it.size = d.size;
-      if (d.condition && !it.condition) it.condition = d.condition;
-      if (d.photo_urls && d.photo_urls.length) {
-        it.photo_urls = d.photo_urls;
-        it.photo_url = it.photo_url || d.photo_urls[0];
+    try {
+      const sleep = ms => new Promise(r => setTimeout(r, ms));
+      for (const it of result.items) {
+        let d = null;
+        try {
+          d = await execInTab(tabId, async (id) => {
+            try {
+              const res = await fetch(`/api/v2/items/${id}`, { headers: { Accept: "application/json" } });
+              if (!res.ok) return null;
+              const data = await res.json();
+              const item = data.item || data;
+              if (!item) return null;
+              const photos = (item.photos || []).map(p => p.full_size_url || p.url).filter(Boolean);
+              return {
+                description: item.description || "",
+                color: item.color1 || item.color1_title || item.colour || "",
+                material: item.material || item.material_title || "",
+                brand: item.brand_title || item.brand_dto?.title || item.brand || "",
+                size: item.size_title || item.size || "",
+                condition: item.status || item.status_title || "",
+                photo_urls: photos,
+              };
+            } catch (e) { return null; }
+          }, [it.platform_listing_id]);
+        } catch (e) { d = null; }
+        if (d) {
+          enriched++;
+          if (d.description) it.description = d.description;
+          if (d.color) it.color = d.color;
+          if (d.material) it.material = d.material;
+          if (d.brand && !it.brand) it.brand = d.brand;
+          if (d.size && !it.size) it.size = d.size;
+          if (d.condition && !it.condition) it.condition = d.condition;
+          if (d.photo_urls && d.photo_urls.length) {
+            it.photo_urls = d.photo_urls;
+            it.photo_url = it.photo_url || d.photo_urls[0];
+          }
+        }
+        await sleep(200); // gentle on Vinted's rate limiter; keeps the SW warm
       }
+    } catch (e) {
+      console.warn("[CrossList] Vinted enrichment aborted, sending list data only:", e);
     }
 
     const completeHeaders = await getAuthHeaders();
