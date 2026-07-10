@@ -821,12 +821,60 @@ async function bgScanVinted(job, serverUrl) {
     if (!result) throw new Error("Vinted scan returned nothing — page may not have loaded correctly.");
     if (result.error) throw new Error(result.error);
 
+    // The wardrobe LIST endpoint omits description + colour/material and
+    // sometimes the photos array. Fetch each item's detail (same-origin, cheap)
+    // to fill those in, so an import lands fully populated. Best-effort per item:
+    // any failure or rate-limit just leaves that candidate with the list data.
+    const ids = result.items.map(it => it.platform_listing_id);
+    const details = await execInTab(tabId, async (ids) => {
+      const sleep = ms => new Promise(r => setTimeout(r, ms));
+      const out = {};
+      for (const id of ids) {
+        try {
+          const res = await fetch(`/api/v2/items/${id}`, { headers: { Accept: "application/json" } });
+          if (!res.ok) { await sleep(250); continue; }
+          const data = await res.json();
+          const it = data.item || data;
+          if (!it) continue;
+          const photos = (it.photos || []).map(p => p.full_size_url || p.url).filter(Boolean);
+          out[String(id)] = {
+            description: it.description || "",
+            color: it.color1 || it.color1_title || it.colour || "",
+            material: it.material || it.material_title || "",
+            brand: it.brand_title || it.brand_dto?.title || it.brand || "",
+            size: it.size_title || it.size || "",
+            condition: it.status || it.status_title || "",
+            photo_urls: photos,
+          };
+        } catch (e) {}
+        await sleep(250); // gentle on Vinted's rate limiter
+      }
+      return out;
+    }, [ids]);
+
+    let enriched = 0;
+    for (const it of result.items) {
+      const d = details && details[it.platform_listing_id];
+      if (!d) continue;
+      enriched++;
+      if (d.description) it.description = d.description;
+      if (d.color) it.color = d.color;
+      if (d.material) it.material = d.material;
+      if (d.brand && !it.brand) it.brand = d.brand;
+      if (d.size && !it.size) it.size = d.size;
+      if (d.condition && !it.condition) it.condition = d.condition;
+      if (d.photo_urls && d.photo_urls.length) {
+        it.photo_urls = d.photo_urls;
+        it.photo_url = it.photo_url || d.photo_urls[0];
+      }
+    }
+
     const completeHeaders = await getAuthHeaders();
     await fetch(`${serverUrl}/api/jobs/${job.id}/complete`, {
       method: "POST", headers: completeHeaders,
       body: JSON.stringify({ listings: result.items }),
     });
-    console.log(`[CrossList] Vinted scan found ${result.items.length} listings`);
+    console.log(`[CrossList] Vinted scan found ${result.items.length} listings (enriched ${enriched})`);
   } finally {
     setTimeout(() => chrome.tabs.remove(tabId).catch(() => {}), 2500);
   }
