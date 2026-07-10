@@ -2838,6 +2838,7 @@ function renderImportReview(candidates) {
         </div>
       </div></td>
       <td style="min-width:200px">
+        <div style="margin-bottom:4px">${matchBadge(c.match_reason)}</div>
         <select id="import-match-${c.id}">
           <option value="">— create new item —</option>
           ${itemOptions}
