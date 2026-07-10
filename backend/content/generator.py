@@ -348,7 +348,7 @@ def generate_page_content(
         logger.error(f"Claude API fout voor keyword '{keyword}': {e}")
         return None
 
-    raw = message.content[0].text if message.content else ""
+    raw = _extract_text(message)
     if not raw:
         logger.error(f"Lege Claude-respons voor keyword '{keyword}'")
         return None
