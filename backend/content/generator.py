@@ -388,7 +388,7 @@ def translate_to_dutch(generated: dict) -> dict | None:
 
     try:
         message = client.messages.create(
-            model=MODEL,
+            model=TRANSLATE_MODEL,
             max_tokens=8000,
             messages=[{"role": "user", "content": prompt}],
         )
