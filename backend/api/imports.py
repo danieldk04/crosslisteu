@@ -12,6 +12,60 @@ SCANNABLE_PLATFORMS = {"vinted", "marktplaats", "2dehands"}
 MATCH_THRESHOLD = 0.9
 
 
+def _map_condition(raw: str | None) -> str:
+    """Map a platform's free-text condition onto our new/good/fair/poor scale."""
+    s = (raw or "").strip().lower()
+    if not s:
+        return "good"
+    if "new" in s or "nieuw" in s or "tags" in s or "prijskaartje" in s:
+        return "new"
+    if "very good" in s or "zo goed als nieuw" in s or "good" in s or "goed" in s:
+        return "good"
+    if "satisf" in s or "redelijk" in s or "fair" in s:
+        return "fair"
+    if "poor" in s or "slecht" in s or "gebruikt" in s:
+        return "poor"
+    return "good"
+
+
+def _photos_from_candidate(cand: dict) -> list[str]:
+    """Full photo list if the scan captured it, else the single thumbnail."""
+    photos = cand.get("photo_urls")
+    if isinstance(photos, list) and photos:
+        return [p for p in photos if p]
+    return [cand["photo_url"]] if cand.get("photo_url") else []
+
+
+def _item_data_from_candidate(cand: dict, body: dict | None = None) -> dict:
+    """
+    Build the full item payload from a scraped candidate, so an import lands
+    with everything the scan captured (all photos, description, brand, size,
+    condition, category, colour, material). `body` overrides any field the user
+    edited in the import dialog and carries data the scan can't see (e.g.
+    purchase_price).
+    """
+    body = body or {}
+
+    def pick(key, cand_key=None, default=None):
+        v = body.get(key)
+        return v if v is not None else (cand.get(cand_key or key) or default)
+
+    return {
+        "title": pick("title") or "Untitled",
+        "price": body.get("price") if body.get("price") is not None else (cand.get("price") or 0),
+        "photo_urls": body.get("photo_urls") or _photos_from_candidate(cand),
+        "description": pick("description"),
+        "purchase_price": body.get("purchase_price"),
+        "brand": pick("brand"),
+        "size": pick("size"),
+        "condition": body.get("condition") or _map_condition(cand.get("condition")),
+        "category": pick("category"),
+        "gender": pick("gender"),
+        "color": pick("color"),
+        "material": pick("material"),
+    }
+
+
 def _best_match(title: str, items: list[dict]) -> str | None:
     """Titles are published verbatim to the platform, so a genuine match scores near 1.0."""
     best_id, best_score = None, 0.0
