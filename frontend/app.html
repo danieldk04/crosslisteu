@@ -2892,31 +2892,40 @@ async function applyImportCandidate(candidateId) {
     return;
   }
 
-  // No match selected — collect the fields scraping can't see, then create a new item.
-  const purchase_price = prompt('Purchase price (optional, leave empty to skip):', '');
-  const brand = prompt('Brand (optional):', '');
-  const size = prompt('Size (optional):', '');
-  const color = prompt('Color (optional):', '');
-  setBusy(true, 'Creating item…');
-  try {
-    const r = await apiFetch(`${API}/api/imports/${candidateId}/create-item`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        purchase_price: purchase_price ? Number(purchase_price) : null,
-        brand: brand || null,
-        size: size || null,
-        color: color || null,
-      }),
-    });
-    if (!r.ok) throw new Error((await r.json()).detail || 'Import failed');
-    await loadAll();
-    await loadImportCandidates();
-    showToast('Item created.');
-  } catch (e) {
-    alert('Import error: ' + e.message);
-  } finally {
-    setBusy(false);
+  // No match selected — open the normal item form (pre-filled from the scan) so
+  // creating an item from an import uses the exact same UI as adding one by hand.
+  openImportCreate(candidateId);
+}
+
+// Open the standard "New item" modal, pre-filled with everything the scan captured,
+// in a mode where saving creates the item AND links the scanned platform listing to it.
+function openImportCreate(candidateId) {
+  const c = importCandidatesById[candidateId];
+  if (!c) return alert('This import row is no longer available — rescan and try again.');
+
+  openAddItem();                       // reset + open the shared item form
+  importCreateCandidateId = candidateId;
+  document.getElementById('modal-title').textContent = `Import from ${PLATFORM_LABELS[c.platform] || c.platform}`;
+  document.getElementById('f-title').value = c.title || '';
+  document.getElementById('f-desc').value = c.description || '';
+  if (c.price != null) document.getElementById('f-price').value = c.price;
+  document.getElementById('f-brand').value = c.brand || '';
+  document.getElementById('f-color').value = c.color || '';
+  document.getElementById('f-material').value = c.material || '';
+  if (c.size) {
+    const sizeSel = document.getElementById('f-size');
+    if ([...sizeSel.options].some(o => o.value === c.size)) sizeSel.value = c.size;
   }
+  if (c.condition) {
+    const condSel = document.getElementById('f-condition');
+    if ([...condSel.options].some(o => o.value === c.condition)) condSel.value = c.condition;
+    updateConditionHint();
+  }
+  resetPhotoUpload(Array.isArray(c.photo_urls) ? c.photo_urls : (c.photo_url ? [c.photo_url] : []));
+
+  // It's already live on the platform — no "publish directly to" step here.
+  document.getElementById('crosslist-group').style.display = 'none';
+  document.getElementById('save-btn').textContent = 'Create item';
 }
 
 async function bulkImportAllCandidates() {
