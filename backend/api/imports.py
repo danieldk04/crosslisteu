@@ -35,7 +35,9 @@ _COLORS = [
     # English compounds first
     "light blue", "dark blue", "light green", "dark green", "light grey", "dark grey",
     "off white", "navy", "royal blue",
-    # Dutch compounds
+    # Dutch compounds (base + inflected -e forms)
+    "lichtblauwe", "donkerblauwe", "marineblauwe", "lichtgroene", "donkergroene",
+    "lichtgrijze", "donkergrijze", "olijfgroene",
     "lichtblauw", "donkerblauw", "marineblauw", "lichtgroen", "donkergroen",
     "lichtgrijs", "donkergrijs", "gebroken wit",
     # English base
