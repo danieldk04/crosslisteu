@@ -794,14 +794,44 @@ async function bgScanVinted(job, serverUrl) {
     const userId = idInfo.userId;
     await reportProgress(serverUrl, job.id, { stage: "listing", message: "Reading your listings…", current: 0, total: 0 });
     const result = await execInTab(tabId, async (userId) => {
-      const res = await fetch(`/api/v2/wardrobe/${userId}/items?order=newest_first&page=1&per_page=200`, {
-        headers: { Accept: "application/json" },
-      });
-      if (!res.ok) return { error: `Vinted returned HTTP ${res.status} while listing your items (user id ${userId}, ${location.origin}).` };
-      const data = await res.json();
-      if (data.code && data.code !== 0) return { error: `Vinted API error: ${data.message_code || data.code}` };
+      const nap = ms => new Promise(r => setTimeout(r, ms));
+      // Page through the WHOLE wardrobe — one page of 200 is not enough for a
+      // seller with a big closet, and stopping at page 1 silently drops the rest.
+      // Loop until a page comes back short (fewer than per_page) or empty; a hard
+      // page cap only guards against a pathological infinite loop.
+      const PER_PAGE = 200;
+      const MAX_PAGES = 50; // 10,000 listings — far beyond any real wardrobe
+      const rawItems = [];
+      for (let page = 1; page <= MAX_PAGES; page++) {
+        let res, data;
+        // Retry each page a couple of times so one transient hiccup mid-paging
+        // doesn't truncate the scan.
+        for (let attempt = 0; attempt < 3; attempt++) {
+          res = await fetch(`/api/v2/wardrobe/${userId}/items?order=newest_first&page=${page}&per_page=${PER_PAGE}`, {
+            headers: { Accept: "application/json" },
+          });
+          if (res.ok) break;
+          if (res.status !== 429 && res.status < 500) break; // real client error — don't retry
+          await nap(1000 * Math.pow(2, attempt));
+        }
+        if (!res.ok) {
+          // First page failing is fatal; a later page failing after we already
+          // have items just ends paging with what we collected so far.
+          if (page === 1) return { error: `Vinted returned HTTP ${res.status} while listing your items (user id ${userId}, ${location.origin}).` };
+          break;
+        }
+        data = await res.json();
+        if (data.code && data.code !== 0) {
+          if (page === 1) return { error: `Vinted API error: ${data.message_code || data.code}` };
+          break;
+        }
+        const pageItems = data.items || [];
+        rawItems.push(...pageItems);
+        if (pageItems.length < PER_PAGE) break; // last page reached
+        await nap(300); // gentle pacing between pages
+      }
 
-      const items = (data.items || []).map(it => {
+      const items = rawItems.map(it => {
         const priceObj = it.price || it.total_item_price;
         const price = priceObj && priceObj.amount != null ? Number(priceObj.amount)
           : (typeof it.price === "number" ? it.price : null);
