@@ -16,7 +16,10 @@ from backend.config import settings
 
 logger = logging.getLogger(__name__)
 
-MODEL = "claude-opus-4-8"
+# Article generation uses Sonnet (strong SEO quality at ~1/5 the cost of Opus);
+# translation is mechanical HTML-preserving work, so Haiku handles it far cheaper.
+GEN_MODEL = "claude-sonnet-5"
+TRANSLATE_MODEL = "claude-haiku-4-5-20251001"
 CURRENT_YEAR = 2026
 FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend"
 
