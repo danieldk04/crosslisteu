@@ -3,6 +3,7 @@ from backend.database import get_db
 from backend.api.deps import get_current_user
 from backend.models import ItemCreate
 from datetime import datetime, timezone
+import re
 import uuid
 
 router = APIRouter(prefix="/imports", tags=["imports"])
