@@ -792,6 +792,7 @@ async function bgScanVinted(job, serverUrl) {
     }
 
     const userId = idInfo.userId;
+    await reportProgress(serverUrl, job.id, { stage: "listing", message: "Reading your listings…", current: 0, total: 0 });
     const result = await execInTab(tabId, async (userId) => {
       const res = await fetch(`/api/v2/wardrobe/${userId}/items?order=newest_first&page=1&per_page=200`, {
         headers: { Accept: "application/json" },
