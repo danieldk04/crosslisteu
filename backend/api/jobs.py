@@ -2,7 +2,6 @@ from fastapi import APIRouter, HTTPException, Depends
 from backend.database import get_db
 from backend.api.deps import get_current_user
 from datetime import datetime, timezone
-from difflib import SequenceMatcher
 import logging
 
 logger = logging.getLogger(__name__)

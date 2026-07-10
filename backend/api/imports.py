@@ -3,13 +3,11 @@ from backend.database import get_db
 from backend.api.deps import get_current_user
 from backend.models import ItemCreate
 from datetime import datetime, timezone
-from difflib import SequenceMatcher
 import uuid
 
 router = APIRouter(prefix="/imports", tags=["imports"])
 
 SCANNABLE_PLATFORMS = {"vinted", "marktplaats", "2dehands"}
-MATCH_THRESHOLD = 0.9
 
 
 def _map_condition(raw: str | None) -> str:
