@@ -60,7 +60,7 @@ _CATEGORY_RULES = [
     (("chino", "trouser", "pants", "pantalon"),
      {"heren": "heren chinos", "dames": "broeken"}),
     (("short",), {"heren": "heren shorts", "dames": "shorts"}),
-    (("coat", "jacket", "parka", "bomber"),
+    (("coat", "jacket", "parka", "bomber", "shacket"),
      {"heren": "heren jassen", "dames": "jassen", "unisex": "unisex jassen"}),
     (("skirt", "rok"), {"dames": "rokken"}),
     (("dress", "jurk"), {"dames": "jurken casual"}),
