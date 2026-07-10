@@ -1024,7 +1024,12 @@ input[type="checkbox"].row-check { width: 15px; height: 15px; cursor: pointer; a
           <h3 style="font-size:15px;margin:0">Review imports</h3>
           <button class="btn btn-sm btn-primary" onclick="bulkImportAllCandidates()">Import all → Items</button>
         </div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Rows with a suggested match get linked to that existing item; the rest become new items (title/price/photo from the scan, condition "good" by default — edit purchase price/brand/size on the item afterwards). Either way they show up in Refresh right after.</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6">
+          <b>How matching works:</b> we only auto-link when we're certain, so nothing gets mislinked:
+          <span style="white-space:nowrap">🔗 <b>Same listing</b></span> = we recognise the exact same platform listing (same ID) on an item you already have.
+          <span style="white-space:nowrap">≈ <b>Same title</b></span> = one existing item has an identical title.
+          Everything else stays <span style="white-space:nowrap">✨ <b>New item</b></span> — near-matches that differ only by size, colour or number are deliberately <i>not</i> linked. You can always override the match per row before applying.
+        </div>
         <table class="data-table">
           <thead>
             <tr>
