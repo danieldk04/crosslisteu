@@ -121,6 +121,9 @@ def _item_data_from_candidate(cand: dict, body: dict | None = None) -> dict:
     purchase_price).
     """
     body = body or {}
+    # Fill colour/gender/category the scan can't see by inferring them from the
+    # listing text — only used as a last resort below (body + scan always win).
+    inferred = _infer_attributes(cand.get("title"), cand.get("description"))
 
     def pick(key, cand_key=None, default=None):
         v = body.get(key)
@@ -135,9 +138,9 @@ def _item_data_from_candidate(cand: dict, body: dict | None = None) -> dict:
         "brand": pick("brand"),
         "size": pick("size"),
         "condition": body.get("condition") or _map_condition(cand.get("condition")),
-        "category": pick("category"),
-        "gender": pick("gender"),
-        "color": pick("color"),
+        "category": pick("category") or inferred.get("category"),
+        "gender": pick("gender") or inferred.get("gender"),
+        "color": pick("color") or inferred.get("color"),
         "material": pick("material"),
     }
 
