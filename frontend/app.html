@@ -2593,6 +2593,37 @@ async function saveItem() {
 
   const btn = document.getElementById('save-btn');
   btn.disabled = true; btn.textContent = 'Saving...';
+
+  // Creating an item from an import: use the import endpoint so the scanned
+  // platform listing is linked to the new item (and the candidate is cleared).
+  if (importCreateCandidateId) {
+    setBusy(true, 'Creating item from import…');
+    try {
+      const r = await apiFetch(`${API}/api/imports/${importCreateCandidateId}/create-item`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: data.title, price: data.price, description: data.description,
+          photo_urls: data.photo_urls, purchase_price: data.purchase_price,
+          brand: data.brand, size: data.size, color: data.color,
+          material: data.material, category: data.category,
+          gender: data.gender, condition: data.condition,
+        }),
+      });
+      if (!r.ok) throw new Error((await r.json()).detail || 'Import failed');
+      importCreateCandidateId = null;
+      closeModal('modal-add');
+      await loadAll();
+      await loadImportCandidates();
+      showToast('Item created and linked — find it under Items.');
+    } catch (e) {
+      alert('Import error: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      setBusy(false);
+    }
+    return;
+  }
+
   setBusy(true, 'Saving item…');
   try {
     let itemId = id;
