@@ -856,6 +856,7 @@ async function bgScanVinted(job, serverUrl) {
     try {
       const sleep = ms => new Promise(r => setTimeout(r, ms));
       const startedAt = Date.now();
+      const noDesc = [];
       let idx = 0;
       for (const it of result.items) {
         let d = null;
