@@ -2715,6 +2715,7 @@ function renderImportProgress(platform, prog) {
         <span>${esc(counter)}</span>
         <span>${esc(eta)}</span>
       </div>
+      ${prog?.debug ? `<div style="margin-top:6px;font-size:11px;color:var(--muted);font-family:monospace">${esc(prog.debug)}</div>` : ''}
     </div>`;
 }
 
