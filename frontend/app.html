@@ -2685,7 +2685,7 @@ const SCAN_STAGE_LABELS = {
   saving: 'Saving everything to your dashboard…',
 };
 
-function fmtEta(s) {
+function fmtScanEta(s) {
   if (s == null) return '';
   if (s <= 0) return 'almost done';
   if (s < 60) return `~${s} sec left`;
