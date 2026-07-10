@@ -308,6 +308,7 @@ async def bulk_import_candidates(body: dict = None, user_id: str = Depends(get_c
                         "status": "active",
                         "listed_at": listed_at,
                     }).execute()
+                _backfill_item_from_candidate(db, match_id, cand)
                 db.table("import_candidates").update({"status": "linked"}).eq("id", cand["id"]).execute()
                 linked += 1
             else:
