@@ -16,7 +16,7 @@ ASSETS = ROOT / "scripts" / "assets"
 
 EMAIL = "dkresellacademy@gmail.com"
 PASSWORD = "95rwPSLgHxncWDV"
-BASE = "https://crosslisteu.com"
+BASE = "https://omnivaleur.com"
 
 W, H = 1600, 1000
 

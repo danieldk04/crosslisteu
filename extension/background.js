@@ -219,11 +219,11 @@ chrome.runtime.onStartup.addListener(pollJobs);
 
 async function getServerUrl() {
   return new Promise((resolve) => {
-    chrome.storage.sync.get({ serverUrl: "https://crosslisteu.com" }, (s) => {
+    chrome.storage.sync.get({ serverUrl: "https://omnivaleur.com" }, (s) => {
       let url = s.serverUrl.replace(/\/$/, "");
-      if (url === "https://api.crosslisteu.com") {
+      if (url === "https://api.omnivaleur.com") {
         // Stale value from before the domain consolidation — migrate it.
-        url = "https://crosslisteu.com";
+        url = "https://omnivaleur.com";
         chrome.storage.sync.set({ serverUrl: url });
       }
       resolve(url);

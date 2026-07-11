@@ -1,4 +1,4 @@
-// Runs on crosslisteu.com — syncs the web app's auth token to the extension
+// Runs on omnivaleur.com — syncs the web app's auth token to the extension
 (function () {
   const token = sessionStorage.getItem('cl_token');
   const email = sessionStorage.getItem('cl_email') || '';

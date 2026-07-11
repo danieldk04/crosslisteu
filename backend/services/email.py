@@ -39,7 +39,7 @@ def send_email(subject: str, body: str, to: str | None = None) -> bool:
 
 
 def notify_published(keyword: str, url_path: str, action: str, schema_warnings: list[str] | None = None) -> None:
-    site_url = "https://crosslisteu.com"
+    site_url = "https://omnivaleur.com"
     lines = [
         f"Nieuw artikel {action}: {keyword}",
         f"{site_url}{url_path}",

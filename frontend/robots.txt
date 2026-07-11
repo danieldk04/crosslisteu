@@ -6,4 +6,4 @@ Disallow: /ebay-callback.html
 Disallow: /forgot-password.html
 Disallow: /reset-password.html
 
-Sitemap: https://crosslisteu.com/sitemap.xml
+Sitemap: https://omnivaleur.com/sitemap.xml

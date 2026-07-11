@@ -32,7 +32,7 @@ async def forgot_password(body: ResetRequest):
     try:
         db.auth.reset_password_for_email(
             body.email,
-            options={"redirect_to": "https://crosslisteu.com/reset-password.html"}
+            options={"redirect_to": "https://omnivaleur.com/reset-password.html"}
         )
     except Exception:
         pass

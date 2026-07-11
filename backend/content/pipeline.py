@@ -22,7 +22,7 @@ from backend.services.search_console import get_top_pages
 
 logger = logging.getLogger(__name__)
 
-SITE_URL = "https://crosslisteu.com"
+SITE_URL = "https://omnivaleur.com"
 
 # Altijd-beschikbare interne linkkandidaten, ook als er nog geen andere
 # content_pages bestaan — zo heeft zelfs de allereerste pagina al zinvolle
@@ -109,7 +109,7 @@ def _save_page_row(
     # Prioritize linking to pages that already get real Search Console traffic —
     # falls back to the existing (unordered) sequence if GSC isn't configured.
     clicks_by_url = {p["url"]: p["clicks"] for p in get_top_pages(days=90, row_limit=200)}
-    candidates.sort(key=lambda c: clicks_by_url.get(f"https://crosslisteu.com{c['url_path']}", 0), reverse=True)
+    candidates.sort(key=lambda c: clicks_by_url.get(f"https://omnivaleur.com{c['url_path']}", 0), reverse=True)
     candidates += STATIC_LINK_CANDIDATES
     body_with_links, linked_intents = apply_internal_links(generated["body_html"], candidates, intent_key)
 

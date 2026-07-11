@@ -8,7 +8,7 @@ OUT.mkdir(parents=True, exist_ok=True)
 with sync_playwright() as p:
     browser = p.chromium.launch()
     page = browser.new_page(viewport={"width": 1440, "height": 900})
-    page.goto("https://crosslisteu.com/login")
+    page.goto("https://omnivaleur.com/login")
     page.fill("#email", "dkresellacademy@gmail.com")
     page.fill("#password", "95rwPSLgHxncWDV")
     page.click("button[type=submit], form button")

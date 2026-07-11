@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 INDEXNOW_KEY = "e9c75dd3136858fec240e72ecd1d275a"
 INDEXNOW_ENDPOINT = "https://api.indexnow.org/indexnow"
-SITE_URL = "https://crosslisteu.com"
+SITE_URL = "https://omnivaleur.com"
 
 
 def submit_url(url_path: str) -> bool:
@@ -21,7 +21,7 @@ def submit_url(url_path: str) -> bool:
         response = httpx.post(
             INDEXNOW_ENDPOINT,
             json={
-                "host": "crosslisteu.com",
+                "host": "omnivaleur.com",
                 "key": INDEXNOW_KEY,
                 "keyLocation": f"{SITE_URL}/{INDEXNOW_KEY}.txt",
                 "urlList": [f"{SITE_URL}{url_path}"],

@@ -24,7 +24,7 @@ from backend.services import social_scrape
 
 logger = logging.getLogger(__name__)
 
-SITE_URL = "https://crosslisteu.com"
+SITE_URL = "https://omnivaleur.com"
 
 
 # ---------------------------------------------------------------------------

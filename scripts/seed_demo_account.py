@@ -151,6 +151,6 @@ if __name__ == "__main__":
     seed(db, uid)
     print()
     print("Demo account ready:")
-    print(f"  URL:      https://crosslisteu.com/login.html")
+    print(f"  URL:      https://omnivaleur.com/login.html")
     print(f"  Email:    {DEMO_EMAIL}")
     print(f"  Password: {DEMO_PASSWORD}")

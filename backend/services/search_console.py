@@ -79,8 +79,8 @@ _RESOLVED_SITE_URL: str | None = None
 def _resolve_site_url(service) -> str:
     """
     De GSC-API vereist dat siteUrl EXACT matcht met de geregistreerde property. Die kan
-    een domain-property zijn (`sc-domain:crosslisteu.com`) of een URL-prefix mét slash
-    (`https://crosslisteu.com/`) — onze config-default (`https://crosslisteu.com`) matcht
+    een domain-property zijn (`sc-domain:omnivaleur.com`) of een URL-prefix mét slash
+    (`https://omnivaleur.com/`) — onze config-default (`https://omnivaleur.com`) matcht
     dan niet en levert lege data op. We halen daarom de echte lijst met properties op en
     kiezen de match voor het geconfigureerde domein. Resultaat wordt gecachet.
     """
@@ -89,7 +89,7 @@ def _resolve_site_url(service) -> str:
         return _RESOLVED_SITE_URL
 
     configured = settings.gsc_site_url
-    # Domein zonder scheme/slash, voor losse vergelijking (crosslisteu.com).
+    # Domein zonder scheme/slash, voor losse vergelijking (omnivaleur.com).
     bare = configured.replace("https://", "").replace("http://", "").strip("/")
 
     try:

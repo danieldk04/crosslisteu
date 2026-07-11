@@ -1,7 +1,7 @@
 """Seed the demo account with a few realistic items (real photos) for video recording."""
 import requests
 
-BASE = "https://crosslisteu.com"
+BASE = "https://omnivaleur.com"
 EMAIL = "dkresellacademy@gmail.com"
 PASSWORD = "95rwPSLgHxncWDV"
 

@@ -36,7 +36,7 @@ templates = Jinja2Templates(directory=str(Path(__file__).parent.parent.parent / 
 
 REGIONS = {"nl", "be-nl", "be-fr", "fr", "de"}
 LANGUAGES = {"nl", "fr", "de"}  # non-English language prefixes this site currently serves
-SITE_URL = "https://crosslisteu.com"
+SITE_URL = "https://omnivaleur.com"
 
 
 def _url_path(language: str, pillar: str, slug: str) -> str:

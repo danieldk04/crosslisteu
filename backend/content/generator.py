@@ -234,7 +234,7 @@ def _build_prompt(
     ) or "(no competitor data available — write from platform expertise)"
 
     internal_links_block = "\n".join(
-        f'- "{p["title"]}" → https://crosslisteu.com{p["url_path"]}'
+        f'- "{p["title"]}" → https://omnivaleur.com{p["url_path"]}'
         for p in existing_pages
     ) or "(no other pages published yet)"
 

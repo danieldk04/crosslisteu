@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     shopify_client_id: str = ""
     shopify_client_secret: str = ""
     shopify_scopes: str = "read_products,write_products"
-    shopify_redirect_uri: str = "https://crosslisteu.com/shopify-callback.html"
+    shopify_redirect_uri: str = "https://omnivaleur.com/shopify-callback.html"
 
     ebay_app_id: str = ""
     ebay_cert_id: str = ""
@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     ebay_sandbox: bool = False
     ebay_default_category_id: str = ""
     ebay_verification_token: str = ""
-    ebay_webhook_url: str = "https://crosslisteu.com/api/webhooks/ebay"
+    ebay_webhook_url: str = "https://omnivaleur.com/api/webhooks/ebay"
 
     anthropic_api_key: str = ""
     google_api_key: str = ""  # Gemini image-gen voor content_pages featured images
@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     stripe_publishable_key: str = ""
     stripe_webhook_secret: str = ""
     stripe_price_id: str = ""
-    app_url: str = "https://app.crosslisteu.com"
+    app_url: str = "https://omnivaleur.com"
 
     secret_key: str = "change-me"
     polling_interval: int = 300
@@ -55,7 +55,7 @@ class Settings(BaseSettings):
     gsc_client_id: str = ""
     gsc_client_secret: str = ""
     gsc_refresh_token: str = ""
-    gsc_site_url: str = "https://crosslisteu.com"
+    gsc_site_url: str = "https://omnivaleur.com"
 
     # Google Analytics 4 — wekelijks marketingrapport (verkeer + kanaalattributie).
     # Hergebruikt de GSC OAuth-client (gsc_client_id/secret); alleen een apart refresh

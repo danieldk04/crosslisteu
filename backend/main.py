@@ -30,10 +30,10 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://crosslisteu.com",
-        "https://www.crosslisteu.com",
-        "https://app.crosslisteu.com",
-        "https://api.crosslisteu.com",
+        "https://omnivaleur.com",
+        "https://www.omnivaleur.com",
+        "https://omnivaleur.com",
+        "https://api.omnivaleur.com",
         "http://localhost:3000",
         "http://localhost:8000",
     ],
