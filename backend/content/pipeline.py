@@ -123,7 +123,7 @@ def _save_page_row(
         "@type": "Article",
         "headline": generated["h1"],
         "description": generated["meta_description"],
-        "image": featured_image_url or f"{SITE_URL}/Logo Crosslist EU.png",
+        "image": featured_image_url or f"{SITE_URL}/logo.png",
         "author": {"@type": "Person", "name": "Daniel"},
         "publisher": {"@type": "Organization", "name": "ListHub", "url": SITE_URL},
         "mainEntityOfPage": {"@type": "WebPage", "@id": canonical},
