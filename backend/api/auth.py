@@ -61,6 +61,7 @@ async def resend_confirmation(body: ResetRequest):
 
 class PasswordUpdate(BaseModel):
     password: str
+    refresh_token: str = ""
 
 
 @router.post("/reset-password")
@@ -70,10 +71,13 @@ async def reset_password(body: PasswordUpdate, authorization: str = Header(...))
         raise HTTPException(status_code=401, detail="Invalid token")
     db = get_db()
     try:
-        db.auth.set_session(token, "")
+        # gotrue's set_session raises if the refresh token is empty, so pass the
+        # real one from the recovery link hash. It travels alongside the access
+        # token in the redirect fragment.
+        db.auth.set_session(token, body.refresh_token)
         db.auth.update_user({"password": body.password})
         return {"ok": True, "message": "Password updated."}
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=400, detail="Password update failed. The link may have expired.")
 
 
