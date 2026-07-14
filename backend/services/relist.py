@@ -273,7 +273,12 @@ async def refresh_listing(item_id: str, platform: str, user_id: str, strategy: s
     create_payload = {
         **item,
         "price": relist_price,
-        "photo_urls": _shuffled_photos(item.get("photo_urls") or []),
+        # Keep the EXACT original photo order — photo 1 must stay photo 1 (it's the
+        # cover image the seller chose). The recreate already gets genuinely new
+        # images because each photo is re-encoded on upload, so there's no need to
+        # shuffle the order for uniqueness, and shuffling silently changed which
+        # photo showed as the cover.
+        "photo_urls": item.get("photo_urls") or [],
     }
     # A Vinted account lives on ONE country domain (e.g. vinted.nl). The create
     # form must be opened on that same domain, otherwise the recreate lands on
