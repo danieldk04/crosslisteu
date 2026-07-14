@@ -130,7 +130,7 @@ async def active_jobs(user_id: str = Depends(get_current_user)):
     db = get_db()
     rows = (
         db.table("jobs")
-        .select("id,action,platform,item_id,status,scheduled_for,claimed_at")
+        .select("id,action,platform,item_id,status,scheduled_for,claimed_at,result")
         .eq("user_id", user_id)
         .in_("status", ["pending", "claimed"])
         .order("created_at")
@@ -143,26 +143,39 @@ async def active_jobs(user_id: str = Depends(get_current_user)):
     # A genuinely active claim is very recent. Beyond this the run is stuck/abandoned.
     active_cutoff = now_dt - timedelta(minutes=3)
 
-    def _claimed_recently(j) -> bool:
-        ts = j.get("claimed_at")
+    def _fresh(ts) -> bool:
         if not ts:
             return False
         try:
             dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
-        except ValueError:
+        except (ValueError, TypeError):
             return False
         if dt.tzinfo is None:
             dt = dt.replace(tzinfo=timezone.utc)
         return dt >= active_cutoff
 
+    def _is_working(j) -> bool:
+        # Fresh claim = a publish/delete tab is open right now.
+        if _fresh(j.get("claimed_at")):
+            return True
+        # Long-running jobs (mainly Vinted scans) can legitimately run past the
+        # claim window, but they post live progress — treat a recent progress
+        # ping as "still working" so the tab stays flagged, while a claim with no
+        # recent activity at all is correctly treated as stuck and dropped.
+        prog = (j.get("result") or {}).get("_progress")
+        if isinstance(prog, dict) and _fresh(prog.get("at")):
+            return True
+        return False
+
     working, queued = [], []
     for j in rows:
         if j["status"] == "claimed":
-            # Only surface it as "working now" if the claim is fresh — a stale
-            # claim means the extension isn't actually acting on it anymore.
-            if _claimed_recently(j):
+            if _is_working(j):
+                # Don't leak the raw progress/result blob to the client.
+                j.pop("result", None)
                 working.append(j)
         elif not j.get("scheduled_for") or j["scheduled_for"] <= now:
+            j.pop("result", None)
             queued.append(j)
     return {"working": working, "queued": queued}
 
