@@ -1529,6 +1529,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true;
   }
 
+  // A content script asks for ITS OWN tab's job (keyed by tab id), so two tabs
+  // can never read each other's data. Returns null if not ready yet — the
+  // content script retries briefly to cover the tab-open race.
+  if (msg.type === "GET_JOB") {
+    const key = `jobtab_${sender.tab?.id}`;
+    chrome.storage.local.get(key, (s) => sendResponse({ job: s[key] || null }));
+    return true;
+  }
+
   if (msg.type === "FILL_DESC") {
     console.log("[Omnivaleur] FILL_DESC received, tab:", sender.tab?.id, "text len:", msg.text?.length);
     chrome.scripting.executeScript({
