@@ -3179,12 +3179,9 @@ function switchRefreshTab(tab) {
   refreshActiveTab = tab;
   document.getElementById('refresh-tab-btn-listings').classList.toggle('active', tab === 'listings');
   document.getElementById('refresh-tab-btn-inprogress').classList.toggle('active', tab === 'inprogress');
-  document.getElementById('refresh-tab-btn-other').classList.toggle('active', tab === 'other');
   document.getElementById('refresh-tab-listings').style.display = tab === 'listings' ? '' : 'none';
   document.getElementById('refresh-tab-inprogress').style.display = tab === 'inprogress' ? '' : 'none';
-  document.getElementById('refresh-tab-other').style.display = tab === 'other' ? '' : 'none';
   if (tab === 'inprogress') renderRelistInProgress();
-  if (tab === 'other') renderRefreshView();
 }
 
 // Filters the Vinted table by refresh status: never refreshed / on cooldown / ready.
