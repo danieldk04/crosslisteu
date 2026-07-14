@@ -288,12 +288,12 @@ nav { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,.95);
 }
 </style>
 <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-FERDR093F7"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-VJ5BVD3GCH"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-  gtag('config', 'G-FERDR093F7');
+  gtag('config', 'G-VJ5BVD3GCH');
 </script>
 </head>
 <body>
@@ -842,6 +842,11 @@ function animateCounts(scope) {
     window.location.replace('/login?confirmed=1');
   } else if (params.access_token && params.type === 'recovery') {
     window.location.replace('/reset-password' + window.location.hash);
+  } else if (params.error || params.error_code) {
+    // Expired or already-used confirmation link — Supabase returns an error
+    // in the hash instead of a token. Send them to login with a clear notice
+    // rather than leaving them on the homepage with a stray #error hash.
+    window.location.replace('/login?link_error=1');
   }
 })();
 </script>

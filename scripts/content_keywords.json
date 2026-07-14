@@ -71,7 +71,7 @@
       "region": "nl",
       "pillar": "B",
       "slug": "vintage-furniture-reselling-automation",
-      "status": "pending",
+      "status": "published",
       "priority": 9
     },
     {
@@ -79,7 +79,7 @@
       "region": "nl",
       "pillar": "C",
       "slug": "omnivaleur-vs-zenlister",
-      "status": "pending",
+      "status": "published",
       "priority": 10
     },
     {
@@ -87,7 +87,7 @@
       "region": "nl",
       "pillar": "A",
       "slug": "marktplaats-to-etsy-crosslisting-2026",
-      "status": "pending",
+      "status": "published",
       "nl_slug": "marktplaats-naar-etsy-crosslisting",
       "priority": 11
     },
@@ -172,6 +172,33 @@
       "action": "created",
       "url_path": "/crosslisting/ebay-to-shopify-crosslisting",
       "published_at": "2026-07-11T09:20:27.286369+00:00"
+    },
+    {
+      "keyword": "vintage furniture reselling automation",
+      "slug": "vintage-furniture-reselling-automation",
+      "region": "nl",
+      "pillar": "B",
+      "action": "created",
+      "url_path": "/reseller-tools/vintage-furniture-reselling-automation",
+      "published_at": "2026-07-12T09:45:55.561783+00:00"
+    },
+    {
+      "keyword": "omnivaleur vs zenlister",
+      "slug": "omnivaleur-vs-zenlister",
+      "region": "nl",
+      "pillar": "C",
+      "action": "created",
+      "url_path": "/vs/omnivaleur-vs-zenlister",
+      "published_at": "2026-07-13T10:53:24.983317+00:00"
+    },
+    {
+      "keyword": "marktplaats to etsy crosslisting 2026",
+      "slug": "marktplaats-to-etsy-crosslisting-2026",
+      "region": "nl",
+      "pillar": "A",
+      "action": "created",
+      "url_path": "/crosslisting/marktplaats-to-etsy-crosslisting-2026",
+      "published_at": "2026-07-14T09:50:02.142219+00:00"
     }
   ]
 }
