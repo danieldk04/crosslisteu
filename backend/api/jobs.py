@@ -107,6 +107,44 @@ async def relist_status(user_id: str = Depends(get_current_user)):
     return out
 
 
+@router.get("/active")
+async def active_jobs(user_id: str = Depends(get_current_user)):
+    """
+    Everything the extension is either actively running or about to run, so the
+    dashboard can warn the user to stay hands-off while it works.
+
+    Two buckets:
+      - "working": jobs already CLAIMED by the extension. This is the dangerous
+        window — a Chrome tab is open and the extension is deleting/creating/
+        scanning in it. The `/pending` feed drops these the moment they're
+        claimed, which is exactly when the user must NOT interfere, so we expose
+        them here explicitly.
+      - "queued": pending jobs that are due now (no future scheduled_for). These
+        will be picked up within one poll (~15s). Relist recreates sitting on a
+        future timer are deliberately excluded — nothing is happening yet, so
+        they shouldn't trip the "busy, don't touch" warning.
+    """
+    db = get_db()
+    rows = (
+        db.table("jobs")
+        .select("id,action,platform,item_id,status,scheduled_for,claimed_at")
+        .eq("user_id", user_id)
+        .in_("status", ["pending", "claimed"])
+        .order("created_at")
+        .limit(50)
+        .execute()
+        .data
+    )
+    now = datetime.now(timezone.utc).isoformat()
+    working, queued = [], []
+    for j in rows:
+        if j["status"] == "claimed":
+            working.append(j)
+        elif not j.get("scheduled_for") or j["scheduled_for"] <= now:
+            queued.append(j)
+    return {"working": working, "queued": queued}
+
+
 @router.post("/reschedule-now")
 async def reschedule_now(body: dict, user_id: str = Depends(get_current_user)):
     """
