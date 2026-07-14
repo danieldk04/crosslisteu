@@ -321,9 +321,6 @@ async function processJob(job, serverUrl) {
     return;
   }
 
-  // Store job for content script to pick up
-  await chrome.storage.local.set({ [`job_${job.platform}`]: { ...job, serverUrl } });
-
   const url = job.action === "delete" ? getDeleteUrl(job.platform, job.payload)
     : job.action === "content_refresh" ? getEditUrl(job.platform, job.payload)
     : getMpSyiUrl(job.platform, job.payload);
@@ -336,11 +333,15 @@ async function processJob(job, serverUrl) {
   chrome.tabs.create({ url, active: true }, (tab) => {
     if (chrome.runtime.lastError) {
       reportError(job.id, serverUrl, "tabs.create failed: " + chrome.runtime.lastError.message);
-    } else {
-      if (job.action === "create") {
-        chrome.storage.local.set({ [`jobtab_${tab.id}`]: { jobId: job.id, platform: job.platform, serverUrl } });
-      }
+      return;
     }
+    // PER-TAB job storage — the whole job, keyed by THIS tab's id. The content
+    // script asks the background for its own tab's job (GET_JOB). This replaces
+    // the old single job_<platform> slot, where a second same-platform tab
+    // overwrote the first tab's job data, so two listings published with each
+    // other's photos, prices, titles and descriptions. Per-tab keying makes that
+    // impossible even if two tabs ever run at once.
+    chrome.storage.local.set({ [`jobtab_${tab.id}`]: { ...job, jobId: job.id, serverUrl } });
   });
 }
 
