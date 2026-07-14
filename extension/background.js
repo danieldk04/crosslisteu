@@ -1188,6 +1188,10 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
   const stored = await chrome.storage.local.get(key);
   const meta = stored[key];
   if (!meta) return;
+  // This auto-detect is a safety net for a manual publish — only meaningful for
+  // a create. A content_refresh (which now also has a jobtab entry) is completed
+  // by its own content script, so never auto-complete it here.
+  if (meta.action && meta.action !== "create") return;
 
   const url = changeInfo.url;
   // Vinted listing ids are plain digits (/items/9331465721), so the m-prefixed
