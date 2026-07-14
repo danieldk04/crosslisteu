@@ -387,10 +387,22 @@ async def delist_all_platforms(item_id: str, user_id: str) -> list[dict]:
     return results
 
 
+# Platforms that are driven by the browser extension. Their cross-platform
+# delist on a sale MUST go through the extension's delete-job flow (which runs in
+# the user's own logged-in Chrome, verifies the listing is still present, deletes
+# it, then verifies it's gone). Deleting these server-side with stored cookies is
+# exactly the fragile path this project moved away from — a stale server session
+# has silently mass-delisted live listings before (see services/polling.py). API
+# platforms (eBay/Etsy/Shopify) delete cleanly via their own APIs, server-side.
+_EXTENSION_DELIST_PLATFORMS = {"marktplaats", "2dehands", "vinted"}
+
+
 async def handle_item_sold(item_id: str, sold_on_platform: str):
     """
-    Called when an item is confirmed sold on one platform.
-    Delists from all other active platforms concurrently.
+    Called when an item is confirmed sold on one platform. Marks that listing
+    sold and delists every OTHER active listing for the item — extension
+    platforms via a queued delete job, API platforms via their API — so the item
+    can't be double-sold.
     """
     db = get_db()
 
@@ -413,12 +425,57 @@ async def handle_item_sold(item_id: str, sold_on_platform: str):
     if not other.data:
         return
 
-    tasks = [_delist_one(listing) for listing in other.data]
-    results = await asyncio.gather(*tasks, return_exceptions=True)
+    item_row = db.table("items").select("*").eq("id", item_id).single().execute().data
+    user_id = (item_row or {}).get("user_id")
 
-    for listing, result in zip(other.data, results):
-        if isinstance(result, Exception):
-            logger.error(f"Failed to delist {listing['platform']} listing {listing['id']}: {result}")
+    api_listings = []
+    for listing in other.data:
+        if listing["platform"] in _EXTENSION_DELIST_PLATFORMS and user_id:
+            _enqueue_extension_delete(db, user_id, item_id, listing, item_row)
+        else:
+            api_listings.append(listing)
+
+    if api_listings:
+        results = await asyncio.gather(
+            *[_delist_one(l) for l in api_listings], return_exceptions=True
+        )
+        for listing, result in zip(api_listings, results):
+            if isinstance(result, Exception):
+                logger.error(f"Failed to delist {listing['platform']} listing {listing['id']}: {result}")
+
+
+def _enqueue_extension_delete(db, user_id: str, item_id: str, listing: dict, item_row: dict | None) -> None:
+    """
+    Queue a delete job for the extension to remove `listing` in the user's Chrome.
+    Skips if a delete is already pending/claimed for this item+platform, so a
+    repeated sale detection can't spawn duplicate delete tabs.
+    """
+    platform = listing["platform"]
+    existing = (
+        db.table("jobs").select("id")
+        .eq("user_id", user_id).eq("item_id", item_id).eq("platform", platform)
+        .eq("action", "delete").in_("status", ["pending", "claimed"])
+        .limit(1).execute().data
+    )
+    if existing:
+        return
+    payload = {
+        **(item_row or {}),
+        # MP/2dh delete searches the overview by the exact (Dutch-translated)
+        # title that was published — recover it, not the stored English title.
+        "title": _last_listed_title(db, item_id, platform, (item_row or {}).get("title", "")),
+        "platform_listing_id": listing.get("platform_listing_id"),
+        "platform_listing_url": listing.get("platform_listing_url"),
+    }
+    db.table("jobs").insert({
+        "user_id": user_id,
+        "item_id": item_id,
+        "platform": platform,
+        "action": "delete",
+        "status": "pending",
+        "payload": payload,
+    }).execute()
+    logger.info(f"Queued extension delete for item {item_id} on {platform} (sold elsewhere)")
 
 
 # Marktplaats free listings expire silently after 28 days.
