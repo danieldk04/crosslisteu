@@ -12,7 +12,7 @@ const GA_MEASUREMENT_ID = "G-VJ5BVD3GCH";
 //   API secrets → Create.
 // Safe to ship in the extension: the secret can only WRITE events, never read
 // data. While empty, analytics is a no-op so the extension keeps working.
-const GA_API_SECRET = "";
+const GA_API_SECRET = "AHRl1iMJSx2ttoi4v7IPMQ";
 
 // A stable per-install pseudonymous id (not tied to any user account).
 async function gaClientId() {
