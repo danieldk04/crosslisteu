@@ -3249,7 +3249,7 @@ function renderRelistInProgress() {
       ${deleteFailed ? `
         <div style="margin-top:10px;font-size:11.5px;color:var(--red,#dc2626);background:rgba(220,38,38,.06);border-radius:8px;padding:8px 10px">This item's old listing could not be removed — nothing was deleted, and no new listing was created. Check the platform manually, then try refreshing again from the "All listings" tab.</div>
       ` : (!deleteDone ? `
-        <div style="margin-top:10px;font-size:11.5px;color:var(--muted);background:rgba(37,99,235,.05);border-radius:8px;padding:8px 10px">Right now this item is <b>not live on ${label}</b> — the old listing is being removed. It's a normal, brief in-between state; the new listing publishes automatically once the timer above runs out.</div>
+        <div style="margin-top:10px;font-size:11.5px;color:var(--muted);background:rgba(37,99,235,.05);border-radius:8px;padding:8px 10px">Right now this item is <b>not live on ${label}</b> — the old listing is being removed. It's a normal, brief in-between state; the new listing publishes automatically once the timer above runs out. If the extension has a ${label} tab open, <b>don't touch it</b> — it closes by itself.</div>
       ` : `
         <div style="margin-top:10px;font-size:11.5px;color:var(--muted);background:rgba(37,99,235,.05);border-radius:8px;padding:8px 10px">The old listing is gone and the new one isn't live yet — this is expected. Keep Chrome open (a background window is fine) so the extension can publish it automatically in <b>${eta}</b>. Nothing to do manually, and this can't be undone or sped up from here.</div>
       `)}
