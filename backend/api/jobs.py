@@ -107,20 +107,25 @@ async def get_pending_jobs(platform: str = None, user_id: str = Depends(get_curr
     result = q.order("created_at").limit(20).execute()
     now = now_dt.isoformat()
 
-    # Per-platform in-flight guard: publishing opens a real browser tab and the
-    # create path doesn't wait for one to finish before the next is claimed, so a
-    # bulk publish used to open many tabs at once — most of which failed and got
-    # stuck. Only hand out a create for a platform that has no create currently
-    # in flight (a fresh claim), so publishes run one-at-a-time per platform.
-    busy_create_platforms = set()
-    for c in (
-        db.table("jobs").select("platform,claimed_at")
-        .eq("user_id", user_id).eq("status", "claimed").eq("action", "create")
-        .execute().data
-    ):
-        ct = _parse_ts(c.get("claimed_at"))
-        if ct and ct >= now_dt - timedelta(minutes=STALE_CLAIM_MINUTES):
-            busy_create_platforms.add(c["platform"])
+    # STRICT GLOBAL SERIALISATION (extension dispatch only).
+    # Every job drives a REAL browser tab. The create path doesn't wait for one
+    # publish to finish before the next is claimed, and the extension stores the
+    # active job under a single per-platform key — so running two at once let a
+    # second tab overwrite the first's data, publishing listings with each other's
+    # photos, prices, titles and descriptions. To make that impossible we hand the
+    # extension exactly ONE job at a time and refuse to dispatch anything while a
+    # job is genuinely in flight (a fresh claim). The dashboard (which calls
+    # /pending WITHOUT a platform, just to count the queue) is never throttled.
+    is_extension_dispatch = platform is not None
+    if is_extension_dispatch:
+        for c in (
+            db.table("jobs").select("claimed_at")
+            .eq("user_id", user_id).eq("status", "claimed").execute().data
+        ):
+            ct = _parse_ts(c.get("claimed_at"))
+            if ct and ct >= now_dt - timedelta(minutes=STALE_CLAIM_MINUTES):
+                return []  # something is running right now — never open a 2nd tab
+
     # Jobs with a future scheduled_for (used to jitter relist recreates) aren't due yet.
     due = [j for j in result.data if not j.get("scheduled_for") or j["scheduled_for"] <= now]
 
@@ -130,11 +135,6 @@ async def get_pending_jobs(platform: str = None, user_id: str = Depends(get_curr
     # instead of handing them to the extension.
     ready = []
     for j in due:
-        # One publish per platform at a time: skip a create if that platform
-        # already has one in flight (busy_create_platforms) or we've already
-        # queued one for it in this very response.
-        if j["action"] == "create" and j["platform"] in busy_create_platforms:
-            continue
         if j["action"] == "create" and j.get("scheduled_for"):
             paired_delete = (
                 db.table("jobs")
