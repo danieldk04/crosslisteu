@@ -985,32 +985,15 @@ input[type="checkbox"].row-check { width: 15px; height: 15px; cursor: pointer; a
         </div>
       </div>
 
-      <!-- Refresh sub-tabs: Vinted table, dedicated relist tracker, and the other platforms -->
+      <!-- Refresh sub-tabs: Vinted table + dedicated relist tracker -->
       <div style="display:flex;gap:6px;margin:16px 0 14px;border-bottom:1px solid var(--border)">
-        <button id="refresh-tab-btn-listings" class="refresh-subtab active" onclick="switchRefreshTab('listings')">Vinted</button>
+        <button id="refresh-tab-btn-listings" class="refresh-subtab active" onclick="switchRefreshTab('listings')">Vinted listings</button>
         <button id="refresh-tab-btn-inprogress" class="refresh-subtab" onclick="switchRefreshTab('inprogress')">Relists in progress<span id="refresh-tab-badge" style="display:none"></span></button>
-        <button id="refresh-tab-btn-other" class="refresh-subtab" onclick="switchRefreshTab('other')">Other platforms</button>
       </div>
 
       <!-- ═══ TAB: Relists in progress — tracks delete→recreate step-by-step ═══ -->
       <div id="refresh-tab-inprogress" style="display:none">
         <div id="relist-inprogress"></div>
-      </div>
-
-      <!-- ═══ TAB: Other platforms — Etsy renew + eBay relist-ended ═══ -->
-      <div id="refresh-tab-other" style="display:none">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Item</th>
-              <th>Platform</th>
-              <th>Status</th>
-              <th>Last refresh</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="refresh-body-other"></tbody>
-        </table>
       </div>
 
       <!-- ═══ TAB: Vinted ═══ -->
