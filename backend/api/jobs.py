@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from backend.database import get_db
 from backend.api.deps import get_current_user
 from backend.api.imports import _backfill_item_from_candidate
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import logging
 
 logger = logging.getLogger(__name__)
