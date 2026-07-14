@@ -1583,7 +1583,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       headers,
       body: JSON.stringify(result),
     })).then(() => {
-      chrome.storage.local.remove(`job_${platform}`);
+      chrome.storage.local.remove([`job_${platform}`, `jobtab_${sender.tab?.id}`]);
       // Keep tab open 2s so user can see the listing was created
       setTimeout(() => chrome.tabs.remove(sender.tab.id), 2000);
     });
