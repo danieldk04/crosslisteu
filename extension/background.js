@@ -1597,7 +1597,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       headers,
       body: JSON.stringify({ error }),
     })).then(() => {
-      chrome.storage.local.remove(`job_${platform}`);
+      chrome.storage.local.remove([`job_${platform}`, `jobtab_${sender.tab?.id}`]);
       // Keep the tab OPEN so the user can review the filled form and finish
       // manually. Closing it here loses all the work that was filled in.
     });
