@@ -3226,47 +3226,74 @@ function renderRelistInProgress() {
     const title = item ? esc(item.title) : r.item_id;
     const photo = item?.photo_urls?.[0];
     const label = PLATFORM_LABELS[r.platform] || r.platform;
-    const eta = fmtEta(new Date(r.recreate_at).getTime() - now);
+    const msLeft = new Date(r.recreate_at).getTime() - now;
     const deleteDone = r.delete_status === 'done';
     const deleteFailed = r.delete_status === 'error';
+    // The recreate is actively running once the extension has claimed it, or
+    // once its scheduled time has passed (it fires on the next poll).
+    const publishing = !deleteFailed && deleteDone && (r.recreate_status === 'claimed' || msLeft <= 0);
 
-    const step1 = deleteFailed
-      ? { icon: '✕', color: 'var(--red,#dc2626)', label: 'Removing old listing', sub: 'Failed' }
-      : { icon: '✓', color: 'var(--green,#16a34a)', label: 'Old listing removed', sub: deleteDone ? 'Done' : 'In progress…' };
-    const step2 = deleteFailed
-      ? { icon: '✕', color: 'var(--muted)', label: 'Republish as new listing', sub: 'Aborted — would have duplicated the old listing' }
-      : { icon: deleteDone ? '⏳' : '·', color: deleteDone ? 'var(--blue,#2563eb)' : 'var(--muted)', label: 'Republish as new listing', sub: deleteDone ? `In ${eta}` : 'Waiting for step 1' };
+    // Phase drives the headline, the progress bar, and which step is lit.
+    let phase, pct, headline;
+    if (deleteFailed) {
+      phase = 'failed'; pct = 100;
+      headline = `<span class="rl-eta" style="color:var(--red,#dc2626)">Relist failed</span>`;
+    } else if (!deleteDone) {
+      phase = 'removing'; pct = 30;
+      headline = `<span class="rl-eta" style="color:#b45309">Removing old listing… <small>step 1 of 2</small></span>`;
+    } else if (publishing) {
+      phase = 'publishing'; pct = 90;
+      headline = `<span class="rl-eta">Publishing now… <small>going live any second</small></span>`;
+    } else {
+      phase = 'waiting'; pct = 60;
+      headline = `<span class="rl-eta">${fmtEta(msLeft)} <small>until the new listing goes live</small></span>`;
+    }
 
-    const stepRow = (s, active) => `
-      <div style="display:flex;align-items:center;gap:8px;${active ? '' : 'opacity:.55'}">
-        <span style="width:18px;height:18px;border-radius:50%;background:${s.color};color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${s.icon}</span>
-        <span style="font-size:12px;font-weight:600">${s.label}</span>
-        <span style="font-size:11.5px;color:var(--muted)">— ${s.sub}</span>
+    const step = (dot, color, label2, sub, active) => `
+      <div class="rl-step" style="${active ? '' : 'opacity:.5'}">
+        <span class="rl-step-dot" style="background:${color}">${dot}</span>
+        <span style="font-weight:600">${label2}</span>
+        <span style="color:var(--muted)">— ${sub}</span>
       </div>`;
 
-    return `<div style="border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px;background:#fff">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-        <div style="width:36px;height:36px;border-radius:8px;overflow:hidden;flex-shrink:0;background:#f1f5f9;display:flex;align-items:center;justify-content:center">${photo ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover">` : '👗'}</div>
-        <div style="min-width:0">
-          <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${title}</div>
-          <div style="font-size:11.5px;color:var(--muted)">${label}</div>
+    const step1 = deleteFailed
+      ? step('✕', 'var(--red,#dc2626)', 'Remove old listing', 'Failed', true)
+      : step('✓', 'var(--green,#16a34a)', 'Old listing removed', deleteDone ? 'Done' : 'In progress…', true);
+    const step2 = deleteFailed
+      ? step('✕', 'var(--muted)', 'Republish as new listing', 'Aborted — would have duplicated the old listing', false)
+      : step(publishing ? '↻' : (deleteDone ? '⏳' : '·'),
+             deleteDone ? 'var(--blue,#2563eb)' : 'var(--muted)',
+             'Republish as new listing',
+             publishing ? 'Publishing now…' : (deleteDone ? `In ${fmtEta(msLeft)}` : 'Waiting for step 1'),
+             deleteDone);
+
+    const note = deleteFailed
+      ? `<div style="margin-top:12px;font-size:11.5px;color:var(--red,#dc2626);background:rgba(220,38,38,.06);border-radius:8px;padding:9px 11px">The old listing could not be removed — nothing was deleted and no new listing was created. Check ${label} manually, then try refreshing again from the Vinted tab.</div>`
+      : `<div style="margin-top:12px;font-size:11.5px;color:var(--muted);background:rgba(37,99,235,.05);border-radius:8px;padding:9px 11px">${
+          phase === 'removing'
+            ? `Right now this item is briefly <b>not live on ${label}</b> — the old listing is being removed, then it's automatically republished with a fresh date. If the extension has a ${label} tab open, <b>don't touch it</b>; it closes by itself.`
+            : `Old listing gone, new one not live yet — this in-between state is normal. <b>Keep Chrome open</b> (a background window is fine) so the recreate can fire. It can't be undone or sped up from here.`
+        }</div>`;
+
+    return `<div class="rl-card">
+      <div style="display:flex;align-items:center;gap:11px;margin-bottom:10px">
+        <div style="width:40px;height:40px;border-radius:9px;overflow:hidden;flex-shrink:0;background:#f1f5f9;display:flex;align-items:center;justify-content:center">${photo ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover">` : '👗'}</div>
+        <div style="min-width:0;flex:1">
+          <div style="font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${title}</div>
+          <div style="font-size:11.5px;color:var(--muted)">${label} · <span class="rf-mode rf-mode-relist" style="padding:1px 6px">🔄 Mode 2 · relist</span></div>
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:8px;padding-left:2px">
-        ${stepRow(step1, true)}
-        ${stepRow(step2, deleteDone && !deleteFailed)}
+      <div style="margin:6px 0 2px">${headline}</div>
+      <div class="rl-progress"><div class="rl-progress-fill" style="width:${pct}%${deleteFailed ? ';background:var(--red,#dc2626)' : ''}"></div></div>
+      <div style="display:flex;flex-direction:column;gap:7px;margin-top:11px">
+        ${step1}
+        ${step2}
       </div>
-      ${deleteFailed ? `
-        <div style="margin-top:10px;font-size:11.5px;color:var(--red,#dc2626);background:rgba(220,38,38,.06);border-radius:8px;padding:8px 10px">This item's old listing could not be removed — nothing was deleted, and no new listing was created. Check the platform manually, then try refreshing again from the "All listings" tab.</div>
-      ` : (!deleteDone ? `
-        <div style="margin-top:10px;font-size:11.5px;color:var(--muted);background:rgba(37,99,235,.05);border-radius:8px;padding:8px 10px">Right now this item is <b>not live on ${label}</b> — the old listing is being removed. It's a normal, brief in-between state; the new listing publishes automatically once the timer above runs out. If the extension has a ${label} tab open, <b>don't touch it</b> — it closes by itself.</div>
-      ` : `
-        <div style="margin-top:10px;font-size:11.5px;color:var(--muted);background:rgba(37,99,235,.05);border-radius:8px;padding:8px 10px">The old listing is gone and the new one isn't live yet — this is expected. Keep Chrome open (a background window is fine) so the extension can publish it automatically in <b>${eta}</b>. Nothing to do manually, and this can't be undone or sped up from here.</div>
-      `)}
+      ${note}
     </div>`;
   }).join('');
 
-  box.innerHTML = `<div style="font-size:12px;color:var(--muted);margin-bottom:12px">${list.length} relist${list.length === 1 ? '' : 's'} currently mid-flight — each one moves through these two steps automatically.</div>${cards}`;
+  box.innerHTML = `<div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">${list.length} relist${list.length === 1 ? '' : 's'} in progress — each is deleted now and automatically republished after a randomised 45–240 min delay, so it gets a fresh "Newest" date without looking scripted.</div>${cards}`;
 }
 
 function renderRefreshView() {
