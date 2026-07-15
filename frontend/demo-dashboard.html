@@ -394,6 +394,55 @@ function countUp(el) {
 }
 setTimeout(() => document.querySelectorAll('.stat-value[data-target]').forEach(countUp), 200);
 
+// Revenue-per-week bar chart.
+const revenueWeeks = [
+  { label: 'W1', value: 32 },
+  { label: 'W2', value: 41 },
+  { label: 'W3', value: 38 },
+  { label: 'W4', value: 55 },
+  { label: 'W5', value: 61 },
+  { label: 'W6', value: 74 },
+];
+const revenueMax = Math.max(...revenueWeeks.map(w => w.value));
+const revenueEl = document.getElementById('revenue-chart');
+revenueEl.innerHTML = revenueWeeks.map(w => `
+  <div class="chart-col">
+    <div class="chart-bar" data-h="${(w.value / revenueMax * 100).toFixed(0)}" style="height:100%"></div>
+    <div class="chart-col-label">${w.label}</div>
+  </div>
+`).join('');
+setTimeout(() => {
+  document.querySelectorAll('#revenue-chart .chart-bar').forEach((el, i) => {
+    setTimeout(() => {
+      el.style.height = el.dataset.h + '%';
+      el.classList.add('show');
+    }, i * 90);
+  });
+}, 500);
+
+// Sales-per-platform split.
+const platformSplit = [
+  { domain: 'vinted.nl', label: 'Vinted', pct: 38 },
+  { domain: 'marktplaats.nl', label: 'Marktplaats', pct: 27 },
+  { domain: '2dehands.be', label: '2dehands', pct: 18 },
+  { domain: 'ebay.com', label: 'eBay', pct: 11 },
+  { domain: 'etsy.com', label: 'Etsy', pct: 6 },
+];
+const splitEl = document.getElementById('platform-split');
+splitEl.innerHTML = platformSplit.map(p => `
+  <div class="split-row">
+    <img src="https://www.google.com/s2/favicons?sz=64&domain=${p.domain}" alt="">
+    <span class="split-row-label">${p.label}</span>
+    <div class="split-bar-track"><div class="split-bar-fill" data-pct="${p.pct}"></div></div>
+    <span class="split-row-pct">${p.pct}%</span>
+  </div>
+`).join('');
+setTimeout(() => {
+  document.querySelectorAll('#platform-split .split-bar-fill').forEach((el, i) => {
+    setTimeout(() => { el.style.width = el.dataset.pct + '%'; }, i * 120);
+  });
+}, 700);
+
 // Ambient "live" loop: occasional dot re-sync + counters ticking up.
 function ambientLoop() {
   const activeDots = allDots.filter(el => el.classList.contains('s-active'));
