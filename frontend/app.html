@@ -4017,6 +4017,12 @@ async function uploadFiles(files) {
 function closeModal(id){document.getElementById(id).style.display='none';}
 function closeOnOverlay(e,id){if(e.target.id===id)closeModal(id);}
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function itemPhotoThumb(item){
+  const n = item.photo_urls?.length || 0;
+  if (!n) return '👗';
+  const badge = n > 1 ? `<span class="item-photo-count">${n}</span>` : '';
+  return `<img src="${item.photo_urls[0]}" style="width:40px;height:40px;border-radius:6px;object-fit:cover">${badge}`;
+}
 function conditionLabel(c){return{new_with_tags:'New with tags',new:'New',good:'Like new',fair:'Used',poor:'Damaged'}[c]||c||'—';}
 function fmtDate(d){if(!d)return'—';const dt=new Date(d);return dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}
 function publishedAt(itemId){
