@@ -172,6 +172,20 @@ async def get_pending_jobs(platform: str = None, user_id: str = Depends(get_curr
                 continue
         ready.append(j)
 
+    # A relist's "create" job can sit queued for 45min-4h (the jittered
+    # recreate delay) before it's actually dispatched. Its payload price was
+    # snapshotted when the job was queued, so if the user edits the item's
+    # price in the frontend in the meantime, the stale snapshot would win and
+    # the relist would silently keep republishing the old price. Re-read the
+    # item's current price right before handing the job to the extension so
+    # the recreate always reflects what the user set, not what was true when
+    # the delay started.
+    for j in ready:
+        if j["action"] == "create" and j.get("scheduled_for") and isinstance(j.get("payload"), dict):
+            current = db.table("items").select("price").eq("id", j["item_id"]).execute().data
+            if current and current[0].get("price") not in (None, ""):
+                j["payload"]["price"] = current[0]["price"]
+
     # Extension: exactly one job at a time. Dashboard: the whole queue, to count.
     return ready[:1] if is_extension_dispatch else ready
 
