@@ -3364,7 +3364,8 @@ function renderRelistInProgress() {
              deleteDone);
 
     const note = deleteFailed
-      ? `<div style="margin-top:12px;font-size:11.5px;color:var(--red,#dc2626);background:rgba(220,38,38,.06);border-radius:8px;padding:9px 11px">The old listing could not be removed — nothing was deleted and no new listing was created. Check ${label} manually, then try refreshing again from the Vinted tab.</div>`
+      ? `<div style="margin-top:12px;font-size:11.5px;color:var(--red,#dc2626);background:rgba(220,38,38,.06);border-radius:8px;padding:9px 11px">The old listing could not be removed — nothing was deleted and no new listing was created, so your item is still live on ${label}. You can retry safely below.</div>
+         <button class="btn btn-sm" style="margin-top:10px;background:var(--red,#dc2626);color:#fff;border:none;width:100%" onclick="retryRelist('${r.item_id}','${r.platform}',this)">↻ Retry relist</button>`
       : `<div style="margin-top:12px;font-size:11.5px;color:var(--muted);background:rgba(37,99,235,.05);border-radius:8px;padding:9px 11px">${
           phase === 'removing'
             ? `Right now this item is briefly <b>not live on ${label}</b> — the old listing is being removed, then it's automatically republished with a fresh date. If the extension has a ${label} tab open, <b>don't touch it</b>; it closes by itself.`
