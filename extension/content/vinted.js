@@ -257,7 +257,20 @@
       send("JOB_DONE", {});
     } else {
       await fillForm(item);
-      const id = await submitListing(/\/items\/(\d+)/);
+      let id;
+      try {
+        id = await submitListing(/\/items\/(\d+)/);
+      } catch (submitErr) {
+        // Vinted's post-upload "check in progress" review can delay the
+        // /items/{id} redirect past submitListing's wait, so a timeout here does
+        // NOT mean the listing failed. Confirm via the wardrobe before giving up:
+        // the item appears there (as is_processing) within a minute or two, and
+        // we recover its real id. Only if it never shows up is it a real failure.
+        const recovered = await resolveCreatedVintedItem(item, item.platform_listing_id, 150000).catch(() => null);
+        if (!recovered) throw submitErr;
+        id = recovered.id;
+        console.log(`[Omnivaleur] Vinted create: recovered id ${id} via wardrobe after delayed redirect${recovered.processing ? " (still in Vinted review)" : ""}`);
+      }
       // Use the origin we actually ended up on (Vinted redirects to the
       // account's country domain), so the stored URL is the real one this
       // item lives on — critical for a later delete to hit the right domain.
