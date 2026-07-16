@@ -1452,9 +1452,11 @@ function scrapeNotificationCounts(url, platform) {
 // we never overwrite the stored snapshot with a bogus 0. Async: Vinted is read
 // from its own JSON API (runs in the vinted.nl context, so cookies are sent).
 async function _mwReadNotifCounts(platform) {
-  const OFFER_RE = /\bbod\b|geboden|bieding|would you (sell|take)|sell (it|this)|€\s?\d/i;
-
   if (platform === "vinted") {
+    // Vinted offers arrive as a message whose text is a price question or a
+    // bare amount ("€25.00"). Marktplaats prices everything, so this pattern is
+    // Vinted-only — on MP it would match every item price (verified).
+    const OFFER_RE = /would you (sell|take)|sell (it|this)|prijsvoorstel|€\s?\d/i;
     // Vinted's inbox API returns each conversation with an `unread` flag. Far
     // more reliable than scraping the SPA. Unread threads sort to the top, so
     // page 1 (50 rows) captures the actionable ones.
