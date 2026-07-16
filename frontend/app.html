@@ -3455,6 +3455,11 @@ function renderRefreshView() {
         statusCell = `<span class="rf-pill rf-pill-relisting"><span class="rf-spin">↻</span> New listing in ${fmtEta(msLeft)}</span>`;
       }
       actionCell = `<button class="btn btn-sm btn-outline" disabled title="Relist in progress">In progress…</button>`;
+    } else if (l.error_message && /relist|delist|still live/i.test(l.error_message)) {
+      // A relist whose delist failed: the item is still live, nothing was lost,
+      // and a retry is safe. Surface it right here so it's not stuck silently.
+      statusCell = `<span class="rf-pill rf-pill-never" style="color:var(--red,#dc2626);background:rgba(220,38,38,.08)">⚠ Relist failed — still live</span>`;
+      actionCell = `<button class="btn btn-sm btn-primary" style="background:var(--red,#dc2626)" onclick="retryRelist('${l.item_id}','${l.platform}',this)">↻ Retry relist</button>`;
     } else if (vintedStatus[l.item_id] === 'cooldown') {
       const elapsedDays = Math.floor((now - new Date(l.last_refreshed_at).getTime()) / 86400000);
       const daysLeft = REFRESH_COOLDOWN_DAYS - elapsedDays;
