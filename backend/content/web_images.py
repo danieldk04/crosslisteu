@@ -1,19 +1,23 @@
 """
 Relevante, echte web-afbeeldingen voor content_pages — geen AI-gegenereerde
-beelden, maar de officiële merk-logo's van de platforms die een artikel
-noemt (Marktplaats, 2dehands, Vinted, eBay, Etsy, Shopify).
+beelden, maar echte SCREENSHOTS van de interface van elk platform dat een
+artikel noemt (Marktplaats, 2dehands, Vinted, eBay, Etsy, Shopify): precies
+hoe die site er nu uitziet als je hem opent.
 
-Waarom logo's i.p.v. willekeurige stockfoto's: dit zijn de meest relevante,
-herkenbare én licentie-veilige beelden voor artikelen die letterlijk over
-die platforms gaan. De bestanden zijn éénmalig van het web gehaald
-(simpleicons.org voor de vier internationale merken, de officiële favicon
-van Marktplaats/2dehands zelf) en LOKAAL gehost in
-frontend/assets/platforms/ — precies zoals CROSSLIST_SCREENSHOTS in
-generator.py. Lokaal hosten voorkomt de hotlink-/CDN-hash-breuk die remote
-URLs vroeg of laat geven.
+Waarom screenshots i.p.v. logo's of stockfoto's: een artikel dat over
+crosslisten tussen deze platforms gaat, wordt concreter als de lezer de échte
+interface ziet (zoekbalk, categorieën, listinggrid) — geen willekeurige foto
+van "iemand die iets fotografeert". De bestanden zijn éénmalig via een gratis
+screenshot-service van de live site gehaald (WordPress mShots / thum.io) en
+LOKAAL gehost in frontend/assets/platforms/ — precies zoals
+CROSSLIST_SCREENSHOTS in generator.py. Lokaal hosten voorkomt de
+hotlink-/generatie-latentie die remote screenshot-URLs geven.
 
-Wil je de logo's verversen (nieuwe huisstijl van een platform), vervang dan
-het bestand in frontend/assets/platforms/ met dezelfde bestandsnaam.
+Wil je een screenshot verversen (het platform heeft z'n interface vernieuwd),
+haal 'm opnieuw op en vervang het bestand in frontend/assets/platforms/ met
+dezelfde bestandsnaam. Voorbeeld om er één te hergenereren:
+    https://s0.wp.com/mshots/v1/<url-encoded platform-url>?w=1280&h=800
+(poll tot je een echte JPEG/PNG krijgt i.p.v. de 'generating'-placeholder).
 """
 import logging
 import re
