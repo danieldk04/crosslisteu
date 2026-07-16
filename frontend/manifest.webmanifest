@@ -1,0 +1,19 @@
+{
+  "name": "Omnivaleur",
+  "short_name": "Omnivaleur",
+  "description": "Publiceer, beheer en herplaats je tweedehands-listings over Marktplaats, 2dehands, Vinted, eBay en Shopify — vanaf één plek.",
+  "start_url": "/app",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f0f9ff",
+  "theme_color": "#2563eb",
+  "lang": "nl",
+  "categories": ["business", "shopping", "productivity"],
+  "icons": [
+    { "src": "/assets/pwa/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/pwa/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/pwa/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/assets/pwa/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
