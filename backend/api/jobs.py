@@ -344,6 +344,61 @@ async def reschedule_now(body: dict, user_id: str = Depends(get_current_user)):
     return {"ok": True, "job_id": rows[0]["id"], "scheduled_for": now}
 
 
+@router.post("/relist-retry")
+async def relist_retry(body: dict, user_id: str = Depends(get_current_user)):
+    """
+    Retry a relist that failed at the delist step. The old listing is still live
+    on the platform (a failed delist removes nothing), so retrying is safe and is
+    exactly what the user wants after "Relist failed".
+
+    Ordering matters for correctness: we FIRST cancel any leftover delete/create
+    jobs from the failed attempt (a still-pending recreate would otherwise fire
+    later and duplicate the listing), reset the listing to a clean "active"
+    state, and only THEN queue a brand-new relist via refresh_listing().
+    """
+    item_id = body.get("item_id")
+    platform = body.get("platform")
+    if not item_id or not platform:
+        raise HTTPException(status_code=400, detail="item_id and platform are required")
+
+    db = get_db()
+
+    # Cancel any outstanding jobs from the failed relist so nothing fires twice.
+    # Only pending/claimed/error jobs — never a job that already completed ("done").
+    stale = (
+        db.table("jobs")
+        .select("id")
+        .eq("user_id", user_id)
+        .eq("item_id", item_id)
+        .eq("platform", platform)
+        .in_("action", ["delete", "create"])
+        .in_("status", ["pending", "claimed", "error"])
+        .execute()
+        .data
+        or []
+    )
+    for j in stale:
+        db.table("jobs").update({
+            "status": "cancelled",
+            "done_at": datetime.now(timezone.utc).isoformat(),
+        }).eq("id", j["id"]).execute()
+
+    # Reset the listing to a clean active state before re-queuing. The failed
+    # delist left it live, so "active" is correct; clearing error_message stops
+    # the failed-relist banner from lingering after a successful retry.
+    db.table("listings").update({
+        "status": "active",
+        "error_message": None,
+    }).eq("item_id", item_id).eq("platform", platform).execute()
+
+    from backend.services.relist import refresh_listing, RefreshError
+    try:
+        result = await refresh_listing(item_id, platform, user_id, "relist")
+    except RefreshError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return {"ok": True, **result}
+
+
 @router.post("/{job_id}/claim")
 async def claim_job(job_id: str, user_id: str = Depends(get_current_user)):
     db = get_db()
