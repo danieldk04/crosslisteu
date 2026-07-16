@@ -160,9 +160,13 @@ async def get_pending_jobs(platform: str = None, user_id: str = Depends(get_curr
                     "result": {"error": "Skipped — the paired delist failed, so the old listing is still live; creating a new one would duplicate it."},
                     "done_at": now,
                 }).eq("id", j["id"]).execute()
+                # The delist failed, so the OLD listing is still live. Keep the
+                # listing "active" (its true state) rather than "error" — the item
+                # never left the platform, so it must not vanish from the dashboard.
+                # The message lets the refresh view offer a one-click retry.
                 db.table("listings").update({
-                    "status": "error",
-                    "error_message": "Relist aborted: delist of the old listing failed, so no new listing was created (would have duplicated it).",
+                    "status": "active",
+                    "error_message": "Relist aborted: the old listing couldn't be removed, so it's still live and no duplicate was created. You can retry the relist.",
                 }).eq("item_id", j["item_id"]).eq("platform", j["platform"]).execute()
                 continue
             # Delete not confirmed "done" yet (still pending/claimed, e.g. Chrome
