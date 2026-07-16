@@ -614,11 +614,14 @@ async def fail_job(job_id: str, body: dict, user_id: str = Depends(get_current_u
             "error_message": body.get("error", "Extension reported failure"),
         }).eq("item_id", job["item_id"]).eq("platform", job["platform"]).eq("status", "pending").execute()
     elif job and job["action"] == "delete":
-        # Without this, a failed delist leaves the listing "active" with no
-        # visible error — the dashboard looks like the delist did nothing.
+        # A failed delist means NOTHING was removed — the listing is still live on
+        # the platform. Setting it to "error" hid it from the dashboard's active
+        # views, so it looked deleted while it was actually still up (and, for a
+        # relist, left the item in limbo). Keep it "active" (its true state) and
+        # attach a visible message so the UI can offer a retry instead of hiding it.
         db.table("listings").update({
-            "status": "error",
-            "error_message": body.get("error", "Delist failed — extension could not remove the listing"),
+            "status": "active",
+            "error_message": body.get("error", "Delist failed — the listing is still live. You can retry."),
         }).eq("item_id", job["item_id"]).eq("platform", job["platform"]).execute()
     return {"ok": True}
 
