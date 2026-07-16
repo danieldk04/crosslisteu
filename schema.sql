@@ -206,3 +206,23 @@ CREATE INDEX IF NOT EXISTS idx_content_pages_status ON content_pages(status);
 ALTER TABLE content_pages ADD COLUMN IF NOT EXISTS language VARCHAR(5) DEFAULT 'en';
 ALTER TABLE content_pages ADD COLUMN IF NOT EXISTS translation_of VARCHAR(200);
 CREATE INDEX IF NOT EXISTS idx_content_pages_translation_of ON content_pages(translation_of);
+
+-- Aggregated activity notifications (unread messages + open bids/offers) that
+-- the desktop extension reads from the user's own logged-in platform sessions
+-- and reports here, so the dashboard can show "3 new offers on Marktplaats" in
+-- one place with a deep link. We store ONLY counts + a deep link — never the
+-- message contents. One row per (user, platform). The extension overwrites the
+-- counts each scan (it reports the current truth), so this is a snapshot, not a
+-- log. Marktplaats/Vinted have no seller API, so the counts come from the
+-- extension reading the platform's own unread badges; replying/accepting still
+-- happens on the platform via the deep link.
+CREATE TABLE IF NOT EXISTS platform_notifications (
+    user_id UUID NOT NULL,
+    platform VARCHAR(50) NOT NULL,
+    messages INT DEFAULT 0,          -- unread conversations/messages
+    offers INT DEFAULT 0,            -- open bids/offers awaiting a response
+    deep_link TEXT,                  -- where to open on the platform to act
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    PRIMARY KEY (user_id, platform)
+);
+CREATE INDEX IF NOT EXISTS idx_platform_notifications_user ON platform_notifications(user_id);
