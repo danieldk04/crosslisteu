@@ -521,6 +521,54 @@
     if (presentBefore === null) throw new Error(`Could not read your Vinted wardrobe on ${location.origin} to verify item ${listingId} — aborting to avoid an unverified delete.`);
     if (presentBefore === false) throw new Error(`Vinted item ${listingId} is not in your wardrobe on ${location.origin} — it may already be gone or belong to a different account; nothing to delete.`);
 
+    // The click → confirm → verify sequence is retried a few times: the most
+    // common relist-delete failures are transient (the actions menu didn't open,
+    // the confirm modal rendered a beat late, or the wardrobe API lagged behind
+    // the delete). Each attempt re-locates the control from scratch on the SAME
+    // page load — Vinted's own confirm dialog is idempotent, and every attempt
+    // re-verifies against the wardrobe, so a retry can never double-delete or
+    // report a false success. Only after all attempts fail do we surface an error.
+    const MAX_DELETE_ATTEMPTS = 3;
+    let lastErr = null;
+    for (let attempt = 1; attempt <= MAX_DELETE_ATTEMPTS; attempt++) {
+      try {
+        // If a previous attempt's click already removed it, we're done — verify
+        // and stop before clicking anything again.
+        if (attempt > 1 && (await isInWardrobe(userId, listingId)) === false) return;
+
+        await _attemptDeleteClickAndConfirm(listingId);
+
+        // Verify the item is actually gone from the wardrobe before reporting
+        // success — the same reliable endpoint we used for the pre-check.
+        // Wardrobe can lag a moment after delete, so poll a few times.
+        let goneAfter = false;
+        for (let i = 0; i < 4; i++) {
+          const present = await isInWardrobe(userId, listingId);
+          if (present === false) { goneAfter = true; break; }
+          if (present === null) throw new Error(`Could not re-read your Vinted wardrobe on ${location.origin} to confirm deletion of ${listingId}.`);
+          await sleep(1500);
+        }
+        if (goneAfter) return;  // confirmed removed — success
+        throw new Error(`Vinted listing ${listingId} is still in your wardrobe after confirming delete — removal was not verified`);
+      } catch (e) {
+        lastErr = e;
+        if (attempt < MAX_DELETE_ATTEMPTS) {
+          // Close any half-open menu/modal so the next attempt starts clean, then
+          // give the page a moment to settle before re-locating the control.
+          document.querySelector('[data-testid="item-delete-cancelation-button"]')?.click();
+          document.body?.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+          await sleep(1500);
+        }
+      }
+    }
+    throw lastErr || new Error(`Could not delete Vinted listing ${listingId} after ${MAX_DELETE_ATTEMPTS} attempts`);
+  }
+
+  // One delete attempt: (re)locate the delete control, click it, and confirm in
+  // the modal. Split out of deleteListingVinted so the whole click→confirm
+  // sequence can be retried cleanly on a transient failure. Throws on any missing
+  // control; never verifies success itself (the caller polls the wardrobe).
+  async function _attemptDeleteClickAndConfirm(listingId) {
     // Wait specifically for the delete-listing button to exist (it renders a beat
     // after the item-details panel), then locate the entry point.
     await waitForEl('[data-testid="item-delete-button"], [data-testid="item-actions-button"], [data-testid="item-menu-button"]', 8000).catch(() => {});
@@ -551,31 +599,23 @@
     // exact testid item-delete-confirmation-button (button reads "Confirm and
     // delete") alongside item-delete-cancelation-button ("Cancel"). Prefer the
     // exact confirm testid; only fall back to text matching, and NEVER match the
-    // cancel button or a per-photo remove button.
-    const confirmScope = document.querySelector('[role="dialog"], [role="alertdialog"], [data-testid*="modal"], .ReactModal__Content') || document;
-    const confirmBtn = confirmScope.querySelector('[data-testid="item-delete-confirmation-button"]')
-      || [...confirmScope.querySelectorAll('button, a[role="button"]')]
-        .find(el => {
-          const t = el.textContent.trim();
-          const tid = el.dataset.testid || "";
-          if (/annuleer|cancel|terug|back/i.test(t) || /cancel/i.test(tid) || isPhotoDeleteTestid(tid)) return false;
-          return /confirm|delete|verwijder|remove|\byes\b|\bja\b/i.test(t) || tid === "item-delete-confirmation-button";
-        });
+    // cancel button or a per-photo remove button. Wait briefly for it to render.
+    let confirmBtn = null;
+    for (let i = 0; i < 6 && !confirmBtn; i++) {
+      const confirmScope = document.querySelector('[role="dialog"], [role="alertdialog"], [data-testid*="modal"], .ReactModal__Content') || document;
+      confirmBtn = confirmScope.querySelector('[data-testid="item-delete-confirmation-button"]')
+        || [...confirmScope.querySelectorAll('button, a[role="button"]')]
+          .find(el => {
+            const t = el.textContent.trim();
+            const tid = el.dataset.testid || "";
+            if (/annuleer|cancel|terug|back/i.test(t) || /cancel/i.test(tid) || isPhotoDeleteTestid(tid)) return false;
+            return /confirm|delete|verwijder|remove|\byes\b|\bja\b/i.test(t) || tid === "item-delete-confirmation-button";
+          });
+      if (!confirmBtn) await sleep(500);
+    }
     if (!confirmBtn) throw new Error("Confirm-delete button not found on Vinted for ID " + listingId + " — deletion was not confirmed");
     confirmBtn.click();
     await sleep(1500);
-
-    // Verify the item is actually gone from the wardrobe before reporting
-    // success — the same reliable endpoint we used for the pre-check. Wardrobe
-    // can lag a moment after delete, so poll a few times.
-    let goneAfter = false;
-    for (let i = 0; i < 4; i++) {
-      const present = await isInWardrobe(userId, listingId);
-      if (present === false) { goneAfter = true; break; }
-      if (present === null) throw new Error(`Could not re-read your Vinted wardrobe on ${location.origin} to confirm deletion of ${listingId}.`);
-      await sleep(1500);
-    }
-    if (!goneAfter) throw new Error(`Vinted listing ${listingId} is still in your wardrobe after confirming delete — removal was not verified`);
   }
 
   function realClickEl(el) {
