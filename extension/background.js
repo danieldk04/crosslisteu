@@ -1447,55 +1447,51 @@ function scrapeNotificationCounts(url, platform) {
 }
 
 // Injected into the platform page (MAIN world). Counts unread conversations and
-// those that look like open bids/offers. Heuristic and defensive: if it sees a
-// login wall, it returns null so we don't overwrite with a bogus 0.
-function _mwReadNotifCounts(platform) {
-  const txt = (document.body.innerText || "").toLowerCase();
-  // Login wall → don't report; the user simply isn't signed into this platform.
-  if (/log ?in|inloggen|sign in|aanmelden/.test(txt) && !/bericht|message|verkocht|verzonden/.test(txt)) {
-    return null;
-  }
-
-  const num = (el) => {
-    const m = (el && (el.getAttribute("data-count") || el.textContent) || "").match(/\d+/);
-    return m ? parseInt(m[0], 10) : 0;
-  };
-
-  let messages = 0;
-  let offers = 0;
+// open bids/offers. Selectors/endpoints verified against the live logged-in
+// sites (2026-07). Defensive: on a login wall / failed read it returns null so
+// we never overwrite the stored snapshot with a bogus 0. Async: Vinted is read
+// from its own JSON API (runs in the vinted.nl context, so cookies are sent).
+async function _mwReadNotifCounts(platform) {
+  const OFFER_RE = /\bbod\b|geboden|bieding|would you (sell|take)|sell (it|this)|€\s?\d/i;
 
   if (platform === "vinted") {
-    // Unread conversation rows carry an unread/bold marker; the header bell also
-    // exposes a badge. Try the conversation list first, fall back to the badge.
-    const unreadRows = document.querySelectorAll(
-      '[class*="conversation"] [class*="unread"], [data-testid*="conversation"][class*="unread"], .c-conversation--unread'
-    );
-    messages = unreadRows.length;
-    if (!messages) {
-      const badge = document.querySelector('[class*="notification"] [class*="badge"], [data-testid*="badge"]');
-      messages = num(badge);
+    // Vinted's inbox API returns each conversation with an `unread` flag. Far
+    // more reliable than scraping the SPA. Unread threads sort to the top, so
+    // page 1 (50 rows) captures the actionable ones.
+    try {
+      const r = await fetch("/api/v2/inbox?page=1&per_page=50", {
+        headers: { Accept: "application/json" },
+        credentials: "include",
+      });
+      if (!r.ok) return null; // 401 = not logged into Vinted → don't report
+      const j = await r.json();
+      const convos = Array.isArray(j.conversations) ? j.conversations : [];
+      const unread = convos.filter((c) => c && c.unread);
+      const offers = unread.filter((c) => OFFER_RE.test(c.description || "")).length;
+      return { messages: unread.length, offers };
+    } catch (_) {
+      return null;
     }
-    // Vinted "offer" rows show an offer/bid chip within the thread preview.
-    offers = document.querySelectorAll('[class*="offer"], [data-testid*="offer"]').length;
-  } else {
-    // Marktplaats / 2dehands share one codebase. Unread conversations are
-    // marked in the inbox list; bids surface as "Bod" / "Bod uitgebracht".
-    const unreadRows = document.querySelectorAll(
-      '[class*="conversation"][class*="unread"], [class*="Conversation"][class*="unread"], li[class*="unread"]'
-    );
-    messages = unreadRows.length;
-    if (!messages) {
-      const badge = document.querySelector('[class*="unread"] [class*="count"], [class*="badge"]');
-      messages = num(badge);
-    }
-    // Count conversation previews that mention a bid.
-    const rows = document.querySelectorAll('[class*="conversation"], li[class*="Conversation"], [class*="inbox"] li');
-    rows.forEach((r) => {
-      if (/\bbod\b|bod uitgebracht|geboden/i.test(r.textContent || "")) offers++;
-    });
   }
 
-  return { messages: Math.max(0, messages), offers: Math.max(0, offers) };
+  // Marktplaats / 2dehands share one codebase (hashed CSS-module class names).
+  // A conversation row is `ConversationItem-module-root-*`; an UNREAD row shows
+  // its latest-message preview in the strong/bold body style; a bid surfaces as
+  // "Bod" in the preview text.
+  const rows = document.querySelectorAll('[class*="ConversationItem-module-root"]');
+  if (!rows.length) {
+    // No rows AND a visible login prompt → not signed in; else just empty inbox.
+    const txt = (document.body.innerText || "").toLowerCase();
+    if (/inloggen|log ?in|aanmelden/.test(txt) && !/bericht/.test(txt)) return null;
+    return { messages: 0, offers: 0 };
+  }
+  let messages = 0;
+  let offers = 0;
+  rows.forEach((r) => {
+    if (r.querySelector('[class*="u-textStyleBodySmallStrong"]')) messages++;
+    if (OFFER_RE.test(r.textContent || "")) offers++;
+  });
+  return { messages, offers };
 }
 
 // ---- Main-world helpers (injected via chrome.scripting, bypasses page CSP) ----
