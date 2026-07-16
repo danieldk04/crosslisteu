@@ -1365,11 +1365,12 @@ function scrapeSoldListings(url, platform) {
 const NOTIF_SCAN_MINUTES = 15;
 
 // Where to open the messages/bids view per platform, and the deep link we hand
-// the dashboard so the user can jump straight there.
+// the dashboard so the user can jump straight there. (Vinted's inbox lives at
+// /inbox — /member/messages 404s.)
 const NOTIF_SOURCES = {
   marktplaats: "https://www.marktplaats.nl/messages",
   "2dehands": "https://www.2dehands.be/messages",
-  vinted: "https://www.vinted.nl/member/messages",
+  vinted: "https://www.vinted.nl/inbox",
 };
 
 chrome.alarms.create("notif-scan", { periodInMinutes: NOTIF_SCAN_MINUTES });
