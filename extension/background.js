@@ -1437,7 +1437,7 @@ function scrapeNotificationCounts(url, platform) {
               finish(val && typeof val.messages === "number" ? val : null);
             }
           );
-        }, 2500);
+        }, 3000);
       };
 
       chrome.tabs.onUpdated.addListener(onUpdated);
