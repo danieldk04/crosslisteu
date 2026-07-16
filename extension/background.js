@@ -1487,11 +1487,14 @@ async function _mwReadNotifCounts(platform) {
     if (/inloggen|log ?in|aanmelden/.test(txt) && !/bericht/.test(txt)) return null;
     return { messages: 0, offers: 0 };
   }
+  // On MP/2dehands a bid shows up literally as "bod" in the preview; the strict
+  // word match avoids counting ordinary item prices as offers (verified).
+  const MP_OFFER_RE = /\bbod\b|geboden|bieding/i;
   let messages = 0;
   let offers = 0;
   rows.forEach((r) => {
     if (r.querySelector('[class*="u-textStyleBodySmallStrong"]')) messages++;
-    if (OFFER_RE.test(r.textContent || "")) offers++;
+    if (MP_OFFER_RE.test(r.textContent || "")) offers++;
   });
   return { messages, offers };
 }
