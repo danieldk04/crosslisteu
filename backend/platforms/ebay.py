@@ -486,6 +486,13 @@ async def suggest_categories(query: str, brand: str | None = None,
         return []
     search_text = _build_ebay_query(query, brand, category, gender)
     logger.info(f"eBay category lookup: {query!r} -> {search_text!r}")
+    results = await _raw_category_suggestions(search_text)
+    return await _translate_category_names(results)
+
+
+async def _raw_category_suggestions(search_text: str) -> list[dict]:
+    """Ruwe Taxonomy-suggesties [{category_id, name}, ...] zonder vertaling —
+    gedeeld door de UI-suggestie en de listing-tijd fallback-resolver."""
     token = await _get_app_token()
     tree_id = await _get_category_tree_id()
     async with httpx.AsyncClient() as client:
@@ -501,7 +508,20 @@ async def suggest_categories(query: str, brand: str | None = None,
         ancestors = [a["categoryName"] for a in reversed(s.get("categoryTreeNodeAncestors", []))]
         path = " > ".join(ancestors + [s["category"]["categoryName"]])
         results.append({"category_id": s["category"]["categoryId"], "name": path})
-    return await _translate_category_names(results)
+    return results
+
+
+async def resolve_category_id(query: str, brand: str | None = None,
+                              category: str | None = None,
+                              gender: str | None = None) -> str | None:
+    """Beste-gok eBay-categorie-ID voor een item op basis van de titel, gebruikt
+    als fallback bij het plaatsen wanneer het item zelf geen ebay_category_id heeft.
+    Geeft een gegarandeerd geldige leaf-categorie terug (of None)."""
+    if not settings.ebay_app_id or not query or not query.strip():
+        return None
+    search_text = _build_ebay_query(query, brand, category, gender)
+    results = await _raw_category_suggestions(search_text)
+    return results[0]["category_id"] if results else None
 
 
 async def _translate_category_names(results: list[dict]) -> list[dict]:
