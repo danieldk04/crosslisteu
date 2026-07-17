@@ -275,6 +275,83 @@ async function getAuthHeaders() {
   });
 }
 
+// ── Reliable job finalisation ─────────────────────────────────────────────
+// A /complete that silently fails is worse than a job that never ran: the work
+// IS done on the platform, but the backend still sees the job as claimed and
+// _recover_stale_claims resets it to pending — so the dashboard shows it queued
+// forever, and a create job gets flagged as a possible duplicate. These calls
+// used to be `await fetch(...)` with no .ok check, so a 401/5xx/offline blip was
+// invisible. Now: verify the response, retry with backoff, and persist anything
+// still unsent so an MV3 worker kill can't drop it.
+const FINALISE_QUEUE_KEY = "pendingFinalisations";
+const FINALISE_MAX_ATTEMPTS = 4;
+
+async function _postFinalise(serverUrl, jobId, kind, body) {
+  const headers = await getAuthHeaders();
+  const res = await fetch(`${serverUrl}/api/jobs/${jobId}/${kind}`, {
+    method: "POST", headers, body: JSON.stringify(body || {}),
+  });
+  // 404 = job is already gone/finalised server-side; treat as settled, not a
+  // failure, so we don't retry forever on a job the backend has moved past.
+  if (!res.ok && res.status !== 404) {
+    throw new Error(`${kind} returned HTTP ${res.status}`);
+  }
+  return true;
+}
+
+function _queueGet() {
+  return new Promise(r => chrome.storage.local.get([FINALISE_QUEUE_KEY], s => r(s[FINALISE_QUEUE_KEY] || [])));
+}
+function _queueSet(list) {
+  return new Promise(r => chrome.storage.local.set({ [FINALISE_QUEUE_KEY]: list }, r));
+}
+
+async function _queueAdd(entry) {
+  const list = await _queueGet();
+  if (list.some(e => e.jobId === entry.jobId && e.kind === entry.kind)) return;
+  list.push(entry);
+  await _queueSet(list);
+}
+async function _queueRemove(jobId, kind) {
+  await _queueSet((await _queueGet()).filter(e => !(e.jobId === jobId && e.kind === kind)));
+}
+
+// Finalise a job (complete/error), retrying transient failures. Resolves true if
+// the backend confirmed it; false if it was handed to the persistent queue.
+async function finaliseJob(serverUrl, jobId, kind, body) {
+  for (let attempt = 1; attempt <= FINALISE_MAX_ATTEMPTS; attempt++) {
+    try {
+      await _postFinalise(serverUrl, jobId, kind, body);
+      await _queueRemove(jobId, kind);
+      return true;
+    } catch (e) {
+      if (attempt === FINALISE_MAX_ATTEMPTS) {
+        console.warn(`[Omnivaleur] ${kind} for job ${jobId} failed after ${attempt} attempts (${e.message}) — queued for retry`);
+        await _queueAdd({ jobId, kind, body: body || {}, serverUrl, queuedAt: Date.now() });
+        return false;
+      }
+      await new Promise(r => setTimeout(r, 500 * Math.pow(2, attempt - 1)));
+    }
+  }
+  return false;
+}
+
+// Drain anything the retries above couldn't deliver. Runs on every poll tick and
+// on startup, so a completion survives Chrome restarting or the token being
+// refreshed after it expired mid-run.
+async function flushFinaliseQueue() {
+  const list = await _queueGet();
+  if (!list.length) return;
+  for (const e of list) {
+    try {
+      await _postFinalise(e.serverUrl, e.jobId, e.kind, e.body);
+      await _queueRemove(e.jobId, e.kind);
+      console.log(`[Omnivaleur] flushed queued ${e.kind} for job ${e.jobId}`);
+    } catch (err) { /* stays queued for the next tick */ }
+  }
+}
+chrome.runtime.onStartup.addListener(flushFinaliseQueue);
+
 // Post a small live-progress update for a running job so the dashboard can show
 // the user exactly what's happening. Fire-and-forget: never let a progress ping
 // (or its failure) slow down or break the actual scan.
