@@ -619,14 +619,19 @@ async function bgDeleteVinted(job, serverUrl) {
         const photos = (it.photos || []).map(p => p.full_size_url || p.url).filter(Boolean);
         if (photos.length) out.photo_urls = photos;
         else if (it.photo?.url) out.photo_urls = [it.photo.url];
-        out.brand = it.brand_title || it.brand_dto?.title || it.brand || "";
-        out.size = it.size_title || it.size || "";
+        // Field names verified live 2026-07 against a real wardrobe object:
+        // brand:"Ralph Lauren", size:"L", status:"Very good",
+        // price:{amount,currency_code}, photos:[{url,full_size_url}].
+        // The verified name comes FIRST; the alternates behind it are legacy
+        // guesses kept only as a cushion if Vinted renames a field.
+        out.brand = it.brand || it.brand_title || it.brand_dto?.title || "";
+        out.size = it.size || it.size_title || "";
         out.condition = it.status || it.status_title || "";
         out.description = it.description || "";
         const pr = it.price?.amount ?? it.price ?? it.total_item_price?.amount;
         if (pr != null && !isNaN(Number(pr))) out.price = Number(pr);
-        // Colours: Vinted returns color names on the wardrobe object under
-        // varying keys.
+        // Colour + material are NOT on the wardrobe object at all (confirmed
+        // live) — they only exist in the page's attribute rows, scraped below.
         out.color = it.color1 || it.color1_title || it.colour || "";
       }
       // Description: if the wardrobe object didn't carry it, scrape the DOM but
