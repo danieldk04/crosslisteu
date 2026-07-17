@@ -3032,7 +3032,8 @@ function openAddItem() {
   document.getElementById('bid-amount-label').textContent = '';
   document.getElementById('f-platform-price-enabled').checked = false;
   document.getElementById('platform-price-fields').style.display = 'none';
-  updateCategoryOptions();
+  document.getElementById('f-item-type').value = 'clothing';
+  onItemTypeChange();
   document.getElementById('f-condition').value = 'good';
   updateConditionHint();
   resetPhotoUpload([]);
