@@ -123,7 +123,12 @@ const MP_CATEGORIES = {
   "unisex schoenen":        { cat1: 621,  cat3: 625,  bucketId: 164 },
   "unisex accessoires":     { cat1: 621,  cat3: 628,  bucketId: 162 },
 };
-const MP_DEFAULT = { cat1: 621, cat3: 636, bucketId: 162 }; // fallback: dames jeans
+// NOTE: there is deliberately no catch-all default category. There used to be
+// one (dames jeans), and it meant any item whose category didn't resolve got
+// published as women's jeans — a MyProtein sport short included. Publishing to a
+// wrong category is worse than not publishing: it's visible to buyers, hurts
+// reach, and the user never learns it happened. Unresolved category now fails
+// the job with an actionable message instead (see getMpSyiUrl).
 
 function getDeleteUrl(platform, payload) {
   if (platform === "marktplaats") {
