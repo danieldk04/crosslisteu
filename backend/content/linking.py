@@ -37,6 +37,33 @@ def link_first_mention(body_html: str, term: str, url: str) -> str:
     return body_html
 
 
+_INLINE_ANCHOR = re.compile(r"<a\b[^>]*>[^<]*</a>")
+_ANCHOR_TEXT = re.compile(r"<a\b[^>]*>([^<]*)</a>")
+
+
+def _tag_depth_before(html: str, pos: int) -> int:
+    """Aantal open '<' minus gesloten '>' vóór pos. >0 betekent: binnen tag-markup."""
+    return html.count("<", 0, pos) - html.count(">", 0, pos)
+
+
+def repair_anchors_in_tags(body_html: str) -> str:
+    """
+    Repareert HTML waar de link-engine een <a>…</a> midden ín een tag-attribuut
+    heeft geïnjecteerd (bv. src="/assets/platforms/<a href=...>vinted</a>.jpg").
+    Zulke anchors staan op tag-diepte >0 en worden uitgepakt naar hun linktekst.
+    Anchors in gewone body-tekst (diepte 0) blijven ongemoeid.
+    """
+    result = body_html
+    while True:
+        for m in _INLINE_ANCHOR.finditer(result):
+            if _tag_depth_before(result, m.start()) != 0:
+                inner = _ANCHOR_TEXT.match(m.group(0)).group(1)
+                result = result[: m.start()] + inner + result[m.end():]
+                break
+        else:
+            return result
+
+
 def apply_internal_links(body_html: str, candidates: list[dict], self_intent_key: str, min_links: int = 2) -> tuple[str, list[str]]:
     """
     `candidates`: [{intent_key, title, url_path, link_terms: [str, ...]}, ...] — other
