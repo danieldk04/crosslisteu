@@ -603,11 +603,7 @@ async function bgDeleteMp2dh(job, serverUrl) {
 
     if (stillPresent) throw new Error(`Listing "${title}" still visible on ${overviewUrl} after confirming delete — removal was not verified`);
 
-    const completeHeaders = await getAuthHeaders();
-    await fetch(`${serverUrl}/api/jobs/${job.id}/complete`, {
-      method: "POST", headers: completeHeaders,
-      body: JSON.stringify({}),
-    });
+    await finaliseJob(serverUrl, job.id, "complete", {});
     console.log(`[Omnivaleur] bgDelete success: ${platform} listing "${title}"`);
 
   } finally {
