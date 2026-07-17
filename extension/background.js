@@ -893,13 +893,9 @@ async function bgDeleteVinted(job, serverUrl) {
     }
     if (!goneAfter) throw new Error(`Vinted listing ${listingId} still in your wardrobe after confirming delete — removal was not verified.`);
 
-    const completeHeaders = await getAuthHeaders();
-    await fetch(`${serverUrl}/api/jobs/${job.id}/complete`, {
-      method: "POST", headers: completeHeaders,
-      // Hand the captured listing snapshot to the backend so it can enrich the
-      // paired relist recreate job (imported items otherwise lack this data).
-      body: JSON.stringify({ captured_listing: snapshot }),
-    });
+    // The captured listing snapshot lets the backend enrich the paired relist
+    // recreate job (imported items otherwise lack this data).
+    await finaliseJob(serverUrl, job.id, "complete", { captured_listing: snapshot });
     console.log(`[Omnivaleur] bgDeleteVinted success: listing ${listingId}`, snapshot);
   } finally {
     setTimeout(() => chrome.tabs.remove(tabId).catch(() => {}), 2500);
