@@ -1321,11 +1321,7 @@ async function bgScanMp2dh(job, serverUrl) {
       }
     }
 
-    const completeHeaders = await getAuthHeaders();
-    await fetch(`${serverUrl}/api/jobs/${job.id}/complete`, {
-      method: "POST", headers: completeHeaders,
-      body: JSON.stringify({ listings: result.items }),
-    });
+    await finaliseJob(serverUrl, job.id, "complete", { listings: result.items });
     console.log(`[Omnivaleur] ${platform} scan found ${result.items.length} listings (enriched ${Object.keys(enrichments || {}).length})`);
   } finally {
     setTimeout(() => chrome.tabs.remove(tabId).catch(() => {}), 2500);
