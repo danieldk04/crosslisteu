@@ -742,13 +742,25 @@ async function bgDeleteVinted(job, serverUrl) {
     await sleep(2500);
     let goneAfter = false;
     for (let i = 0; i < 5; i++) {
+      // Paged — and this one matters most: with the old single-page fetch an
+      // older listing was ALWAYS absent from page 1, so a delete that never
+      // happened verified as "gone" and the recreate then duplicated the still
+      // live listing. A false "gone" is worse than a failed relist.
       const present = await execInTab(tabId, async (userId, lid) => {
         try {
-          const res = await fetch(`/api/v2/wardrobe/${userId}/items?order=newest_first&page=1&per_page=200`, { headers: { Accept: "application/json" } });
-          if (!res.ok) return null;
-          const data = await res.json();
-          if (data.code && data.code !== 0) return null;
-          return (data.items || []).some(it => String(it.id) === String(lid));
+          for (let page = 1; page <= 60; page++) {
+            const res = await fetch(`/api/v2/wardrobe/${userId}/items?order=newest_first&page=${page}&per_page=96`, { headers: { Accept: "application/json" } });
+            if (!res.ok) return null;
+            const data = await res.json();
+            if (data.code && data.code !== 0) return null;
+            const items = data.items || [];
+            if (items.some(it => String(it.id) === String(lid))) return true;
+            const pg = data.pagination || {};
+            if (items.length === 0) return false;
+            if (pg.total_pages && page >= pg.total_pages) return false;
+            if (!pg.total_pages && items.length < 96) return false;
+          }
+          return null;
         } catch (e) { return null; }
       }, [before.userId, listingId]);
       if (present === false) { goneAfter = true; break; }
