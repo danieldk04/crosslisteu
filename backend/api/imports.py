@@ -88,6 +88,103 @@ _CATEGORY_RULES = [
 ]
 
 
+# The complete taxonomy, mirroring frontend CATEGORIES. This is what the
+# classifier is allowed to choose from — it may not invent a key, because the
+# extension maps these to hardcoded platform category IDs.
+_TAXONOMY = {
+    "dames": [
+        "jeans", "broeken", "shorts", "rokken", "jurken casual", "jurken feest",
+        "blouses", "tops", "truien", "hoodies", "jassen", "sport bh",
+        "sportleggings", "sportbroeken", "zwemkleding", "ondergoed",
+        "sneakers dames", "schoenen dames", "hakken", "laarzen dames",
+        "sandalen", "accessoires dames",
+    ],
+    "heren": [
+        "heren jeans", "heren chinos", "heren shorts", "heren t-shirts",
+        "heren polo's", "heren overhemden", "heren truien", "heren hoodies",
+        "heren jassen", "heren pakken", "heren sportbroeken", "heren sneakers",
+        "heren schoenen", "heren formele schoenen", "heren laarzen",
+        "heren accessoires",
+    ],
+    "kinderen": [
+        "babykleding", "peuterkleding", "jongens kleding", "meisjes kleding",
+        "tieners jongens", "tieners meisjes", "kinderen sportkleding",
+        "kinderen schoenen",
+    ],
+    "unisex": [
+        "unisex truien", "unisex jassen", "unisex sportkleding",
+        "unisex schoenen", "unisex accessoires",
+    ],
+}
+_ALL_CATEGORIES = {c for cats in _TAXONOMY.values() for c in cats}
+
+
+async def _classify_with_claude(title: str | None, description: str | None,
+                                brand: str | None) -> dict:
+    """
+    Ask Claude for gender + category, choosing only from _TAXONOMY.
+
+    The keyword rules below can't see brand context and have no sportswear rule
+    for adults, so "MyProtein sport shorts" matched nothing, fell through to an
+    empty category, and the extension's MP_DEFAULT turned it into women's jeans.
+    Claude gets the brand too, which is usually the strongest signal about what
+    kind of garment this is.
+
+    Returns {} on any failure or low confidence — callers fall back to the
+    keyword rules, and an unresolved category is surfaced to the user rather
+    than guessed (see _infer_attributes).
+    """
+    if not (title or description):
+        return {}
+    try:
+        import anthropic as _anthropic
+        from backend.config import settings as _settings
+        client = _anthropic.Anthropic(api_key=_settings.anthropic_api_key)
+
+        taxonomy_lines = "\n".join(
+            f"  {g}: {', '.join(cats)}" for g, cats in _TAXONOMY.items()
+        )
+        prompt = (
+            "You categorise second-hand clothing listings for a Dutch marketplace.\n\n"
+            f"Brand: {brand or 'unknown'}\n"
+            f"Title: {title or ''}\n"
+            f"Description: {(description or '')[:1500]}\n\n"
+            "Pick the single best gender and category from this exact taxonomy:\n"
+            f"{taxonomy_lines}\n\n"
+            "Rules:\n"
+            "- The category MUST be copied verbatim from the list for the gender you pick.\n"
+            "- Use the brand as a signal (e.g. MyProtein/Gymshark/Nike = sportswear).\n"
+            "- Athletic shorts belong in a sportbroeken category, NOT shorts or jeans.\n"
+            "- If gender is not stated or implied, use unisex where a sensible unisex\n"
+            "  category exists; otherwise pick the most likely gender.\n"
+            "- Set confidence low if you are guessing about what the garment is.\n\n"
+            'Respond with ONLY JSON: {"gender":"...","category":"...","confidence":"high|medium|low"}'
+        )
+        resp = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=200,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        raw = resp.content[0].text.strip()
+        m = re.search(r"\{.*\}", raw, re.S)
+        if not m:
+            return {}
+        data = json.loads(m.group(0))
+
+        gender, category = data.get("gender"), data.get("category")
+        # Never trust the model's key blindly: an invented category would be
+        # mapped to MP_DEFAULT downstream, recreating the exact bug this fixes.
+        if data.get("confidence") == "low":
+            return {}
+        if gender not in _TAXONOMY or category not in _TAXONOMY.get(gender, []):
+            logger.warning(f"Claude returned category outside taxonomy: {gender}/{category}")
+            return {}
+        return {"gender": gender, "category": category}
+    except Exception as e:
+        logger.warning(f"Claude classification failed, falling back to keywords: {e}")
+        return {}
+
+
 def _word_in(word: str, text: str) -> bool:
     """Whole-word match so a garment/colour word inside a brand name (e.g. 'suit'
     in 'Suitsupply') never triggers a false category."""
