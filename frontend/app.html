@@ -1755,10 +1755,13 @@ input[type="checkbox"].row-check { width: 15px; height: 15px; cursor: pointer; a
 <!-- Points at Chrome's extensions area (top-right). Shown when the extension is
      installed but not signed in — the one moment where "click that icon up
      there" is the actual instruction. -->
-<div id="ext-signin-callout" style="display:none;position:fixed;top:8px;right:14px;z-index:520;width:330px;font-family:inherit">
-  <svg width="330" height="86" viewBox="0 0 330 86" fill="none" style="display:block;margin-bottom:-6px" aria-hidden="true">
-    <path id="ext-arrow-path" d="M300 78 C 300 40, 296 26, 292 14" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-dasharray="7 6"/>
-    <path d="M292 8 l -8 13 l 16 0 z" fill="#2563eb"/>
+<div id="ext-signin-callout" style="display:none;position:fixed;top:8px;right:14px;z-index:520;width:330px;max-width:calc(100vw - 28px);font-family:inherit">
+  <!-- The arrow is long enough to clear the page header, so the card lands below
+       the "New item" button instead of covering it, while the tip still reaches
+       the top of the viewport — where Chrome's extensions icon actually is. -->
+  <svg width="330" height="132" viewBox="0 0 330 132" fill="none" style="display:block;margin-bottom:-6px" aria-hidden="true">
+    <path d="M300 126 C 300 70, 296 34, 292 14" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-dasharray="7 6"/>
+    <path d="M292 6 l -8 14 l 16 0 z" fill="#2563eb"/>
   </svg>
   <div style="background:#fff;border:2px solid #2563eb;border-radius:16px;padding:16px 18px;box-shadow:0 14px 40px rgba(15,23,42,.22)">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
