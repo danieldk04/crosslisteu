@@ -584,6 +584,18 @@ async def bulk_import_candidates(body: dict = None, user_id: str = Depends(get_c
     items = db.table("items").select("id,title").eq("user_id", user_id).execute().data or []
     listings_by_id = _listings_by_platform_id(db, items)
 
+    # Classify every candidate up front and in parallel — one sequential Haiku
+    # call per candidate inside the loop would stall a bulk import of 50 items
+    # for minutes. Each entry falls back to keywords on its own failure.
+    import asyncio
+    inferred_by_id = dict(zip(
+        (c["id"] for c in candidates),
+        await asyncio.gather(*(
+            _infer_attributes_smart(c.get("title"), c.get("description"), c.get("brand"))
+            for c in candidates
+        )),
+    )) if candidates else {}
+
     for cand in candidates:
         try:
             listed_at = cand.get("platform_listed_at") or now
