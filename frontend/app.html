@@ -1750,6 +1750,31 @@ input[type="checkbox"].row-check { width: 15px; height: 15px; cursor: pointer; a
 </div>
 
 <!-- EXTENSION INSTALL OVERLAY -->
+<!-- Points at Chrome's extensions area (top-right). Shown when the extension is
+     installed but not signed in — the one moment where "click that icon up
+     there" is the actual instruction. -->
+<div id="ext-signin-callout" style="display:none;position:fixed;top:8px;right:14px;z-index:520;width:330px;font-family:inherit">
+  <svg width="330" height="86" viewBox="0 0 330 86" fill="none" style="display:block;margin-bottom:-6px" aria-hidden="true">
+    <path id="ext-arrow-path" d="M300 78 C 300 40, 296 26, 292 14" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-dasharray="7 6"/>
+    <path d="M292 8 l -8 13 l 16 0 z" fill="#2563eb"/>
+  </svg>
+  <div style="background:#fff;border:2px solid #2563eb;border-radius:16px;padding:16px 18px;box-shadow:0 14px 40px rgba(15,23,42,.22)">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <span style="font-size:18px">🧩</span>
+      <strong style="font-size:14px;color:#0f172a">One step left — sign in</strong>
+    </div>
+    <p style="font-size:13px;color:#475569;line-height:1.55;margin:0 0 10px">
+      The extension is installed but not signed in, so nothing can be published yet.
+      Click the <strong>puzzle icon</strong> above, pin <strong>Omnivaleur</strong>, then open it
+      and sign in with your Omnivaleur email and password.
+    </p>
+    <div style="display:flex;gap:8px">
+      <button onclick="pingExtension()" style="flex:1;padding:9px;background:#2563eb;border:none;border-radius:100px;color:#fff;font-size:13px;font-weight:700;cursor:pointer">I've signed in — re-check</button>
+      <button onclick="hideExtSigninCallout()" style="padding:9px 12px;background:transparent;border:1.5px solid #e2e8f0;border-radius:100px;color:#64748b;font-size:13px;font-weight:600;cursor:pointer">Later</button>
+    </div>
+  </div>
+</div>
+
 <div id="ext-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;align-items:center;justify-content:center;padding:20px">
   <div style="background:#fff;border-radius:20px;max-width:480px;width:100%;padding:40px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.2)">
     <div style="width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,#2563eb,#34d399);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 20px">🧩</div>
