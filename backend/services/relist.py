@@ -208,8 +208,13 @@ async def refresh_listing(item_id: str, platform: str, user_id: str, strategy: s
         # Content refresh keeps the seller's OWN price — no jitter. It re-saves
         # the listing (with a photo re-order) so Vinted registers a fresh edit
         # without silently changing what the item is listed for.
+        # Re-saving the listing rewrites its title/description, so they must be
+        # localized here too — otherwise a content refresh quietly turns a Dutch
+        # marktplaats listing back into English.
+        from backend.services.crosslist import localize_item_for_platform
+        localized = await localize_item_for_platform(item, platform)
         payload = {
-            **item,
+            **localized,
             "platform_listing_id": listing["platform_listing_id"],
             "platform_listing_url": listing["platform_listing_url"],
             "price": float(item["price"]) if item.get("price") not in (None, "") else None,
