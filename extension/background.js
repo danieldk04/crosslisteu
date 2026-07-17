@@ -1912,11 +1912,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
   if (msg.type === "JOB_ERROR") {
     const { platform, jobId, serverUrl, error } = msg;
-    getAuthHeaders().then(headers => fetch(`${serverUrl}/api/jobs/${jobId}/error`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ error }),
-    })).then(() => {
+    finaliseJob(serverUrl, jobId, "error", { error }).finally(() => {
       chrome.storage.local.remove([`job_${platform}`, `jobtab_${sender.tab?.id}`]);
       // Keep the tab OPEN so the user can review the filled form and finish
       // manually. Closing it here loses all the work that was filled in.
