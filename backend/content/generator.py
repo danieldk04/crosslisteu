@@ -366,7 +366,7 @@ def _build_translation_prompt(generated: dict) -> str:
     takeaways_block = "\n".join(generated["takeaways"])
     faq_block = "\n".join(f"Q: {f['question']}\nA: {f['answer']}" for f in generated["faq"])
 
-    return f"""Translate the following English article into natural, fluent Dutch (Netherlands) for Omnivaleur, a cross-listing SaaS. Keep the exact same meaning, tone (helpful reseller talking to a colleague) and HTML structure — do not add or remove headings, links or paragraphs, just translate the text inside them. Keep all <a href="..."> URLs and platform/brand names (Marktplaats, Vinted, eBay, etc.) unchanged. Keep numbers, prices and the year 2026 unchanged.
+    return f"""Translate the following English article into natural, fluent Dutch (Netherlands) for Omnivaleur, a cross-listing SaaS. Keep the exact same meaning, tone (helpful reseller talking to a colleague) and HTML structure — do not add or remove headings, links or paragraphs, just translate the text inside them. Keep all <a href="..."> URLs and platform/brand names (Marktplaats, Vinted, eBay, etc.) unchanged. Keep numbers, prices and the year 2026 unchanged. Translate the verb "cross-list"/"cross-listing" to the Dutch verb "crosslisten"/"crosslisting" — NEVER to the brand name "Omnivaleur" ("Omnivaleur" is a product name, never a verb).
 
 OUTPUT FORMAT — return EXACTLY this structure, nothing else, no markdown code fences:
 
