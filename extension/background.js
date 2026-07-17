@@ -450,9 +450,18 @@ async function processJob(job, serverUrl) {
     return;
   }
 
-  const url = job.action === "delete" ? getDeleteUrl(job.platform, job.payload)
-    : job.action === "content_refresh" ? getEditUrl(job.platform, job.payload)
-    : getMpSyiUrl(job.platform, job.payload);
+  let url;
+  try {
+    url = job.action === "delete" ? getDeleteUrl(job.platform, job.payload)
+      : job.action === "content_refresh" ? getEditUrl(job.platform, job.payload)
+      : getMpSyiUrl(job.platform, job.payload);
+  } catch (e) {
+    // An unresolved category lands here. Report it against this job only — an
+    // uncaught throw would escape processJob and silently abandon every other
+    // job in this poll round.
+    await reportError(job.id, serverUrl, e.message || String(e));
+    return;
+  }
   if (!url) {
     await reportError(job.id, serverUrl, "No URL configured for " + job.platform + " action=" + job.action);
     return;
