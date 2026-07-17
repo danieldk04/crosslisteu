@@ -235,6 +235,12 @@ async def relist_status(user_id: str = Depends(get_current_user)):
             "recreate_at": j["scheduled_for"],
             "recreate_status": j["status"],
             "delete_status": paired[0]["status"] if paired else None,
+            # Surface WHY the delist failed: without this the dashboard could
+            # only say "Failed", which hid a real bug for weeks.
+            "delete_error": (
+                ((paired[0].get("result") or {}).get("error") or None)
+                if paired and paired[0]["status"] == "error" else None
+            ),
         })
     return out
 
