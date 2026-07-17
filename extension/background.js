@@ -239,6 +239,32 @@ async function getServerUrl() {
   });
 }
 
+// Without a token every request goes out unauthenticated, gets a 401 and no job
+// is ever picked up — silently. The popup shows this, but only if you think to
+// open it, so surface it on the toolbar icon itself instead.
+function refreshAuthBadge() {
+  chrome.storage.sync.get(["authToken"], (s) => {
+    if (s.authToken) {
+      chrome.action.setBadgeText({ text: "" });
+      chrome.action.setTitle({ title: "Omnivaleur" });
+    } else {
+      chrome.action.setBadgeText({ text: "!" });
+      chrome.action.setBadgeBackgroundColor({ color: "#dc2626" });
+      chrome.action.setTitle({
+        title: "Omnivaleur — not logged in. Nothing will be published until you log in.",
+      });
+    }
+  });
+}
+
+refreshAuthBadge();
+chrome.runtime.onStartup.addListener(refreshAuthBadge);
+chrome.runtime.onInstalled.addListener(refreshAuthBadge);
+// Covers the popup's own login/logout, which writes the token directly.
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "sync" && changes.authToken) refreshAuthBadge();
+});
+
 async function getAuthHeaders() {
   return new Promise((resolve) => {
     chrome.storage.sync.get(["authToken"], (s) => {
