@@ -336,19 +336,90 @@ async def _get_category_tree_id() -> str:
     return tree_id
 
 
-async def suggest_categories(query: str) -> list[dict]:
+def _clean_ebay_query(query: str) -> str:
+    """
+    Strip the noise that derails eBay's category matcher.
+
+    The raw title goes to eBay's relevance engine as-is, and inventory prefixes
+    plus loose numbers are actively harmful: "(1324) White Suitsupply Shoes -
+    Men 43" was suggested as Toys > Miniature vehicles, because 1:24 and 1:43
+    are the standard scales for model cars — eBay read the SKU and the shoe size
+    as scale markers. None of these numbers say anything about what the item IS.
+    """
+    q = re.sub(r"^\s*[\(\[]\s*\d+\s*[\)\]]\s*", " ", query)   # leading (1324) / [1324] SKU
+    q = re.sub(r"\b\d+\s*[:/]\s*\d+\b", " ", q)                # 1:24-style scale markers
+    q = re.sub(r"(?<![a-z0-9])\d+(?![a-z0-9])", " ", q, flags=re.I)  # standalone numbers (sizes)
+    q = re.sub(r"[-–—]+", " ", q)                              # separator dashes
+    q = re.sub(r"\s+", " ", q).strip()
+    return q
+
+
+def _build_ebay_query(query: str, brand: str | None = None,
+                      category: str | None = None, gender: str | None = None) -> str:
+    """
+    Build the text handed to eBay's matcher: a cleaned title plus the context the
+    listing form already knows. Our own category is the single strongest signal
+    about what the garment is — leaving it out meant eBay had to guess from a
+    title that might be mostly SKU and size.
+    """
+    cleaned = _clean_ebay_query(query)
+    parts = []
+    if gender:
+        parts.append(_EBAY_GENDER_WORDS.get(gender.lower().strip(), ""))
+    if brand and brand.strip().lower() not in cleaned.lower():
+        parts.append(brand.strip())
+    parts.append(cleaned)
+    if category:
+        parts.append(_EBAY_CATEGORY_HINTS.get(category.lower().strip(), ""))
+    text = " ".join(p for p in parts if p)
+    return re.sub(r"\s+", " ", text).strip() or query.strip()
+
+
+_EBAY_GENDER_WORDS = {"heren": "mens", "dames": "womens", "kinderen": "kids", "unisex": ""}
+
+# Our category keys -> plain English garment words eBay's matcher understands.
+_EBAY_CATEGORY_HINTS = {
+    "jeans": "jeans", "heren jeans": "jeans", "broeken": "trousers",
+    "heren chinos": "chinos trousers", "shorts": "shorts", "heren shorts": "shorts",
+    "sportbroeken": "athletic shorts", "heren sportbroeken": "athletic shorts",
+    "sportleggings": "athletic leggings", "sport bh": "sports bra",
+    "rokken": "skirt", "jurken casual": "dress", "jurken feest": "party dress",
+    "blouses": "blouse", "tops": "top t-shirt", "heren t-shirts": "t-shirt",
+    "heren polo's": "polo shirt", "heren overhemden": "shirt",
+    "truien": "jumper sweater", "heren truien": "jumper sweater",
+    "unisex truien": "jumper sweater", "hoodies": "hoodie", "heren hoodies": "hoodie",
+    "jassen": "coat jacket", "heren jassen": "coat jacket", "unisex jassen": "coat jacket",
+    "heren pakken": "suit", "zwemkleding": "swimwear", "ondergoed": "underwear",
+    "sneakers dames": "sneakers shoes", "heren sneakers": "sneakers shoes",
+    "unisex schoenen": "shoes", "schoenen dames": "shoes", "heren schoenen": "shoes",
+    "heren formele schoenen": "formal dress shoes", "hakken": "heels",
+    "laarzen dames": "boots", "heren laarzen": "boots", "sandalen": "sandals",
+    "accessoires dames": "accessories", "heren accessoires": "accessories",
+    "unisex accessoires": "accessories", "unisex sportkleding": "sportswear",
+    "kinderen schoenen": "kids shoes", "kinderen sportkleding": "kids sportswear",
+    "jongens kleding": "boys clothing", "meisjes kleding": "girls clothing",
+    "babykleding": "baby clothing", "peuterkleding": "toddler clothing",
+    "tieners jongens": "boys clothing", "tieners meisjes": "girls clothing",
+}
+
+
+async def suggest_categories(query: str, brand: str | None = None,
+                             category: str | None = None,
+                             gender: str | None = None) -> list[dict]:
     """Look up eBay category suggestions for free text via the Taxonomy API,
     so users don't have to hunt for category IDs manually."""
     if not settings.ebay_app_id:
         raise RuntimeError("eBay is not configured yet: set EBAY_APP_ID and EBAY_CERT_ID.")
     if not query or not query.strip():
         return []
+    search_text = _build_ebay_query(query, brand, category, gender)
+    logger.info(f"eBay category lookup: {query!r} -> {search_text!r}")
     token = await _get_app_token()
     tree_id = await _get_category_tree_id()
     async with httpx.AsyncClient() as client:
         resp = await client.get(
             f"{TAXONOMY_API}/category_tree/{tree_id}/get_category_suggestions",
-            params={"q": query},
+            params={"q": search_text},
             headers={"Authorization": f"Bearer {token}", "Accept-Language": "en-US"},
         )
         resp.raise_for_status()
