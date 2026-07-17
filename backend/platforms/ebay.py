@@ -153,11 +153,26 @@ class EbayPlatform(PlatformBase):
         credentials = await self._ensure_fresh_token(credentials)
         sku = item.get("sku") or item["id"]
 
-        category_id = item.get("ebay_category_id") or settings.ebay_default_category_id
+        # Categorie-keten: 1) expliciet op het item, 2) auto-resolutie via de
+        # Taxonomy API op basis van de titel (gegarandeerd geldige leaf), 3) het
+        # geconfigureerde EBAY_DEFAULT_CATEGORY_ID als laatste backstop.
+        category_id = item.get("ebay_category_id")
+        if not category_id:
+            try:
+                category_id = await resolve_category_id(
+                    item.get("title", ""), item.get("brand"),
+                    item.get("category"), item.get("gender"),
+                )
+                if category_id:
+                    logger.info(f"eBay-categorie automatisch bepaald voor '{item.get('title', sku)}': {category_id}")
+            except Exception as e:
+                logger.warning(f"eBay categorie-auto-resolutie mislukt (val terug op default): {e}")
+        if not category_id:
+            category_id = settings.ebay_default_category_id
         if not category_id:
             raise EbayCategoryRequiredError(
-                f"Item '{item.get('title', sku)}' has no eBay category. "
-                "Set an eBay category ID on the item (look it up at "
+                f"Item '{item.get('title', sku)}' has no eBay category and auto-resolution "
+                "returned nothing. Set an eBay category ID on the item (look it up at "
                 "https://www.ebay.com/sch/allcategories/all-categories) or configure "
                 "EBAY_DEFAULT_CATEGORY_ID as a fallback."
             )
