@@ -218,7 +218,7 @@ async def relist_status(user_id: str = Depends(get_current_user)):
             continue  # only relist recreates carry a scheduled_for
         paired = (
             db.table("jobs")
-            .select("status")
+            .select("status,result")
             .eq("user_id", user_id)
             .eq("item_id", j["item_id"])
             .eq("platform", j["platform"])
