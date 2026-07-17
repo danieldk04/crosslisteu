@@ -454,6 +454,12 @@ async def complete_job(job_id: str, body: dict, user_id: str = Depends(get_curre
                     "platform_listing_id": body["platform_listing_id"],
                     "platform_listing_url": body.get("platform_listing_url"),
                     "status": "active",
+                    # This completion may arrive AFTER the job was marked failed
+                    # (the user fixed the form by hand and published themselves —
+                    # the extension's auto-detect then completes it late). Clear
+                    # the stale error, otherwise the listing shows as live and
+                    # broken at the same time.
+                    "error_message": None,
                     "listed_at": datetime.now(timezone.utc).isoformat(),
                 }).eq("item_id", job["item_id"]).eq("platform", job["platform"]).execute()
             else:
