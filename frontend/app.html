@@ -1855,6 +1855,28 @@ function dismissExtOverlay() {
   localStorage.setItem('cl_ext_ok', '1');
   document.getElementById('ext-overlay').style.display = 'none';
 }
+function hideExtSigninCallout() {
+  sessionStorage.setItem('cl_signin_hint_hidden', '1');
+  document.getElementById('ext-signin-callout').style.display = 'none';
+}
+
+// Renders whichever of the two setup states applies. 'checking' shows nothing —
+// never flash "install the extension" at someone who has it.
+function renderExtSetup() {
+  const overlay = document.getElementById('ext-signin-callout');
+  const modal = document.getElementById('ext-overlay');
+  if (!overlay || !modal) return;
+
+  const missing = extState.status === 'missing';
+  const signedOut = extState.status === 'signed-out';
+
+  // Install step: blocking, because publishing is impossible without it.
+  // Dismissal is per-browser ("Not now"), but a real detection still wins.
+  modal.style.display = (missing && !localStorage.getItem('cl_ext_ok')) ? 'flex' : 'none';
+
+  // Sign-in step: non-blocking arrow pointing at the toolbar.
+  overlay.style.display = (signedOut && !sessionStorage.getItem('cl_signin_hint_hidden')) ? 'block' : 'none';
+}
 
 // Re-check when the user comes back to the tab — that's exactly when they return
 // from installing the extension or signing in to it.
