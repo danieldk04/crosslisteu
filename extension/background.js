@@ -591,12 +591,22 @@ async function bgDeleteVinted(job, serverUrl) {
       // Whole-page DOM scraping is avoided for brand/size/description because
       // the item page also renders "Member's items" and a stats line, which
       // produced junk ("Menu", "17 views 0 favourites") in the first attempt.
+      // Paged for the same reason as the presence check above (per_page caps at
+      // 96): without this an older listing's snapshot came back empty and the
+      // paired recreate would republish it stripped of photos/description.
       let it = null;
       try {
-        const res = await fetch(`/api/v2/wardrobe/${userId}/items?order=newest_first&page=1&per_page=200`, { headers: { Accept: "application/json" } });
-        if (res.ok) {
+        for (let page = 1; page <= 60 && !it; page++) {
+          const res = await fetch(`/api/v2/wardrobe/${userId}/items?order=newest_first&page=${page}&per_page=96`, { headers: { Accept: "application/json" } });
+          if (!res.ok) break;
           const data = await res.json();
-          it = (data.items || []).find(x => String(x.id) === String(lid)) || null;
+          const items = data.items || [];
+          it = items.find(x => String(x.id) === String(lid)) || null;
+          if (it) break;
+          const pg = data.pagination || {};
+          if (items.length === 0) break;
+          if (pg.total_pages && page >= pg.total_pages) break;
+          if (!pg.total_pages && items.length < 96) break;
         }
       } catch (e) {}
       if (it) {
