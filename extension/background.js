@@ -283,6 +283,22 @@ function refreshAuthBadge() {
 refreshAuthBadge();
 chrome.runtime.onStartup.addListener(refreshAuthBadge);
 chrome.runtime.onInstalled.addListener(refreshAuthBadge);
+
+// Content scripts are only injected into pages loaded AFTER install, so someone
+// who installs the extension with their dashboard already open would sit there
+// signed out, with the dashboard telling them to install what they just
+// installed — until they happened to reload. Inject the bridge into any open
+// Omnivaleur tab so it syncs the token and announces itself immediately.
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.tabs.query({ url: ["https://omnivaleur.com/*", "https://www.omnivaleur.com/*"] }, (tabs) => {
+    for (const t of tabs || []) {
+      chrome.scripting.executeScript(
+        { target: { tabId: t.id }, files: ["content/webapp_sync.js"] },
+        () => { void chrome.runtime.lastError; }  // tab may have navigated away
+      );
+    }
+  });
+});
 // Covers the popup's own login/logout, which writes the token directly.
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "sync" && changes.authToken) refreshAuthBadge();
