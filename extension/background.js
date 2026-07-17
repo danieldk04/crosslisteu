@@ -634,15 +634,18 @@ async function bgDeleteVinted(job, serverUrl) {
         // live) — they only exist in the page's attribute rows, scraped below.
         out.color = it.color1 || it.color1_title || it.colour || "";
       }
-      // Description: if the wardrobe object didn't carry it, scrape the DOM but
-      // reject the stats line / anything that isn't a real description.
+      // Description: never on the wardrobe object, so it comes from the DOM.
+      // [itemprop="description"] is THIS item's description — the loose
+      // "any leaf element with >25 chars" fallback is dangerous here because the
+      // page also renders other_user_items-*--description blocks for the
+      // seller's OTHER listings, and could republish a different item's text.
+      // Collapsed descriptions append a "... more" expander to innerText but do
+      // NOT truncate it (verified live: 540 chars collapsed = 531 + "\n... more",
+      // identical text after expanding), so stripping the suffix is lossless.
       if (!out.description) {
-        const cand = document.querySelector('[itemprop="description"]')
-          || [...document.querySelectorAll('div, p, span')].find(el =>
-              el.children.length === 0 &&
-              el.textContent.trim().length > 25 &&
-              !/views|favourites|favorieten|weergaven|€|\bcm\b/i.test(el.textContent));
-        if (cand && cand.textContent.trim()) out.description = cand.textContent.trim().slice(0, 1000);
+        const dEl = document.querySelector('[itemprop="description"]');
+        const raw = (dEl?.innerText || "").trim();
+        if (raw) out.description = raw.replace(/\s*\n?\.{3}\s*(more|meer|minder|less)\s*$/i, "").trim().slice(0, 1000);
       }
       // Colour + material: the wardrobe object often omits these, but scraping
       // the item's OWN attribute rows worked. Scope to the details container
