@@ -171,6 +171,18 @@ function getEditUrl(platform, payload) {
   return null;
 }
 
+// Thrown when an item's category can't be mapped to a real platform category.
+// Distinct from a runtime failure: nothing is broken, the item just needs a
+// category from the user — so it's reported as a normal job error with a clear
+// instruction rather than retried.
+class CategoryUnresolvedError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "CategoryUnresolvedError";
+    this.needsUserInput = true;
+  }
+}
+
 function getMpSyiUrl(platform, item) {
   // Vinted has a simple listing flow — no category-based URLs needed.
   // Open the create form on the account's real country domain when known
