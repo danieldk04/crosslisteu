@@ -158,6 +158,55 @@ const MP_CATEGORIES = {
   "games sega":             { cat1: 356, cat3: 366,  bucketId: 207 },
   "games atari":            { cat1: 356, cat3: 1729, bucketId: 207 },
   "games overige":          { cat1: 356, cat3: 364,  bucketId: 207 },
+
+  // === GAME CONSOLES — hardware (cat1=356, but the "Spelcomputers" L2 buckets
+  // 208-211, distinct from the "Games" software buckets 204-207 above). Same
+  // URL form /plaats/{cat1}/{cat3}?bucketId={bucketId}. IDs read live from the
+  // SYI category picker (verified). These share the "games " non-clothing prefix.
+  // -- PlayStation consoles (bucketId 209 = "Spelcomputers | Sony PlayStation")
+  "games console playstation 5": { cat1: 356, cat3: 2954, bucketId: 209 },
+  "games console playstation 4": { cat1: 356, cat3: 2894, bucketId: 209 },
+  "games console playstation 3": { cat1: 356, cat3: 1741, bucketId: 209 },
+  "games console playstation 2": { cat1: 356, cat3: 1740, bucketId: 209 },
+  "games console playstation 1": { cat1: 356, cat3: 347,  bucketId: 209 },
+  "games console ps vita":       { cat1: 356, cat3: 2895, bucketId: 209 },
+  "games console psp":           { cat1: 356, cat3: 1656, bucketId: 209 },
+  // -- Nintendo consoles (bucketId 208 = "Spelcomputers | Nintendo")
+  "games console nintendo switch":      { cat1: 356, cat3: 2943, bucketId: 208 },
+  "games console nintendo switch lite": { cat1: 356, cat3: 2946, bucketId: 208 },
+  "games console nintendo wii u":       { cat1: 356, cat3: 2893, bucketId: 208 },
+  "games console nintendo wii":         { cat1: 356, cat3: 1628, bucketId: 208 },
+  "games console nintendo 3ds":         { cat1: 356, cat3: 2892, bucketId: 208 },
+  "games console nintendo ds":          { cat1: 356, cat3: 1655, bucketId: 208 },
+  "games console gamecube":             { cat1: 356, cat3: 1736, bucketId: 208 },
+  "games console nintendo 64":          { cat1: 356, cat3: 1739, bucketId: 208 },
+  "games console snes":                 { cat1: 356, cat3: 1738, bucketId: 208 },
+  "games console nes":                  { cat1: 356, cat3: 1737, bucketId: 208 },
+  "games console gameboy":              { cat1: 356, cat3: 346,  bucketId: 208 },
+  // -- Xbox consoles (bucketId 210 = "Spelcomputers | Xbox")
+  "games console xbox series":   { cat1: 356, cat3: 2955, bucketId: 210 },
+  "games console xbox one":      { cat1: 356, cat3: 2896, bucketId: 210 },
+  "games console xbox 360":      { cat1: 356, cat3: 1629, bucketId: 210 },
+  "games console xbox original": { cat1: 356, cat3: 349,  bucketId: 210 },
+  // -- Other consoles (bucketId 211 = "Spelcomputers | Overige")
+  "games console sega":    { cat1: 356, cat3: 348,  bucketId: 211 },
+  "games console atari":   { cat1: 356, cat3: 345,  bucketId: 211 },
+  "games console overige": { cat1: 356, cat3: 1743, bucketId: 211 },
+
+  // === ELECTRONICS — mobile phones (cat1=820 "Telecommunicatie", L2 bucketId
+  // 225 = "Mobiele telefoons", cat3 = phone brand). Same URL form. IDs read live
+  // from the SYI picker (verified: /plaats/820/1953?bucketId=225 = Apple iPhone).
+  // Recognised as non-clothing by the "electronics " prefix.
+  "electronics telefoon apple iphone": { cat1: 820, cat3: 1953, bucketId: 225 },
+  "electronics telefoon samsung":      { cat1: 820, cat3: 841,  bucketId: 225 },
+  "electronics telefoon huawei":       { cat1: 820, cat3: 2897, bucketId: 225 },
+  "electronics telefoon sony":         { cat1: 820, cat3: 843,  bucketId: 225 },
+  "electronics telefoon nokia":        { cat1: 820, cat3: 836,  bucketId: 225 },
+  "electronics telefoon lg":           { cat1: 820, cat3: 1632, bucketId: 225 },
+  "electronics telefoon motorola":     { cat1: 820, cat3: 834,  bucketId: 225 },
+  "electronics telefoon htc":          { cat1: 820, cat3: 1685, bucketId: 225 },
+  "electronics telefoon blackberry":   { cat1: 820, cat3: 1954, bucketId: 225 },
+  "electronics telefoon overige":      { cat1: 820, cat3: 837,  bucketId: 225 },
 };
 // NOTE: there is deliberately no catch-all default category. There used to be
 // one (dames jeans), and it meant any item whose category didn't resolve got
