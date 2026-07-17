@@ -366,6 +366,9 @@ async function reportProgress(serverUrl, jobId, progress) {
 
 async function pollJobs() {
   const serverUrl = await getServerUrl();
+  // Deliver any completions a previous run couldn't confirm BEFORE asking for
+  // pending work — otherwise the backend hands us back a job we already did.
+  await flushFinaliseQueue();
   const headers = await getAuthHeaders();
   for (const platform of EXTENSION_PLATFORMS) {
     try {
