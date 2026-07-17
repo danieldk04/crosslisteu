@@ -618,11 +618,11 @@ async def bulk_import_candidates(body: dict = None, user_id: str = Depends(get_c
                         "status": "active",
                         "listed_at": listed_at,
                     }).execute()
-                _backfill_item_from_candidate(db, match_id, cand)
+                _backfill_item_from_candidate(db, match_id, cand, inferred=inferred_by_id.get(cand["id"]))
                 db.table("import_candidates").update({"status": "linked"}).eq("id", cand["id"]).execute()
                 linked += 1
             else:
-                item_data = _item_data_from_candidate(cand)
+                item_data = _item_data_from_candidate(cand, inferred=inferred_by_id.get(cand["id"]))
                 item = ItemCreate(**item_data)
                 data = item.model_dump()
                 data["id"] = str(uuid.uuid4())
