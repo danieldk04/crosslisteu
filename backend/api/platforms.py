@@ -68,10 +68,14 @@ async def ebay_auth_url():
 
 
 @router.get("/ebay/category-suggest")
-async def ebay_category_suggest(q: str, user_id: str = Depends(get_current_user)):
+async def ebay_category_suggest(q: str, brand: str = None, category: str = None,
+                                gender: str = None, user_id: str = Depends(get_current_user)):
+    """`q` is the raw title; brand/category/gender are the listing form's own
+    fields. They're optional (older callers pass only `q`) but make the match far
+    more reliable — a title alone is often mostly SKU, size and colour."""
     from backend.platforms.ebay import suggest_categories
     try:
-        return {"suggestions": await suggest_categories(q)}
+        return {"suggestions": await suggest_categories(q, brand, category, gender)}
     except RuntimeError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
