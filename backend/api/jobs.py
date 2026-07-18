@@ -697,6 +697,48 @@ async def fail_job(job_id: str, body: dict, user_id: str = Depends(get_current_u
     return {"ok": True}
 
 
+@router.post("/{job_id}/cancel")
+async def cancel_job(job_id: str, user_id: str = Depends(get_current_user)):
+    """
+    User-triggered abort of a still-running/queued job. Used when a publish run got
+    stuck — e.g. the extension picked a wrong category and the user touched the tab,
+    so the job never reaches complete/error and the "extension is working" banner
+    hangs while the item is NOT actually published. Cancelling settles the job so the
+    banner clears and the item correctly reads as not-listed.
+    """
+    db = get_db()
+    job = db.table("jobs").select("*").eq("id", job_id).eq("user_id", user_id).single().execute().data
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    # Already finished — nothing to cancel; report where it landed.
+    if job["status"] in ("done", "error", "cancelled"):
+        return {"ok": True, "status": job["status"]}
+
+    now = datetime.now(timezone.utc).isoformat()
+    db.table("jobs").update({
+        "status": "cancelled",
+        "result": {"cancelled": "by user"},
+        "done_at": now,
+    }).eq("id", job_id).execute()
+
+    # A content-refresh or relist-delete bumped the listing's cooldown/quota at enqueue
+    # time; hand it back since the run was aborted.
+    rollback = ((job.get("payload")) or {}).get("_refresh_rollback")
+    if rollback:
+        from backend.services.relist import rollback_refresh
+        rollback_refresh(rollback, user_id)
+
+    # For a create, drop the not-yet-confirmed "pending" listing so the item shows as
+    # not-listed (its true state) — the publish didn't complete. An already-active
+    # listing (a retry over a live one) is left untouched.
+    if job["action"] == "create":
+        db.table("listings").update({
+            "status": "error",
+            "error_message": "Publishing was cancelled — the item is not listed. Publish again, or mark it listed if it did go live.",
+        }).eq("item_id", job["item_id"]).eq("platform", job["platform"]).eq("status", "pending").execute()
+    return {"ok": True, "status": "cancelled"}
+
+
 @router.get("/status/{job_id}")
 async def get_job_status(job_id: str, user_id: str = Depends(get_current_user)):
     db = get_db()
