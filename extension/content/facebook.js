@@ -211,11 +211,38 @@
     await selectCombo(/categorie|category/i, fbCategoryCandidates(item));
     await selectCombo(/staat|conditie|condition/i, CONDITION_MAP[item.condition] || CONDITION_MAP.good);
 
-    // Description ("Beschrijving") is optional and sometimes behind a details
-    // expander — fill it if present, skip otherwise (happy path).
-    const desc = findField(/beschrijving|description|details/i);
+    // Description ("Beschrijving") is a <textarea> that only mounts AFTER a category
+    // is picked (it's a clothing-specific field), so it can render a beat late.
+    // Poll for it instead of a single lookup — that late mount is why the field
+    // stayed empty before while title/price/category/condition all filled.
+    const desc = await waitForField(/^(beschrijving|description)$/i, 5000);
     if (desc) await typeInto(desc, item.description || "");
     await sleep(400);
+  }
+
+  // Poll findField until the control mounts (or timeout). Used for fields FB adds
+  // asynchronously after another choice (e.g. Beschrijving appears post-category).
+  async function waitForField(labelRe, timeout) {
+    const deadline = Date.now() + (timeout || 4000);
+    while (Date.now() < deadline) {
+      const el = findField(labelRe);
+      if (el) return el;
+      await sleep(250);
+    }
+    return null;
+  }
+
+  // Has Facebook shown a photo preview thumbnail yet? It renders the picked files
+  // as blob:/scontent <img>s; their presence confirms the upload was accepted.
+  async function waitForPhotoPreview(timeout) {
+    const deadline = Date.now() + (timeout || 6000);
+    while (Date.now() < deadline) {
+      const has = [...document.querySelectorAll("img")]
+        .some((i) => /^blob:/.test(i.src) || i.src.includes("scontent"));
+      if (has) return true;
+      await sleep(300);
+    }
+    return false;
   }
 
   // Click through FB's "Next" → "Publish" and capture the resulting item URL.
