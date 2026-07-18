@@ -3541,14 +3541,31 @@ function openImportCreate(candidateId) {
 async function bulkImportAllCandidates() {
   if (!confirm('Import all pending candidates now? Matches get linked to the existing item; the rest become new items.')) return;
   setBusy(true, 'Importing all pending candidates — this can take a while, please wait…');
+  let totalLinked = 0, totalCreated = 0, totalFailed = 0;
   try {
-    const r = await apiFetch(`${API}/api/imports/bulk-import`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
-    const data = await r.json();
-    if (!r.ok) throw new Error(data.detail || 'Bulk import failed');
+    // Import in small batches, looping until the server reports nothing pending remains.
+    // Each request stays short, so a large import can never trip a gateway timeout (which
+    // used to return an HTML error page → "Unexpected token '<'"). A safety cap on passes
+    // guards against an unexpected non-decreasing `remaining`.
+    for (let pass = 0; pass < 1000; pass++) {
+      const r = await apiFetch(`${API}/api/imports/bulk-import`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ limit: 25 }) });
+      const data = await parseJsonSafe(r);
+      if (!r.ok) throw new Error(data.detail || 'Bulk import failed');
+      totalLinked += data.linked || 0;
+      totalCreated += data.created || 0;
+      totalFailed += data.failed || 0;
+      const remaining = data.remaining || 0;
+      if (remaining <= 0) break;
+      setBusy(true, `Importing… ${totalLinked + totalCreated} done, ${remaining} to go — please wait…`);
+      // Nothing moved this pass (all remaining are un-processable) — stop to avoid a loop.
+      if ((data.linked || 0) + (data.created || 0) + (data.failed || 0) === 0) break;
+    }
     await loadAll();
     await loadImportCandidates();
-    showToast(`Done: ${data.linked} linked, ${data.created} created${data.failed ? `, ${data.failed} failed` : ''}.`);
+    showToast(`Done: ${totalLinked} linked, ${totalCreated} created${totalFailed ? `, ${totalFailed} failed` : ''}.`);
   } catch (e) {
+    // Even on error, refresh so any items already imported before the failure show up.
+    try { await loadAll(); await loadImportCandidates(); } catch {}
     alert('Bulk import error: ' + e.message);
   } finally {
     setBusy(false);
