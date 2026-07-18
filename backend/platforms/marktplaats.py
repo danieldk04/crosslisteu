@@ -51,6 +51,7 @@ _CATEGORY_CONFIGS = {
 }
 
 _CONDITION_MAP = {
+    "new_with_tags": "Nieuw",
     "new": "Nieuw",
     "good": "Zo goed als nieuw",
     "fair": "Gedragen",
