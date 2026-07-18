@@ -101,28 +101,40 @@
     return true;
   }
 
-  // Open a FB dropdown/combobox identified by its label, then pick the option
-  // whose text best matches `wanted`. Used for Category and Condition.
-  async function selectCombo(labelRe, wanted) {
-    if (!wanted) return false;
-    const trigger = [...document.querySelectorAll('[role="combobox"], [role="button"], label, div[aria-haspopup="listbox"]')]
-      .find((el) => isVisible(el) && labelRe.test(
-        (el.getAttribute("aria-label") || "") + " " + (el.textContent || "").slice(0, 60)
-      ));
+  // Open a FB combobox (Categorie/Staat) identified by its aria-label, then pick
+  // the option matching one of `candidates` (tried in order). FB is a role=combobox
+  // that opens a role=listbox of role=option rows; the category picker also exposes
+  // a search box we can type into to filter a long taxonomy.
+  async function selectCombo(labelRe, candidates) {
+    const wants = (Array.isArray(candidates) ? candidates : [candidates])
+      .filter(Boolean).map((c) => String(c).toLowerCase().trim());
+    if (!wants.length) return false;
+
+    const trigger = [...document.querySelectorAll('[role="combobox"], [aria-haspopup="listbox"], [role="button"], label')]
+      .find((el) => isVisible(el) && labelRe.test(el.getAttribute("aria-label") || ""))
+      || [...document.querySelectorAll('[role="combobox"], [role="button"], label')]
+        .find((el) => isVisible(el) && labelRe.test((el.textContent || "").slice(0, 60)));
     if (!trigger) return false;
     trigger.click();
-    await sleep(600);
-    // Options render into a popup listbox.
+    await sleep(700);
+
+    // If a search box appeared (category), type the first candidate to filter.
+    const search = [...document.querySelectorAll('input[type="text"], input[type="search"], [role="combobox"] input')]
+      .find((el) => isVisible(el) && el !== trigger && document.activeElement === el);
+    if (search) { await typeInto(search, candidates[0]); await sleep(700); }
+
     const deadline = Date.now() + 4000;
     let opt = null;
-    const want = wanted.toLowerCase();
     while (Date.now() < deadline && !opt) {
-      const opts = [...document.querySelectorAll('[role="option"], [role="menuitem"], li')]
-        .filter(isVisible);
-      // Exact-ish match first, then a looser "starts with the first word" match.
-      opt = opts.find((o) => (o.textContent || "").trim().toLowerCase() === want)
-         || opts.find((o) => (o.textContent || "").trim().toLowerCase().includes(want))
-         || opts.find((o) => (o.textContent || "").trim().toLowerCase().startsWith(want.split(" ")[0]));
+      const opts = [...document.querySelectorAll('[role="option"], [role="menuitem"], [role="menuitemradio"], li')]
+        .filter(isVisible)
+        .map((o) => ({ o, t: (o.textContent || "").trim().toLowerCase() }))
+        .filter((x) => x.t);
+      for (const w of wants) {
+        opt = (opts.find((x) => x.t === w)               // exact match wins
+            || opts.find((x) => x.t.includes(w)))?.o;     // then substring
+        if (opt) break;
+      }
       if (!opt) await sleep(250);
     }
     if (!opt) return false;
