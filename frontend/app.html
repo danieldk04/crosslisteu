@@ -4346,9 +4346,12 @@ function renderPlatformCheckboxes(containerId, itemId) {
         <span class="pm-cb-missing">Missing: ${esc(missing.join(', '))}</span>
       </label>`;
     }
+    const betaTag = BETA_PLATFORMS.has(p)
+      ? ` <span style="font-size:10px;font-weight:600;color:#92400e;background:#fef3c7;border-radius:4px;padding:1px 5px" title="Beta — Facebook staat automatisch plaatsen niet officieel toe. Risico op accountblokkade. Gebruik op eigen risico.">BETA · eigen risico</span>`
+      : '';
     return `<label class="platform-checkbox">
       <input type="checkbox" value="${p}">
-      <span>${PLATFORM_ICONS[p]} ${PLATFORM_LABELS[p]}</span>
+      <span>${PLATFORM_ICONS[p]} ${PLATFORM_LABELS[p]}${betaTag}</span>
     </label>`;
   }).join('');
 }
