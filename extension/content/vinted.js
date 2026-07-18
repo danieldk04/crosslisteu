@@ -963,19 +963,28 @@
       "golf", "cycling", "skate", "boxing", "wrestling", "climbing"];
     const itemText = `${item.title || ""} ${item.description || ""}`.toLowerCase();
 
+    // Does the listing (title/description) OR the dashboard category actually name
+    // this sport? Only then is a niche sport-shoe category the right pick.
+    const hintText = hints.join(" ");
+    const sportNamed = (n) => itemText.includes(n) || hintText.includes(n);
+
     // Score a choice on category hints (+3 each) and gender breadcrumb (+/-).
+    // Returns -Infinity to HARD-exclude a row (niche sport shoe on a plain sneaker).
     const score = (c) => {
       const t = c.text;
+      // Hard exclude a niche sport-shoe suggestion unless the sport is actually named.
+      // A -4 penalty wasn't enough: on ties or weak hints "Tennis shoes" could still
+      // surface. A normal sneaker must NEVER land in Tennis/Football/Running shoes.
+      for (const n of NICHE_SHOE) if (t.includes(n) && !sportNamed(n)) return -Infinity;
       let s = 0;
       for (const h of hints) if (t.includes(h)) s += 3;
+      // Explicitly favour the plain footwear buckets for ordinary shoes.
+      if (/\b(sneakers|trainers)\b/.test(t)) s += 2;
       const isMenRow = /\bmen\b/.test(t) && !/women/.test(t);
       const isWomenRow = /\bwomen\b/.test(t);
       if (wantMen) { if (isMenRow) s += 3; if (isWomenRow) s -= 5; }
       if (wantWomen) { if (isWomenRow) s += 3; if (isMenRow) s -= 5; }
       if (hints.length === 0 && /shoe|clothing|jacket|dress|jeans/.test(t)) s += 1;
-      // Penalise a niche sport-shoe suggestion unless the listing actually mentions
-      // that sport — keeps ordinary sneakers out of "Tennis shoes" etc.
-      for (const n of NICHE_SHOE) if (t.includes(n) && !itemText.includes(n)) s -= 4;
       return s;
     };
 
