@@ -48,6 +48,15 @@
       "run_at": "document_idle"
     },
     {
+      "matches": [
+        "https://www.facebook.com/marketplace/create/*",
+        "https://www.facebook.com/marketplace/item/*",
+        "https://www.facebook.com/marketplace/you/*"
+      ],
+      "js": ["content/shared.js", "content/facebook.js"],
+      "run_at": "document_idle"
+    },
+    {
       "matches": ["https://www.marktplaats.nl/mijn-marktplaats/advertenties/*", "https://www.marktplaats.nl/v/listing/*"],
       "js": ["content/shared.js", "content/marktplaats.js"],
       "run_at": "document_idle"
