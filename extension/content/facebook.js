@@ -149,15 +149,20 @@
     if (item.photo_urls?.length) await uploadPhotos(item.photo_urls.slice(0, 20));
     await sleep(800);
 
-    await typeInto(findField(/title/i), smartTrunc(item.title || "", 100));
-    await typeInto(findField(/price/i), String(item.price || ""));
+    // FB localises the whole form (verified NL: "Titel"/"Prijs"/"Categorie"/
+    // "Staat"), so every label match accepts both the Dutch and English term.
+    await typeInto(findField(/^(titel|title)$/i), smartTrunc(item.title || "", 100));
+    await typeInto(findField(/^(prijs|price)$/i), String(item.price || ""));
 
     // Category is required on Marketplace — type the item's category so FB's
     // picker surfaces a matching option, then pick the closest one.
-    await selectCombo(/categor/i, item.category || "");
-    await selectCombo(/condition/i, CONDITION_MAP[item.condition] || "Used – good");
+    await selectCombo(/categorie|category/i, [item.category]);
+    await selectCombo(/staat|conditie|condition/i, CONDITION_MAP[item.condition] || CONDITION_MAP.good);
 
-    await typeInto(findField(/description|details/i), item.description || "");
+    // Description ("Beschrijving") is optional and sometimes behind a details
+    // expander — fill it if present, skip otherwise (happy path).
+    const desc = findField(/beschrijving|description|details/i);
+    if (desc) await typeInto(desc, item.description || "");
     await sleep(400);
   }
 
