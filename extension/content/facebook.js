@@ -183,7 +183,16 @@
   async function fillForm(item) {
     // Photos first — FB's create form opens straight on the photo step.
     await waitForEl('input[type="file"]', 20000);
-    if (item.photo_urls?.length) await uploadPhotos(item.photo_urls.slice(0, 20));
+    if (item.photo_urls?.length) {
+      await uploadPhotos(item.photo_urls.slice(0, 20));
+      // FB renders a blob:/scontent preview thumbnail once it accepts the files.
+      // If none shows up the upload silently failed (usually a cross-origin fetch
+      // block on the image host) — fail loudly rather than publish without photos.
+      const ok = await waitForPhotoPreview(6000);
+      if (!ok) throw new Error(
+        "Photos could not be added to Facebook (the image files were rejected or " +
+        "blocked). Nothing was published. Try again, or add the photos by hand.");
+    }
     await sleep(800);
 
     // FB localises the whole form (verified NL: "Titel"/"Prijs"/"Categorie"/
