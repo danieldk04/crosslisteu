@@ -4356,7 +4356,7 @@ function renderPlatformCheckboxes(containerId, itemId) {
       </label>`;
     }
     const betaTag = BETA_PLATFORMS.has(p)
-      ? ` <span style="font-size:10px;font-weight:600;color:#92400e;background:#fef3c7;border-radius:4px;padding:1px 5px" title="Beta — Facebook staat automatisch plaatsen niet officieel toe. Risico op accountblokkade. Gebruik op eigen risico.">BETA · eigen risico</span>`
+      ? ` <span style="font-size:10px;font-weight:600;color:#92400e;background:#fef3c7;border-radius:4px;padding:1px 5px" title="Beta — Facebook does not officially allow automated listing. Risk of account suspension. Use at your own risk.">BETA · at your own risk</span>`
       : '';
     return `<label class="platform-checkbox">
       <input type="checkbox" value="${p}">
