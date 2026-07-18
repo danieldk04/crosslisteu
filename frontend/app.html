@@ -2837,7 +2837,7 @@ function renderPlatforms() {
     const cfg = PLATFORM_CONNECT[p.id];
     let action = '';
     if (p.type === 'extension' && p.beta) {
-      action = `<span class="badge" style="background:#fef3c7;color:#92400e">Beta · gebruik op eigen risico</span>`;
+      action = `<span class="badge" style="background:#fef3c7;color:#92400e">Beta · use at your own risk</span>`;
     } else if (p.type === 'extension') {
       action = `<span class="badge active">✓ Auto-detected</span>`;
     } else if (ok && cfg?.connectable) {
