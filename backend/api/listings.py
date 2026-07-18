@@ -86,6 +86,20 @@ async def mark_listing_active(body: dict, user_id: str = Depends(get_current_use
             "status": "active",
             "listed_at": now,
         }).execute()
+
+    # The user marked this listed by hand — so any still-open publish job for this
+    # item+platform is done (the extension likely published it but couldn't confirm).
+    # Settle it to "done" so the "extension is working" banner clears immediately and
+    # the stale-claim sweep won't reset it to pending and re-open a tab.
+    try:
+        db.table("jobs").update({
+            "status": "done",
+            "done_at": now,
+            "result": {"manual": "marked active by user"},
+        }).eq("user_id", user_id).eq("item_id", item_id).eq("platform", platform) \
+          .eq("action", "create").in_("status", ["pending", "claimed"]).execute()
+    except Exception:
+        pass
     return {"ok": True}
 
 
