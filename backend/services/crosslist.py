@@ -125,6 +125,10 @@ _UNIVERSAL_REQUIRED = ["description", "photo_urls"]
 _PLATFORM_REQUIRED = {
     "marktplaats": ["category", "gender", "brand", "size", "color"],
     "2dehands": ["category", "gender", "brand", "size", "color"],
+    # Facebook Marketplace (beta): the create form requires a category — the
+    # content script types it into Facebook's category picker. Brand/size/colour
+    # are optional on Marketplace, so we don't demand them for the happy path.
+    "facebook": ["category"],
 }
 # Non-clothing items (games, consoles, ...) live in a different Marktplaats
 # category tree that has no gender/maat/kleur attributes, so demanding those
