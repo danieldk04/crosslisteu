@@ -280,6 +280,12 @@ function getMpSyiUrl(platform, item) {
     return `${origin}/items/new`;
   }
 
+  // Facebook Marketplace (beta): single create-item form, no category-based URL.
+  // The content script fills category/condition/etc. inside the form.
+  if (platform === "facebook") {
+    return "https://www.facebook.com/marketplace/create/item";
+  }
+
   const base = platform === "marktplaats"
     ? "https://www.marktplaats.nl/plaats"
     : "https://www.2dehands.be/plaats";
