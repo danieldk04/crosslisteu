@@ -1968,7 +1968,12 @@ const CROSSLIST_UNIVERSAL_REQUIRED = ['description', 'photo_urls'];
 const CROSSLIST_PLATFORM_REQUIRED = {
   marktplaats: ['category', 'gender', 'brand', 'size', 'color'],
   '2dehands': ['category', 'gender', 'brand', 'size', 'color'],
+  // Facebook Marketplace (beta) needs a category so the extension can fill FB's
+  // category picker — mirrors backend crosslist.py _PLATFORM_REQUIRED.
+  facebook: ['category'],
 };
+// Platforms that are still beta/best-effort — shown with a risk warning in the UI.
+const BETA_PLATFORMS = new Set(['facebook']);
 const CROSSLIST_FIELD_LABELS = { description: 'description', photo_urls: 'photos', category: 'category', gender: 'gender', brand: 'brand', size: 'size', color: 'color' };
 
 // Non-clothing items (games) have no gender/size/kleur attributes on Marktplaats,
