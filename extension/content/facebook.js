@@ -178,9 +178,9 @@
     await typeInto(findField(/^(titel|title)$/i), smartTrunc(item.title || "", 100));
     await typeInto(findField(/^(prijs|price)$/i), String(item.price || ""));
 
-    // Category is required on Marketplace — type the item's category so FB's
-    // picker surfaces a matching option, then pick the closest one.
-    await selectCombo(/categorie|category/i, [item.category]);
+    // Category is required. FB uses its own flat taxonomy (no free-text search),
+    // so we map the item to a verified selectable leaf rather than typing.
+    await selectCombo(/categorie|category/i, fbCategoryCandidates(item));
     await selectCombo(/staat|conditie|condition/i, CONDITION_MAP[item.condition] || CONDITION_MAP.good);
 
     // Description ("Beschrijving") is optional and sometimes behind a details
