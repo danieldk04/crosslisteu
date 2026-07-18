@@ -440,6 +440,11 @@ async def complete_job(job_id: str, body: dict, user_id: str = Depends(get_curre
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
+    # The user explicitly cancelled this run — honour that and don't silently
+    # revive the listing to "active" if a late completion trickles in afterwards.
+    if job["status"] == "cancelled":
+        return {"ok": True, "status": "cancelled"}
+
     db.table("jobs").update({
         "status": "done",
         "result": body,
