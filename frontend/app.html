@@ -1939,6 +1939,25 @@ function apiFetch(url, opts = {}) {
   });
 }
 
+// Safely turn a response into JSON. When something in front of the app (proxy, gateway
+// timeout, error page) returns HTML instead of JSON, calling r.json() throws the cryptic
+// "Unexpected token '<', "<!DOCTYPE "… is not valid JSON". This reads the body once and,
+// if it isn't JSON, raises a message that actually tells the user what happened.
+async function parseJsonSafe(r) {
+  const text = await r.text();
+  try {
+    return text ? JSON.parse(text) : {};
+  } catch {
+    if (!r.ok) {
+      if (r.status === 502 || r.status === 503 || r.status === 504) {
+        throw new Error(`The server took too long to respond (${r.status}). Your work may still be processing — give it a moment and refresh.`);
+      }
+      throw new Error(`Server error (${r.status}). Please try again in a moment.`);
+    }
+    throw new Error('The server returned an unexpected response. Please try again in a moment.');
+  }
+}
+
 const PLATFORMS = ['marktplaats', '2dehands', 'vinted', 'ebay', 'etsy', 'shopify'];
 
 // Mirrors backend/services/crosslist.py's _UNIVERSAL_REQUIRED / _PLATFORM_REQUIRED —
