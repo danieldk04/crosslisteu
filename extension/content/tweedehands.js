@@ -1,7 +1,7 @@
 // Content script for 2dehands.be/plaats/* — uses the shared CL engine.
 (async () => {
   const PLATFORM = "2dehands";
-  const CONDITION_MAP = { new: "Nieuw", good: "Zo goed als nieuw", fair: "Gedragen", poor: "Beschadigd" };
+  const CONDITION_MAP = { new_with_tags: "Nieuw", new: "Nieuw", good: "Zo goed als nieuw", fair: "Gedragen", poor: "Beschadigd" };
   const { step, qs, sleep, waitForEl, fillInput, fillInputHuman, fillDescription, selectDropdown,
           fillBrand, fillManufacturer, selectBundleFree, selectPackageSize,
           uploadPhotos, submitListing, clickRadioByValue, smartTrunc, fillBidding } = window.CL;
