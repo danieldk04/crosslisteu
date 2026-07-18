@@ -655,9 +655,20 @@ async def bulk_import_candidates(body: dict = None, user_id: str = Depends(get_c
                 items.append({"id": created_item["id"], "title": created_item["title"]})
                 created += 1
         except Exception:
+            # Mark it failed so it drops out of the pending set — otherwise the batched
+            # loop would re-fetch the same broken candidate every pass and never finish.
+            try:
+                db.table("import_candidates").update({"status": "failed"}).eq("id", cand["id"]).execute()
+            except Exception:
+                pass
             failed += 1
 
-    return {"linked": linked, "created": created, "failed": failed}
+    remaining_q = db.table("import_candidates").select("id", count="exact").eq("user_id", user_id).eq("status", "pending")
+    if platform:
+        remaining_q = remaining_q.eq("platform", platform)
+    remaining = remaining_q.execute().count or 0
+
+    return {"linked": linked, "created": created, "failed": failed, "remaining": remaining}
 
 
 @router.post("/{candidate_id}/ignore")
