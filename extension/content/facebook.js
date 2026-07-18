@@ -62,15 +62,15 @@
     )];
     return controls.find((el) => {
       if (!isVisible(el)) return false;
-      const aria = (el.getAttribute("aria-label") || "") + " " + (el.getAttribute("placeholder") || "");
-      if (labelRe.test(aria)) return true;
-      // Fallback: a labelling element sitting just above the control.
+      // Test each accessible-name source on its own (trimmed) so an anchored
+      // regex like /^titel$/ still matches an aria-label of "Titel".
+      const names = [el.getAttribute("aria-label"), el.getAttribute("placeholder")];
       const labelledby = el.getAttribute("aria-labelledby");
       if (labelledby) {
         const lbl = document.getElementById(labelledby);
-        if (lbl && labelRe.test(lbl.textContent || "")) return true;
+        if (lbl) names.push(lbl.textContent);
       }
-      return false;
+      return names.some((n) => n && labelRe.test(n.trim()));
     });
   }
 
