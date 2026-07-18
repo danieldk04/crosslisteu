@@ -107,7 +107,10 @@ async def localize_item_for_platform(item: dict, platform: str) -> dict:
 
 
 # Platforms handled by the Chrome extension (form automation in real browser)
-EXTENSION_PLATFORMS = {"marktplaats", "2dehands", "vinted"}
+# NOTE: "facebook" (Facebook Marketplace) is a BETA happy-path integration. Facebook
+# obfuscates its form markup and actively detects automation, so this path is
+# best-effort and carries an account-ban risk — surfaced to the user in the UI.
+EXTENSION_PLATFORMS = {"marktplaats", "2dehands", "vinted", "facebook"}
 # Platforms handled server-side via official API
 API_PLATFORMS = {"ebay", "etsy", "shopify"}
 
