@@ -8,13 +8,17 @@
 // the user about this before they select Facebook as a target.
 (async () => {
   const PLATFORM = "facebook";
-  // Facebook Marketplace condition values (as shown in the "Condition" dropdown).
+  // Facebook Marketplace "Staat"/"Condition" options. Verified live against the
+  // real form (2026-07, NL account): "Nieuw" / "Gebruikt - zo goed als nieuw" /
+  // "Gebruikt - in goede staat" / "Gebruikt - in redelijke staat". FB localises
+  // the whole form, so each dashboard condition maps to a list of candidate option
+  // texts (Dutch first, English fallback) — selectCombo tries them in order.
   const CONDITION_MAP = {
-    new_with_tags: "New",
-    new: "New",
-    good: "Used – good",
-    fair: "Used – fair",
-    poor: "Used – fair",
+    new_with_tags: ["Nieuw", "New"],
+    new: ["Nieuw", "New"],
+    good: ["Gebruikt - in goede staat", "Used - good", "Used – good"],
+    fair: ["Gebruikt - in redelijke staat", "Used - fair", "Used – fair"],
+    poor: ["Gebruikt - in redelijke staat", "Used - fair", "Used – fair"],
   };
   const { qs, sleep, waitForEl, uploadPhotos, smartTrunc } = window.CL;
 
