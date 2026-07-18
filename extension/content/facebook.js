@@ -177,9 +177,9 @@
       return false;
     };
 
-    // FB Marketplace has a "Next" step before "Publish" on some layouts.
-    if (clickByText(/^next$/i)) await sleep(1500);
-    if (!clickByText(/^publish$/i)) throw new Error("Publish button not found (Facebook layout changed?)");
+    // FB Marketplace has a "Next"/"Volgende" step before "Publish"/"Publiceren".
+    if (clickByText(/^(volgende|next)$/i)) await sleep(1800);
+    if (!clickByText(/^(publiceren|publish)$/i)) throw new Error("Publish/Volgende button not found (Facebook layout changed?)");
 
     // After publishing FB navigates to the new item page: /marketplace/item/{id}.
     const deadline = Date.now() + 15000;
