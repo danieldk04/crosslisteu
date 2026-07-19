@@ -171,6 +171,16 @@
   function fbCategoryCandidates(item) {
     const g = (item.gender || "").toLowerCase();
     const cat = (item.category || "").toLowerCase();
+    // Non-clothing items carry a category prefix ("games ..." / "electronics ...",
+    // mirroring the backend _NON_CLOTHING_PREFIXES and the frontend games/electronics
+    // groups). They have no gender, so map them straight to Facebook's own top-level
+    // leaves BEFORE the clothing/gender logic — otherwise a game would fall through
+    // to "Kleding en accessoires" and get the wrong (clothing) attribute fields.
+    // VERIFIED live (NL account, 2026-07): both are directly selectable and mount a
+    // Beschrijving field just like the clothing leaves.
+    if (cat.startsWith("games")) return ["Videogames", "Video games"];
+    if (cat.startsWith("electronics"))
+      return ["Elektronica en computers", "Electronics & computers", "Elektronica", "Electronics"];
     const isMen = /heren|\bmen\b|man/.test(g) || /heren|\bmen\b/.test(cat);
     const isWomen = /dames|women|vrouw/.test(g) || /dames|women/.test(cat);
     if (isMen) return ["Herenkleding en -schoenen", "Men’s clothing & shoes", "Kleding en accessoires"];
