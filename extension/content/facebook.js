@@ -286,25 +286,81 @@
     return { id: null, url: null };
   }
 
-  // Best-effort delete: on the item page (or "Your listings"), open the item's
-  // menu and choose Delete → Confirm. Beta — layout-dependent.
+  // Best-effort delete. VERIFIED live (NL, 2026-07): because publish rarely yields
+  // a platform_listing_id, the delete job almost always opens the seller's listings
+  // page (/marketplace/you/selling) — a LIST of cards, not a single item page. So we
+  // MUST scope to the right card by title before touching any menu, or we could wipe
+  // the wrong listing. FB's delete is also a THREE-click flow, not two:
+  //   1) the card's "..." menu → "Advertentie verwijderen"
+  //   2) "Weet je zeker …?" → "Verwijderen"
+  //   3) "Heb je dit artikel verkocht?" survey → pick an option → "Volgende"
+  // (The old code matched /^verwijder/ which never hit "Advertentie verwijderen",
+  // used the FIRST menu on the page, and skipped the survey step — so it silently
+  // failed to delete.)
   async function deleteListingFb(item) {
     await sleep(2500);
-    const openMenu = [...document.querySelectorAll('[aria-label], [role="button"]')]
-      .find((el) => isVisible(el) && /more|options|menu|acties|meer/i.test(
-        (el.getAttribute("aria-label") || "") + (el.textContent || "")
-      ));
-    if (openMenu) { openMenu.click(); await sleep(800); }
+    const title = (item.title || "").trim();
 
-    const del = [...document.querySelectorAll('[role="menuitem"], [role="button"], div, span')]
-      .find((el) => isVisible(el) && /^(delete listing|delete|verwijder)/i.test((el.textContent || "").trim()));
+    const onSellingList = /\/marketplace\/you\/selling/.test(location.href);
+    let scope = document;
+    if (onSellingList) {
+      if (!title) throw new Error("Facebook delete: no title to identify which listing to remove — aborting to avoid deleting the wrong item.");
+      // Find the card whose text contains the title, then climb to the smallest
+      // ancestor that also holds action controls (the listing card).
+      const titleEl = [...document.querySelectorAll("span, div, a")]
+        .find((el) => isVisible(el) && (el.textContent || "").trim() === title)
+        || [...document.querySelectorAll("span, div, a")]
+          .find((el) => isVisible(el) && (el.textContent || "").includes(title) && (el.textContent || "").length < title.length + 40);
+      if (!titleEl) throw new Error(`Facebook delete: listing "${title}" not found on your listings page — it may already be gone.`);
+      let node = titleEl;
+      for (let i = 0; i < 8 && node.parentElement; i++) {
+        node = node.parentElement;
+        if (node.querySelector('[role="button"], [aria-label]')) { scope = node; break; }
+      }
+    }
+
+    // Open the "..." / more menu (scoped to the card on the list page).
+    const openMenu = [...scope.querySelectorAll('[aria-label], [role="button"]')]
+      .filter(isVisible)
+      .find((el) => /more|options|menu|acties|meer|…|\.\.\./i.test(
+        (el.getAttribute("aria-label") || "") + " " + (el.textContent || "").trim()
+      ))
+      || [...scope.querySelectorAll('[role="button"]')].filter(isVisible).pop();
+    if (openMenu) { openMenu.click(); await sleep(900); }
+
+    // Menu item — VERIFIED text "Advertentie verwijderen". Match "verwijder"/"delete"
+    // ANYWHERE (the label leads with "Advertentie", so an anchored /^verwijder/ misses).
+    const del = [...document.querySelectorAll('[role="menuitem"], [role="menuitemradio"], [role="button"], div, span')]
+      .filter(isVisible)
+      .find((el) => {
+        const t = (el.textContent || "").trim();
+        return t.length < 40 && /verwijder|delete listing|remove listing/i.test(t);
+      });
     if (!del) throw new Error("Delete control not found on Facebook listing (beta)");
     del.click();
-    await sleep(1000);
+    await sleep(1200);
 
+    // Step 2: "Weet je zeker …?" → the confirm button is exactly "Verwijderen"/"Delete"
+    // (never "Annuleren"/"Cancel").
     const confirm = [...document.querySelectorAll('[role="button"], button')]
-      .find((el) => isVisible(el) && /^(delete|confirm|verwijder|ok)/i.test((el.textContent || "").trim()));
-    if (confirm) { confirm.click(); await sleep(1200); }
+      .filter(isVisible)
+      .find((el) => /^(verwijderen|delete|confirm|ok)$/i.test((el.textContent || "").trim()));
+    if (confirm) { confirm.click(); await sleep(1500); }
+
+    // Step 3: "Heb je dit artikel verkocht?" survey. Pick a neutral option ("Nee, niet
+    // verkocht" preferred, else "Ik geef liever geen antwoord") then click Volgende. If
+    // no survey appears, this is a no-op.
+    const surveyOpt = [...document.querySelectorAll('[role="radio"], [role="menuitemradio"], label, div, span')]
+      .filter(isVisible)
+      .find((el) => /nee,?\s*niet verkocht|not sold|geef liever geen antwoord|prefer not/i.test((el.textContent || "").trim()));
+    if (surveyOpt) {
+      surveyOpt.click();
+      await sleep(500);
+      const next = [...document.querySelectorAll('[role="button"], button')]
+        .filter(isVisible)
+        .find((el) => /^(volgende|next|verwijderen|delete|klaar|done)$/i.test((el.textContent || "").trim()));
+      if (next) { next.click(); await sleep(1500); }
+    }
   }
 
   // ── Job plumbing (identical pattern to the other platform scripts) ──────────
