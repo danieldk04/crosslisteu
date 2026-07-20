@@ -4132,6 +4132,56 @@ async function retryRelist(itemId, platform, btn) {
   }
 }
 
+async function cancelRelist(itemId, platform, btn) {
+  const label = PLATFORM_LABELS[platform] || platform;
+  if (!confirm(`Cancel the relist on ${label}? Your current listing stays live and untouched, and the refresh won't count against today's quota. (Only possible while the old listing hasn't been removed yet.)`)) return;
+  if (btn) { btn.disabled = true; btn.textContent = 'Cancelling…'; }
+  try {
+    const r = await apiFetch(`${API}/api/jobs/relist-cancel`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ item_id: itemId, platform }),
+    });
+    const data = await r.json();
+    if (r.status === 409) {
+      // Old listing already gone — cancel can't restore it. Offer publish-now.
+      if (confirm(data.detail + '\n\nPublish the new listing now instead?')) {
+        return publishRelistNow(itemId, platform, btn);
+      }
+      if (btn) { btn.disabled = false; btn.textContent = '✕ Cancel relist & keep the current listing'; }
+      return;
+    }
+    if (!r.ok) throw new Error(data.detail || 'Cancel failed');
+    showToast('Relist cancelled — your listing is unchanged and back to active.');
+    await loadAll();
+    await loadRelistStatus();
+    await pollActivity();
+    if (document.getElementById('view-refresh')?.classList.contains('active')) renderRefreshView();
+  } catch (e) {
+    alert('Cancel error: ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = '✕ Cancel relist & keep the current listing'; }
+  }
+}
+
+async function publishRelistNow(itemId, platform, btn) {
+  const label = PLATFORM_LABELS[platform] || platform;
+  if (btn) { btn.disabled = true; btn.textContent = 'Queuing…'; }
+  try {
+    const r = await apiFetch(`${API}/api/jobs/reschedule-now`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ item_id: itemId, platform }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Could not publish now');
+    showToast('Publishing now — the extension will open ' + label + ' within ~15 seconds. Stay logged in.');
+    await loadRelistStatus();
+    await pollActivity();
+    if (document.getElementById('view-refresh')?.classList.contains('active')) renderRefreshView();
+  } catch (e) {
+    alert('Publish-now error: ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = '↑ Publish the new listing now'; }
+  }
+}
+
 async function refreshStaleListings(platform) {
   const label = PLATFORM_LABELS[platform] || platform;
   if (!confirm(`Refresh your oldest active ${label} listings (30+ days old)? This queues a legitimate delete+recreate for up to 5 items, rate-limited and delayed to avoid a scripted pattern.`)) return;
