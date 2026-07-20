@@ -288,3 +288,88 @@ async def mark_not_sold(body: dict, user_id: str = Depends(get_current_user)):
     if not res.data:
         raise HTTPException(status_code=404, detail="No sold listing found for this item on that platform")
     return {"ok": True, "status": "active"}
+
+
+def _parse_sku_price(raw_price):
+    if raw_price in (None, ""):
+        return None
+    try:
+        # Accept "€29,99", "29.99", 29.99 …
+        s = str(raw_price).replace("€", "").replace(",", ".").strip()
+        v = round(float(s), 2)
+        return v if v > 0 else None
+    except (ValueError, TypeError):
+        return None
+
+
+@router.post("/reconcile-vinted-orders")
+async def reconcile_vinted_orders(body: dict, user_id: str = Depends(get_current_user)):
+    """
+    Authoritative Vinted sale reconciliation from the seller's own
+    "My orders → Sold" page (scraped by the extension). This is stronger than
+    inferring a sale from a listing disappearing off the wardrobe: Vinted itself
+    says the order sold, and the row carries the amount actually received.
+
+    Each order carries the item's SKU (the "(1234)" prefix the app embeds in every
+    Vinted title), the price paid, and whether it's a genuine sale (`sold: true`)
+    or a cancelled/refunded order (`sold: false`, ignored).
+
+    Safety: we only act on an EXACT, UNIQUE SKU match scoped to the caller's own
+    items — an ambiguous or unknown SKU is skipped, never guessed, so a bad scrape
+    can't mark the wrong item sold (and trigger its cross-platform delist).
+    Already-sold items are only touched to backfill a missing sold_price, so this
+    endpoint can run every few minutes without re-queuing delist jobs.
+
+    Body: {orders: [{sku, price, sold}]}
+    """
+    orders = body.get("orders")
+    if not isinstance(orders, list):
+        raise HTTPException(status_code=400, detail="orders must be a list")
+
+    db = get_db()
+    marked_sold = 0
+    price_backfilled = 0
+
+    for o in orders:
+        if not isinstance(o, dict) or not o.get("sold"):
+            continue
+        sku = str(o.get("sku") or "").strip()
+        if not sku:
+            continue
+        price = _parse_sku_price(o.get("price"))
+
+        # Exact + UNIQUE match only. len != 1 → ambiguous/unknown → skip.
+        items = db.table("items").select("id").eq("user_id", user_id).eq("sku", sku).execute().data or []
+        if len(items) != 1:
+            continue
+        item_id = items[0]["id"]
+
+        vinted_rows = (
+            db.table("listings").select("id,status,sold_price")
+            .eq("item_id", item_id).eq("platform", "vinted").execute().data or []
+        )
+        sold_row = next((l for l in vinted_rows if l["status"] == "sold"), None)
+
+        if sold_row:
+            # Already recorded — just fill in the real price if we didn't have it.
+            if price is not None and sold_row.get("sold_price") in (None, 0):
+                try:
+                    db.table("listings").update({"sold_price": price}).eq("id", sold_row["id"]).execute()
+                    price_backfilled += 1
+                except Exception:
+                    pass
+            continue
+
+        # New sale. Ensure a Vinted listing row exists so it shows in analytics,
+        # then run the canonical sold flow (records price + delists other platforms).
+        if not vinted_rows:
+            db.table("listings").insert({
+                "item_id": item_id, "platform": "vinted", "status": "active",
+            }).execute()
+        try:
+            await handle_item_sold(item_id, "vinted", price)
+            marked_sold += 1
+        except Exception:
+            pass
+
+    return {"ok": True, "marked_sold": marked_sold, "price_backfilled": price_backfilled}
