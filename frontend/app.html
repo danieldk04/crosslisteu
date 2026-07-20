@@ -4959,12 +4959,13 @@ function renderAnalytics() {
     const d = new Date(); d.setDate(d.getDate() - i);
     buckets.push({ label: d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }), date: d.toISOString().slice(0, 10), rev: 0, profit: 0, count: 0 });
   }
-  for (const { listing, item } of sales) {
+  for (const sale of sales) {
+    const { listing, item } = sale;
     const day = listing.sold_at?.slice(0, 10);
     const b = buckets.find(b => b.date === day);
     if (b) {
-      b.rev += item.price || 0;
-      if (item.purchase_price != null) b.profit += (item.price || 0) - (item.purchase_price || 0);
+      b.rev += saleAmt(sale);
+      if (item.purchase_price != null) b.profit += saleAmt(sale) - (item.purchase_price || 0);
       b.count++;
     }
   }
