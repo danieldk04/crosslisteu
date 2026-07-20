@@ -4866,6 +4866,32 @@ function addPurchasePrice(itemId) {
   }, 150);
 }
 
+// Confirm/correct what an item ACTUALLY sold for (bids/offers mean it's rarely
+// the asking price). Updates the sold listing so revenue/profit turn exact.
+async function setSoldPrice(itemId, platform, suggested) {
+  const label = PLATFORM_LABELS[platform] || platform;
+  const raw = prompt(`What did this item actually sell for on ${label}? (€)\n\nLeave the asking price if that's correct, or type the real amount received.`,
+    suggested != null ? Number(suggested).toFixed(2) : '');
+  if (raw === null) return;                     // cancelled
+  const val = parseFloat(String(raw).replace(',', '.'));
+  if (isNaN(val) || val < 0) { alert('Please enter a valid amount (e.g. 22.50).'); return; }
+  try {
+    const r = await apiFetch(`${API}/api/listings/sold-price`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ item_id: itemId, platform, sold_price: val }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Could not save sold price');
+    // Reflect it locally so the dashboard updates instantly, then re-render.
+    const l = state.listings.find(x => x.item_id === itemId && x.platform === platform && x.status === 'sold');
+    if (l) l.sold_price = data.sold_price;
+    showToast('Sold price saved — revenue & profit updated.');
+    renderAnalytics();
+  } catch (e) {
+    alert('Error saving sold price: ' + e.message);
+  }
+}
+
 function setAnPeriod(days) {
   anPeriodDays = days;
   document.querySelectorAll('.an-period-tab').forEach(t => {
