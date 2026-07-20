@@ -116,6 +116,13 @@ ALTER TABLE listings ADD COLUMN IF NOT EXISTS not_found_count INT DEFAULT 0;
 -- + recreate), so the dashboard can show the user exactly what happened last.
 ALTER TABLE listings ADD COLUMN IF NOT EXISTS last_refresh_strategy VARCHAR(20);
 
+-- The amount the item ACTUALLY sold for on this platform. Items rarely sell for
+-- their asking price (bids/offers on Vinted/Marktplaats), so analytics must use
+-- this — not the item's asking price — for revenue/profit. NULL when unknown
+-- (e.g. a Vinted sale detected only by the listing disappearing); the dashboard
+-- then falls back to the asking price and flags it as an estimate to confirm.
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS sold_price NUMERIC(10,2);
+
 -- Jobs can be scheduled for the future (used to jitter the "recreate" half of
 -- a relist so delete→create doesn't fire back-to-back like a script).
 ALTER TABLE jobs ADD COLUMN IF NOT EXISTS scheduled_for TIMESTAMPTZ;
