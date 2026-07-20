@@ -268,14 +268,21 @@
     if (clickByText(/^(volgende|next)$/i)) await sleep(1800);
     if (!clickByText(/^(publiceren|publish)$/i)) throw new Error("Publish/Volgende button not found (Facebook layout changed?)");
 
-    // After publishing FB navigates to the new item page: /marketplace/item/{id}.
+    // VERIFIED live (NL, 2026-07): after publishing FB does NOT land on the new
+    // item page — it redirects to "Your listings" (/marketplace/you/selling), and
+    // the fresh listing sits in an "in review" state with no public item URL yet.
+    // So treat the redirect AWAY from /create/item (to /you/selling or, when FB
+    // does expose it, /item/{id}) as the success signal, and only capture the id
+    // if the item URL actually appears. Waiting for /item/{id} unconditionally used
+    // to burn the full timeout and always return null.
     const deadline = Date.now() + 15000;
     while (Date.now() < deadline) {
       const m = location.href.match(/\/marketplace\/item\/(\d+)/);
       if (m) return { id: m[1], url: `https://www.facebook.com/marketplace/item/${m[1]}` };
+      if (/\/marketplace\/you\/selling/.test(location.href)) break; // published, no public id yet
       await sleep(500);
     }
-    // Couldn't read the id — still count it published (happy path), just without a URL.
+    // Published (happy path) but FB gave us no item id/URL to store.
     return { id: null, url: null };
   }
 
