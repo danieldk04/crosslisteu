@@ -265,14 +265,26 @@ async def mark_not_sold(body: dict, user_id: str = Depends(get_current_user)):
     if not owned.data:
         raise HTTPException(status_code=404, detail="Item not found")
 
-    res = (
-        db.table("listings")
-        .update({"status": "active", "sold_at": None, "sold_price": None})
-        .eq("item_id", item_id)
-        .eq("platform", platform)
-        .eq("status", "sold")
-        .execute()
-    )
+    def _restore(fields):
+        return (
+            db.table("listings")
+            .update(fields)
+            .eq("item_id", item_id)
+            .eq("platform", platform)
+            .eq("status", "sold")
+            .execute()
+        )
+
+    fields = {"status": "active", "sold_at": None, "sold_price": None}
+    try:
+        res = _restore(fields)
+    except Exception as e:
+        # sold_price column not migrated yet — restore the rest so the fix still works.
+        if "sold_price" in str(e):
+            fields.pop("sold_price", None)
+            res = _restore(fields)
+        else:
+            raise
     if not res.data:
         raise HTTPException(status_code=404, detail="No sold listing found for this item on that platform")
     return {"ok": True, "status": "active"}
