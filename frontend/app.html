@@ -1591,8 +1591,12 @@ input[type="checkbox"].row-check { width: 15px; height: 15px; cursor: pointer; a
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Purchase price (€)</label>
-          <input id="f-purchase" type="number" step="0.01" min="0" placeholder="optional">
+          <label>Purchase price (€) <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— what you paid for it</span></label>
+          <input id="f-purchase" type="number" step="0.01" min="0" placeholder="e.g. 8.00">
+          <div style="display:flex;align-items:flex-start;gap:7px;font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.45">
+            <span>💡</span>
+            <span>Fill this in now so your <b>profit &amp; margins</b> show up automatically in Analytics. Leave empty if it was free or you don't know — the sale still counts toward revenue.</span>
+          </div>
         </div>
       </div>
       <div class="form-row">
