@@ -239,3 +239,40 @@ async def set_sold_price(body: dict, user_id: str = Depends(get_current_user)):
     if not res.data:
         raise HTTPException(status_code=404, detail="No sold listing found for this item on that platform")
     return {"ok": True, "sold_price": sold_price}
+
+
+@router.post("/not-sold")
+async def mark_not_sold(body: dict, user_id: str = Depends(get_current_user)):
+    """
+    Undo a false "sold" — the Vinted wardrobe scan infers a sale when a listing
+    disappears, which occasionally misfires (a temporary scrape gap, the item
+    briefly hidden). This flips that listing back to 'active' and clears the
+    sold_at/sold_price bookkeeping so it drops out of Analytics again.
+
+    Scope is deliberately narrow: only the flagged listing is restored. We do NOT
+    try to recreate listings on OTHER platforms that a genuine-looking sale may
+    have delisted — those runs already happened and re-publishing is the user's
+    explicit action (Crosslist), not something to silently auto-fire here.
+    Body: {item_id, platform}.
+    """
+    item_id = body.get("item_id")
+    platform = body.get("platform")
+    if not item_id or not platform:
+        raise HTTPException(status_code=400, detail="item_id and platform are required")
+
+    db = get_db()
+    owned = db.table("items").select("id").eq("id", item_id).eq("user_id", user_id).execute()
+    if not owned.data:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    res = (
+        db.table("listings")
+        .update({"status": "active", "sold_at": None, "sold_price": None})
+        .eq("item_id", item_id)
+        .eq("platform", platform)
+        .eq("status", "sold")
+        .execute()
+    )
+    if not res.data:
+        raise HTTPException(status_code=404, detail="No sold listing found for this item on that platform")
+    return {"ok": True, "status": "active"}
