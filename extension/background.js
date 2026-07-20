@@ -1615,13 +1615,18 @@ async function checkSoldListings() {
       const active = allListings.filter(l => l.platform === platform && l.status === "active" && l.platform_listing_id);
       if (!active.length) continue;
 
-      // Open a background tab to the sold page and scrape it
-      const soldIds = await scrapeSoldListings(soldUrl, platform);
-      if (!soldIds.length) continue;
+      // Scrape the ads overview and read each ad's SOLD marker. We only act on a
+      // POSITIVE "verkocht/gereserveerd" label — never on a listing merely being
+      // absent, which on Marktplaats also means "expired" (auto-relisted later)
+      // and would wrongly delist a still-live item everywhere. Fail-safe: if no
+      // ad shows a sold label, nothing happens.
+      const ads = await scrapeMarktplaatsAds(soldUrl, platform);
+      const soldIds = new Set(ads.filter(a => a.sold).map(a => a.id));
+      if (!soldIds.size) continue;
 
       for (const listing of active) {
-        if (soldIds.includes(listing.platform_listing_id)) {
-          console.log(`[Omnivaleur] Sold detected: ${listing.platform_listing_id} on ${platform}, triggering delist`);
+        if (soldIds.has(listing.platform_listing_id)) {
+          console.log(`[Omnivaleur] Sold detected (verkocht label): ${listing.platform_listing_id} on ${platform}, triggering delist`);
           await fetch(`${serverUrl}/api/listings/sold?item_id=${listing.item_id}&platform=${platform}`, {
             method: "POST",
             headers: authHeaders,
@@ -1634,7 +1639,9 @@ async function checkSoldListings() {
   }
 }
 
-function scrapeSoldListings(url, platform) {
+// Scrape each ad card on the Marktplaats/2dehands "my ads" overview and report
+// whether it carries an explicit SOLD/RESERVED label. Returns [{id, sold}].
+function scrapeMarktplaatsAds(url, platform) {
   return new Promise((resolve) => {
     chrome.tabs.create({ url, active: false }, (tab) => {
       if (chrome.runtime.lastError) { resolve([]); return; }
@@ -1648,24 +1655,107 @@ function scrapeSoldListings(url, platform) {
           target: { tabId },
           world: "MAIN",
           func: () => {
-            // Scrape listing IDs from the sold listings page
-            const ids = [];
+            const byId = {};
             document.querySelectorAll('a[href]').forEach(a => {
               const m = a.href.match(/\/(m\d{6,})/);
-              if (m) ids.push(m[1]);
+              if (!m) return;
+              const id = m[1];
+              const card = a.closest('article, li, [class*="listing" i], [class*="ad" i]') || a.parentElement || a;
+              const text = (card.innerText || "").toLowerCase();
+              const sold = /\bverkocht\b|\bgereserveerd\b|\bsold\b|\breserved\b/.test(text);
+              byId[id] = byId[id] || sold;
+              if (sold) byId[id] = true;
             });
-            return [...new Set(ids)];
+            return Object.entries(byId).map(([id, sold]) => ({ id, sold }));
           },
         }, (results) => {
           chrome.tabs.remove(tabId).catch(() => {});
-          const ids = results?.[0]?.result || [];
-          console.log(`[Omnivaleur] Sold listings scraped from ${platform}:`, ids);
-          resolve(ids);
+          const ads = results?.[0]?.result || [];
+          console.log(`[Omnivaleur] ${platform} ads scraped: ${ads.length} (sold: ${ads.filter(a => a.sold).length})`);
+          resolve(ads);
         });
       };
 
       chrome.tabs.onUpdated.addListener(onUpdated);
-      // Timeout fallback
+      setTimeout(() => {
+        chrome.tabs.onUpdated.removeListener(onUpdated);
+        chrome.tabs.remove(tabId).catch(() => {});
+        resolve([]);
+      }, 30000);
+    });
+  });
+}
+
+// ── Vinted sales from the seller's own "My orders → Sold" page ─────────────
+// Authoritative (Vinted itself says the order sold) and carries the amount
+// actually received — far better than inferring a sale from a wardrobe
+// disappearance. Each order's title embeds our "(1234)" SKU, which the backend
+// matches EXACTLY + uniquely, so a bad scrape can't touch the wrong item.
+async function checkVintedOrders() {
+  try {
+    const serverUrl = await getServerUrl();
+    const authHeaders = await getAuthHeaders();
+    if (!authHeaders.Authorization) return; // not logged into the extension yet
+    const orders = await scrapeVintedOrders("https://www.vinted.nl/my_orders");
+    if (!orders.length) return;
+    await fetch(`${serverUrl}/api/listings/reconcile-vinted-orders`, {
+      method: "POST",
+      headers: authHeaders,
+      body: JSON.stringify({ orders }),
+    }).catch(e => console.error("[Omnivaleur] vinted-orders reconcile failed:", e));
+  } catch (e) {
+    console.error("[Omnivaleur] checkVintedOrders error:", e);
+  }
+}
+
+function scrapeVintedOrders(url) {
+  return new Promise((resolve) => {
+    chrome.tabs.create({ url, active: false }, (tab) => {
+      if (chrome.runtime.lastError) { resolve([]); return; }
+      const tabId = tab.id;
+
+      const onUpdated = (id, info) => {
+        if (id !== tabId || info.status !== "complete") return;
+        chrome.tabs.onUpdated.removeListener(onUpdated);
+
+        // Give the SPA a moment to render the orders list, then scrape.
+        setTimeout(() => {
+          chrome.scripting.executeScript({
+            target: { tabId },
+            world: "MAIN",
+            func: () => {
+              // Each order row links to its conversation (/inbox/…). Walk up to the
+              // row and read title (with the "(1234)" SKU), price, and status text.
+              const rows = {};
+              document.querySelectorAll('a[href*="/inbox/"]').forEach(a => {
+                const row = a.closest('div, li, article') || a;
+                const text = (row.innerText || a.innerText || "").replace(/\s+/g, " ").trim();
+                const skuM = text.match(/\((\d{3,6})\)/);
+                if (!skuM) return;
+                const sku = skuM[1];
+                const priceM = text.match(/€\s?(\d+(?:[.,]\d{2})?)/);
+                const cancelled = /cancel|refund|geannuleerd|terugbetaal|retour/i.test(text);
+                const prev = rows[sku];
+                const sold = !cancelled;
+                // Keep the sold entry (with price) over a cancelled one for the same SKU.
+                if (!prev || (sold && !prev.sold)) {
+                  rows[sku] = { sku, price: priceM ? priceM[1] : null, sold };
+                } else if (sold && prev.sold && !prev.price && priceM) {
+                  prev.price = priceM[1];
+                }
+              });
+              return Object.values(rows);
+            },
+          }, (results) => {
+            chrome.tabs.remove(tabId).catch(() => {});
+            const orders = results?.[0]?.result || [];
+            console.log(`[Omnivaleur] Vinted orders scraped: ${orders.length} (sold: ${orders.filter(o => o.sold).length})`);
+            resolve(orders);
+          });
+        }, 2500);
+      };
+
+      chrome.tabs.onUpdated.addListener(onUpdated);
       setTimeout(() => {
         chrome.tabs.onUpdated.removeListener(onUpdated);
         chrome.tabs.remove(tabId).catch(() => {});
