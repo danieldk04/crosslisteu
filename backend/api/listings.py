@@ -188,10 +188,54 @@ async def relist_ended_ebay(body: dict, user_id: str = Depends(get_current_user)
 
 
 @router.post("/sold")
-async def mark_sold(item_id: str, platform: str, background_tasks: BackgroundTasks, user_id: str = Depends(get_current_user)):
+async def mark_sold(item_id: str, platform: str, background_tasks: BackgroundTasks, sold_price: float | None = None, user_id: str = Depends(get_current_user)):
     db = get_db()
     item = db.table("items").select("id").eq("id", item_id).eq("user_id", user_id).execute()
     if not item.data:
         raise HTTPException(status_code=404, detail="Item not found")
-    background_tasks.add_task(handle_item_sold, item_id, platform)
+    background_tasks.add_task(handle_item_sold, item_id, platform, sold_price)
     return {"status": "delist_triggered"}
+
+
+@router.post("/sold-price")
+async def set_sold_price(body: dict, user_id: str = Depends(get_current_user)):
+    """
+    Set/correct the amount an already-sold listing actually went for. Used from
+    the Analytics "Sales breakdown" so revenue/profit reflect the real sale
+    price instead of the asking price (items rarely sell at asking on
+    Vinted/Marktplaats). Pass sold_price = null to clear it back to "estimate".
+    Body: {item_id, platform, sold_price}.
+    """
+    item_id = body.get("item_id")
+    platform = body.get("platform")
+    if not item_id or not platform:
+        raise HTTPException(status_code=400, detail="item_id and platform are required")
+
+    raw = body.get("sold_price")
+    if raw in (None, ""):
+        sold_price = None
+    else:
+        try:
+            sold_price = round(float(raw), 2)
+        except (ValueError, TypeError):
+            raise HTTPException(status_code=400, detail="sold_price must be a number")
+        if sold_price < 0:
+            raise HTTPException(status_code=400, detail="sold_price can't be negative")
+
+    db = get_db()
+    # Scope to the caller's own item (listings has no user_id column).
+    owned = db.table("items").select("id").eq("id", item_id).eq("user_id", user_id).execute()
+    if not owned.data:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    res = (
+        db.table("listings")
+        .update({"sold_price": sold_price})
+        .eq("item_id", item_id)
+        .eq("platform", platform)
+        .eq("status", "sold")
+        .execute()
+    )
+    if not res.data:
+        raise HTTPException(status_code=404, detail="No sold listing found for this item on that platform")
+    return {"ok": True, "sold_price": sold_price}
