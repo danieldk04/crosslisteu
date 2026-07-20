@@ -5078,16 +5078,18 @@ function renderAnalytics() {
     tableEmpty.style.display = 'none';
     summary.textContent = `${salesDesc.length} sale(s) · €${revenue.toFixed(2)} revenue` +
       (profitSales.length ? ` · €${profit.toFixed(2)} profit` : '');
-    tbody.innerHTML = salesDesc.map(({ listing, item }) => {
+    tbody.innerHTML = salesDesc.map(sale => {
+      const { listing, item } = sale;
       const p = listing.platform;
       const soldDate = listing.sold_at
         ? new Date(listing.sold_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })
         : '—';
-      const sale = item.price || 0;
+      const amount = saleAmt(sale);           // actual sold_price, or asking as estimate
+      const estimate = isEstimate(sale);
       const hasCost = item.purchase_price != null;
       const cost = hasCost ? item.purchase_price : null;
-      const prof = hasCost ? sale - cost : null;
-      const margin = (hasCost && sale > 0) ? (prof / sale * 100) : null;
+      const prof = hasCost ? amount - cost : null;
+      const margin = (hasCost && amount > 0) ? (prof / amount * 100) : null;
       const thumb = item.photo_urls?.[0]
         ? `<img src="${item.photo_urls[0]}" class="an-sales-thumb">`
         : `<span class="an-sales-thumb" style="display:flex;align-items:center;justify-content:center">👕</span>`;
@@ -5100,11 +5102,16 @@ function renderAnalytics() {
       const costCell = hasCost
         ? `€${cost.toFixed(2)}`
         : `<button class="an-cost-btn" onclick="addPurchasePrice('${item.id}')">＋ Add cost</button>`;
-      return `<tr class="${hasCost ? '' : 'an-row-missing'}">
+      // Sale-price cell: confirmed amount is plain + editable; an estimate is
+      // shown greyed with the asking price and a clear "confirm" affordance.
+      const saleCell = estimate
+        ? `<button class="an-cost-btn" title="This is the asking price — set what you actually received" onclick="setSoldPrice('${item.id}','${p}',${amount})">~€${amount.toFixed(2)} · confirm</button>`
+        : `€${amount.toFixed(2)} <span style="cursor:pointer;color:var(--muted)" title="Edit sold price" onclick="setSoldPrice('${item.id}','${p}',${amount})">✎</span>`;
+      return `<tr class="${estimate ? 'an-row-missing' : ''}">
         <td style="color:var(--muted)">${soldDate}</td>
         <td><div class="an-sales-item">${thumb}<span class="an-sales-title" title="${esc(item.title || '')}">${esc(item.title || 'Untitled')}</span></div></td>
         <td><span style="font-size:12px">${PLATFORM_ICONS[p] || '🏪'}</span> ${PLATFORM_LABELS[p] || p}</td>
-        <td class="an-sales-num">€${sale.toFixed(2)}</td>
+        <td class="an-sales-num">${saleCell}</td>
         <td class="an-sales-num">${costCell}</td>
         <td class="an-sales-num">${profCell}</td>
         <td class="an-sales-num">${marginCell}</td>
