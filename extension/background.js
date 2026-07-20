@@ -1585,6 +1585,11 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 });
 chrome.runtime.onInstalled.addListener(triggerVintedAutoScan);
 chrome.runtime.onStartup.addListener(triggerVintedAutoScan);
+// Alarms only fire after their first period, so kick a sold-check once on
+// startup too (delayed a little so auth/session is ready).
+function kickSoldCheck() { setTimeout(() => { checkSoldListings(); checkVintedOrders(); }, 8000); }
+chrome.runtime.onInstalled.addListener(kickSoldCheck);
+chrome.runtime.onStartup.addListener(kickSoldCheck);
 
 async function triggerVintedAutoScan() {
   try {
