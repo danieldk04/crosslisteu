@@ -4384,7 +4384,16 @@ async function doCrosslist() {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(formatMissingFieldsError(data) || data.detail || 'Publish failed');
     closeModal('modal-crosslist');
-    showToast(`Queued for ${selected.map(p => PLATFORM_LABELS[p]).join(', ')} — extension will publish within 15 seconds`);
+    // API platforms (eBay/Shopify) publish server-side and can fail immediately —
+    // surface those instead of always claiming success.
+    const errored = (data.results || []).filter(r => r.status === 'error');
+    const ok = (data.results || []).filter(r => r.status !== 'error').map(r => PLATFORM_LABELS[r.platform] || r.platform);
+    if (errored.length) {
+      const lines = errored.map(r => `• ${PLATFORM_LABELS[r.platform] || r.platform}: ${r.error || 'failed'}`).join('\n');
+      alert((ok.length ? `Queued: ${ok.join(', ')}.\n\n` : '') + `Could not publish:\n${lines}`);
+    } else {
+      showToast(`Queued for ${selected.map(p => PLATFORM_LABELS[p]).join(', ')} — extension will publish within 15 seconds`);
+    }
     await loadAll();
   } catch(e) {
     btn.disabled = false;
