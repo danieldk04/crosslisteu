@@ -5151,7 +5151,7 @@ function renderAnalytics() {
       const saleCell = estimate
         ? `<button class="an-cost-btn" title="This is the asking price — set what you actually received" onclick="setSoldPrice('${item.id}','${p}',${amount})">~€${amount.toFixed(2)} · confirm</button>`
         : `€${amount.toFixed(2)} <span style="cursor:pointer;color:var(--muted)" title="Edit sold price" onclick="setSoldPrice('${item.id}','${p}',${amount})">✎</span>`;
-      return `<tr class="${estimate ? 'an-row-missing' : ''}">
+      return `<tr class="${(estimate || !hasCost) ? 'an-row-missing' : ''}">
         <td style="color:var(--muted)">${soldDate}</td>
         <td><div class="an-sales-item">${thumb}<span class="an-sales-title" title="${esc(item.title || '')}">${esc(item.title || 'Untitled')}</span></div></td>
         <td><span style="font-size:12px">${PLATFORM_ICONS[p] || '🏪'}</span> ${PLATFORM_LABELS[p] || p}</td>
