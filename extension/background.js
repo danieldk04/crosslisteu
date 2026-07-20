@@ -1567,7 +1567,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
 // Every poll cycle also checks for sold items and triggers auto-delist.
 chrome.alarms.create("sold-check", { periodInMinutes: 10 });
 chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === "sold-check") checkSoldListings();
+  if (alarm.name === "sold-check") { checkSoldListings(); checkVintedOrders(); }
 });
 
 // Vinted has no webhook and no server-side polling (a stale session once let
