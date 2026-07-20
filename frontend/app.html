@@ -4940,7 +4940,9 @@ function renderAnalytics() {
   }
 
   document.getElementById('an-revenue').textContent = '€' + revenue.toFixed(2);
-  document.getElementById('an-revenue-delta').innerHTML = deltaEl(revenue, prevRevenue, true);
+  document.getElementById('an-revenue-delta').innerHTML = estimatedSales.length
+    ? `<span class="an-kpi-sub" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted" onclick="document.getElementById('an-estimate-card').scrollIntoView({behavior:'smooth',block:'center'})">${estimatedSales.length} sale(s) using asking price — confirm actual</span>`
+    : deltaEl(revenue, prevRevenue, true);
   document.getElementById('an-profit').textContent = profitSales.length ? '€' + profit.toFixed(2) : '—';
   const missingCount = sales.length - profitSales.length;
   document.getElementById('an-profit-sub').innerHTML = missingCount > 0
