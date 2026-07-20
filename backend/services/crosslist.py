@@ -112,7 +112,11 @@ async def localize_item_for_platform(item: dict, platform: str) -> dict:
 # best-effort and carries an account-ban risk — surfaced to the user in the UI.
 EXTENSION_PLATFORMS = {"marktplaats", "2dehands", "vinted", "facebook"}
 # Platforms handled server-side via official API
-API_PLATFORMS = {"ebay", "etsy", "shopify"}
+API_PLATFORMS = {"ebay", "shopify"}
+# Built in the backend but NOT yet released — surfaced as "Coming soon" in the UI
+# and refused by publish_to_platforms so nothing half-lists. Etsy's platform code
+# exists (backend/platforms/etsy.py) but the flow isn't finished/tested.
+NOT_YET_AVAILABLE = {"etsy"}
 
 # Required on every platform — an empty description or zero photos means the
 # extension has nothing to type/upload, so the listing goes out looking broken
