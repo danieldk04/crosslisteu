@@ -92,6 +92,52 @@ async def ebay_callback(code: str, user_id: str = Depends(get_current_user)):
     return {"status": "connected", "platform": "ebay"}
 
 
+@router.get("/ebay/ship-from")
+async def ebay_get_ship_from(user_id: str = Depends(get_current_user)):
+    """Return the user's saved eBay ship-from address (used for their merchant
+    location so eBay can derive Item.Country). Empty dict if none saved yet."""
+    db = get_db()
+    creds = (
+        db.table("platform_credentials")
+        .select("extra_data")
+        .eq("user_id", user_id).eq("platform", "ebay").execute()
+    )
+    if not creds.data:
+        raise HTTPException(status_code=404, detail="eBay is not connected")
+    return {"ship_from": (creds.data[0].get("extra_data") or {}).get("ship_from") or {}}
+
+
+@router.post("/ebay/ship-from")
+async def ebay_set_ship_from(body: dict, user_id: str = Depends(get_current_user)):
+    """Save the user's ship-from address and push it to their eBay merchant location.
+    Body: {postal_code, city?, country?}"""
+    postal = (body.get("postal_code") or "").strip()
+    if not postal:
+        raise HTTPException(status_code=400, detail="Postcode is required")
+    db = get_db()
+    creds = (
+        db.table("platform_credentials")
+        .select("*").eq("user_id", user_id).eq("platform", "ebay").execute()
+    )
+    if not creds.data:
+        raise HTTPException(status_code=404, detail="Connect eBay first")
+    row = creds.data[0]
+    extra = row.get("extra_data") or {}
+    extra["ship_from"] = {
+        "postal_code": postal,
+        "city": (body.get("city") or "").strip(),
+        "country": (body.get("country") or "NL").strip().upper(),
+    }
+    db.table("platform_credentials").update({"extra_data": extra}).eq(
+        "user_id", user_id).eq("platform", "ebay").execute()
+    # Push to eBay so the location reflects the new address right away.
+    try:
+        await EbayPlatform().upsert_location({**row, "extra_data": extra})
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Saved, but eBay rejected the address: {e}")
+    return {"status": "saved", "ship_from": extra["ship_from"]}
+
+
 @router.get("/shopify/auth-url")
 async def shopify_auth_url(shop: str, user_id: str = Depends(get_current_user)):
     shop = shop.strip().lower()
