@@ -2918,8 +2918,8 @@ function renderPlatforms() {
     let extra = '';
     if (p.id === 'ebay' && ok) {
       extra = `<div id="ebay-shipfrom" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border,#e5e7eb)">
-        <div style="font-weight:700;font-size:12px;margin-bottom:2px;color:#b45309">⚠️ Ship-from address — required</div>
-        <div style="font-size:11px;color:#92400e;background:#fef3c7;border-radius:6px;padding:8px 10px;margin-bottom:10px">
+        <div id="ebay-sf-title" style="font-weight:700;font-size:12px;margin-bottom:2px;color:#b45309">⚠️ Ship-from address — required</div>
+        <div id="ebay-sf-warn" style="font-size:11px;color:#92400e;background:#fef3c7;border-radius:6px;padding:8px 10px;margin-bottom:10px">
           <strong>Your eBay listings will fail to publish until you set this.</strong> eBay needs your ship-from postcode to set each listing's country and shipping costs. Enter it once below.
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
