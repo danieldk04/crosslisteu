@@ -203,12 +203,20 @@ async def relist_status(user_id: str = Depends(get_current_user)):
     paired delete, so the UI can show "old listing removed, new one in ~X min".
     """
     db = get_db()
+    # Include recently-DONE recreates too, not just in-flight ones: when the
+    # extension finishes, the create job flips to "done" and would instantly drop
+    # out of this list — so the dashboard card vanished mid-"Publishing now" with
+    # no "it's live" confirmation, which read as "nothing happened / stuck". We
+    # keep a completed recreate around for a short window so the UI can show an
+    # explicit "✓ New listing is live" before clearing it.
+    JUST_DONE_WINDOW = timedelta(seconds=90)
+    now_dt = datetime.now(timezone.utc)
     create_jobs = (
         db.table("jobs")
-        .select("item_id,platform,status,scheduled_for,created_at")
+        .select("item_id,platform,status,scheduled_for,created_at,done_at,result")
         .eq("user_id", user_id)
         .eq("action", "create")
-        .in_("status", ["pending", "claimed"])
+        .in_("status", ["pending", "claimed", "done"])
         .execute()
         .data
     )
@@ -216,6 +224,10 @@ async def relist_status(user_id: str = Depends(get_current_user)):
     for j in create_jobs:
         if not j.get("scheduled_for"):
             continue  # only relist recreates carry a scheduled_for
+        if j["status"] == "done":
+            done_at = _parse_ts(j.get("done_at"))
+            if not done_at or (now_dt - done_at) > JUST_DONE_WINDOW:
+                continue  # long-finished — no longer "in progress"
         paired = (
             db.table("jobs")
             .select("status,result")
@@ -229,7 +241,7 @@ async def relist_status(user_id: str = Depends(get_current_user)):
             .execute()
             .data
         )
-        out.append({
+        entry = {
             "item_id": j["item_id"],
             "platform": j["platform"],
             "recreate_at": j["scheduled_for"],
@@ -241,7 +253,12 @@ async def relist_status(user_id: str = Depends(get_current_user)):
                 ((paired[0].get("result") or {}).get("error") or None)
                 if paired and paired[0]["status"] == "error" else None
             ),
-        })
+        }
+        # Hand the new listing's URL to the UI so the "live" confirmation can link
+        # straight to it.
+        if j["status"] == "done":
+            entry["recreate_url"] = (j.get("result") or {}).get("platform_listing_url")
+        out.append(entry)
     return out
 
 
