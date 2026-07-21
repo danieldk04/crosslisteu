@@ -2968,7 +2968,18 @@ async function loadEbayShipFrom() {
     if (p && ship_from.postal_code) p.value = ship_from.postal_code;
     if (c && ship_from.city) c.value = ship_from.city;
     if (co && ship_from.country) co.value = ship_from.country;
+    if (ship_from.postal_code) markEbayShipFromSet();
   } catch (e) { /* non-blocking */ }
+}
+
+function markEbayShipFromSet() {
+  const title = document.getElementById('ebay-sf-title');
+  const warn = document.getElementById('ebay-sf-warn');
+  if (title) { title.textContent = '📦 Ship-from address'; title.style.color = 'var(--text)'; }
+  if (warn) {
+    warn.style.color = '#166534'; warn.style.background = '#dcfce7';
+    warn.innerHTML = '<strong>✓ Ship-from address set.</strong> Your eBay listings will publish from here.';
+  }
 }
 
 async function saveEbayShipFrom(btn) {
