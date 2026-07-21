@@ -124,9 +124,14 @@ def _recover_stale_claims(db, user_id: str, platform: str, now_dt: datetime) -> 
 
 
 @router.get("/pending")
-async def get_pending_jobs(platform: str = None, user_id: str = Depends(get_current_user)):
+async def get_pending_jobs(request: Request, platform: str = None, user_id: str = Depends(get_current_user)):
     db = get_db()
     now_dt = datetime.now(timezone.utc)
+    # A poll WITH a platform is a real extension dispatch poll (the dashboard
+    # polls without one, just to count) — treat it as the extension's heartbeat
+    # so the "computer online" indicator works without any extension change.
+    if platform is not None:
+        _record_extension_heartbeat(db, user_id, request.headers.get("user-agent"))
     # First, rescue anything stuck 'claimed' from an interrupted run.
     _recover_stale_claims(db, user_id, platform, now_dt)
 
