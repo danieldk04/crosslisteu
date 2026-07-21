@@ -260,6 +260,7 @@ class EbayPlatform(PlatformBase):
                 "categoryId": category_id,
                 "listingDescription": item.get("description", ""),
                 "quantityLimitPerBuyer": 1,
+                "merchantLocationKey": MERCHANT_LOCATION_KEY,
             }
             offer_resp = await client.post(
                 f"{INVENTORY_API}/offer",
