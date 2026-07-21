@@ -683,6 +683,10 @@ input[type="checkbox"].row-check { width: 15px; height: 15px; cursor: pointer; a
         <button class="btn btn-sm btn-outline" id="refresh-btn" onclick="refreshDashboard(this)">Refresh</button>
       </div>
 
+      <!-- Is a computer with the extension online to actually run queued jobs?
+           Key for anyone working from their phone. Populated by loadExtensionStatus(). -->
+      <div class="ext-status" style="display:none"></div>
+
       <!-- Stats row -->
       <div class="stats" id="stats">
         <div class="stat">
