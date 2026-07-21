@@ -154,6 +154,21 @@ class EbayPlatform(PlatformBase):
         except Exception as e:
             logger.warning(f"Kon ververste eBay-token niet opslaan (niet-blokkerend): {e}")
 
+    @staticmethod
+    def _ship_from_address(credentials: dict) -> dict:
+        """Ship-from address for this user's eBay location. Prefers the per-user
+        value saved when they connected eBay (extra_data.ship_from); falls back to
+        the global env default so single-tenant setups keep working."""
+        sf = (credentials.get("extra_data") or {}).get("ship_from") or {}
+        address = {"country": sf.get("country") or settings.ebay_location_country or "NL"}
+        postal = sf.get("postal_code") or settings.ebay_location_postal_code
+        city = sf.get("city") or settings.ebay_location_city
+        if postal:
+            address["postalCode"] = postal
+        if city:
+            address["city"] = city
+        return address
+
     async def _ensure_location(self, client: httpx.AsyncClient, credentials: dict) -> None:
         """Make sure a merchant location exists; eBay needs it to derive Item.Country
         when publishing an offer. Idempotent — a 409 (already exists) is fine."""
@@ -163,11 +178,7 @@ class EbayPlatform(PlatformBase):
         )
         if get_resp.status_code == 200:
             return
-        address = {"country": settings.ebay_location_country or "NL"}
-        if settings.ebay_location_postal_code:
-            address["postalCode"] = settings.ebay_location_postal_code
-        if settings.ebay_location_city:
-            address["city"] = settings.ebay_location_city
+        address = self._ship_from_address(credentials)
         create_resp = await client.post(
             f"{INVENTORY_API}/location/{MERCHANT_LOCATION_KEY}",
             json={
