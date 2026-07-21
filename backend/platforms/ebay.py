@@ -193,6 +193,29 @@ class EbayPlatform(PlatformBase):
         if create_resp.status_code not in (200, 201, 204, 409):
             _raise_with_ebay_error(create_resp, "creating merchant location")
 
+    async def upsert_location(self, credentials: dict) -> None:
+        """Create the merchant location, or update its address if it already exists.
+        Called when a user saves/changes their ship-from address so eBay reflects it
+        immediately (not only on the next publish)."""
+        if not credentials.get("access_token"):
+            raise RuntimeError("eBay is not connected.")
+        credentials = await self._ensure_fresh_token(credentials)
+        async with httpx.AsyncClient() as client:
+            get_resp = await client.get(
+                f"{INVENTORY_API}/location/{MERCHANT_LOCATION_KEY}",
+                headers=self._auth_headers(credentials),
+            )
+            if get_resp.status_code != 200:
+                await self._ensure_location(client, credentials)
+                return
+            resp = await client.post(
+                f"{INVENTORY_API}/location/{MERCHANT_LOCATION_KEY}/update_location_details",
+                json={"location": {"address": self._ship_from_address(credentials)}},
+                headers=self._auth_headers(credentials, write=True),
+            )
+            if resp.status_code not in (200, 204):
+                _raise_with_ebay_error(resp, "updating merchant location")
+
     async def create_listing(self, item: dict, credentials: dict) -> dict:
         if not credentials.get("access_token"):
             raise RuntimeError(
