@@ -477,6 +477,69 @@ async def _get_category_tree_id() -> str:
     return tree_id
 
 
+_required_aspects_cache: dict = {}
+
+
+async def _get_required_aspects(category_id: str) -> list[dict]:
+    """Required item specifics for a category, via the Taxonomy API. Each entry is
+    {name, values}: `values` is the closed list of allowed values (empty = free
+    text). Cached per category — the taxonomy rarely changes. Never raises."""
+    if category_id in _required_aspects_cache:
+        return _required_aspects_cache[category_id]
+    try:
+        token = await _get_app_token()
+        tree_id = await _get_category_tree_id()
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                f"{TAXONOMY_API}/category_tree/{tree_id}/get_item_aspects_for_category",
+                params={"category_id": category_id},
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            resp.raise_for_status()
+            data = resp.json()
+    except Exception as e:
+        logger.warning(f"Kon eBay item-aspecten niet ophalen voor categorie {category_id}: {e}")
+        return []
+    out = []
+    for a in data.get("aspects", []):
+        if not a.get("aspectConstraint", {}).get("aspectRequired"):
+            continue
+        values = [v.get("localizedValue") for v in a.get("aspectValues", []) if v.get("localizedValue")]
+        out.append({"name": a.get("localizedAspectName"), "values": values})
+    _required_aspects_cache[category_id] = out
+    return out
+
+
+def _fill_required_aspects(aspects: dict, item: dict, required: list[dict]) -> None:
+    """Fill any required aspect we don't already have. Maps known item fields
+    (gender→Department, size type), otherwise picks the first allowed value from
+    the closed list so eBay accepts the listing (the seller can refine later)."""
+    existing = {k.lower() for k in aspects}
+    gender = (item.get("gender") or "").strip().lower()
+    for req in required:
+        name = req.get("name")
+        if not name or name.lower() in existing:
+            continue
+        allowed = req.get("values") or []
+        low = name.lower()
+        val = None
+        if low == "department":
+            if "wom" in gender or "vrouw" in gender or "dames" in gender:
+                val = "Women"
+            elif "men" in gender or "man" in gender or "heren" in gender:
+                val = "Men"
+        elif low == "size type":
+            val = "Regular"
+        # Fallback: any allowed value satisfies eBay's "required" constraint.
+        if val is None and allowed:
+            val = allowed[0]
+        if val is None:
+            continue  # free-text required aspect we can't infer — let eBay report it
+        if allowed and val not in allowed:
+            val = allowed[0]
+        aspects[name] = [val]
+
+
 def _clean_ebay_query(query: str) -> str:
     """
     Strip the noise that derails eBay's category matcher.
