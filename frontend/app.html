@@ -5031,10 +5031,14 @@ loadAll().then(() => { if (window.location.hash === '#platforms') renderPlatform
 loadBillingStatus();
 pollActivity();
 loadNotifications();
+loadExtensionStatus();
 setInterval(loadAll, 15000);
 setInterval(pollActivity, 4000);
 setInterval(loadBillingStatus, 60000);
 setInterval(loadNotifications, 60000);
+// Poll the "computer online?" heartbeat every 20s so the indicator flips within
+// ~20s of a computer going online/offline.
+setInterval(loadExtensionStatus, 20000);
 
 // ── Analytics ─────────────────────────────────────────────────────
 let anPeriodDays = 90;
