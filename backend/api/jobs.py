@@ -593,6 +593,7 @@ async def relist_cancel(body: dict, user_id: str = Depends(get_current_user)):
 @router.post("/{job_id}/claim")
 async def claim_job(job_id: str, user_id: str = Depends(get_current_user)):
     db = get_db()
+    _record_extension_heartbeat(db, user_id)  # only the extension claims jobs
     result = db.table("jobs").update({
         "status": "claimed",
         "claimed_at": datetime.now(timezone.utc).isoformat(),
