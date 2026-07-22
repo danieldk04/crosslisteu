@@ -623,6 +623,7 @@ async def report_job_progress(job_id: str, body: dict, user_id: str = Depends(ge
 @router.post("/{job_id}/complete")
 async def complete_job(job_id: str, body: dict, user_id: str = Depends(get_current_user)):
     db = get_db()
+    _record_extension_heartbeat(db, user_id)  # only the extension completes jobs
     job = db.table("jobs").select("*").eq("id", job_id).eq("user_id", user_id).single().execute().data
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
