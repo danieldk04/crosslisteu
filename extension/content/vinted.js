@@ -968,6 +968,21 @@
           push(row.querySelector?.('input[type="radio"]') || null, row);
         }
       }
+      // C: generic fallback for ANY category (games, electronics, etc.). When we
+      // type into the search, Vinted renders leaf results as plain rows inside a
+      // dropdown/listbox with NO gender breadcrumb — Strategy B skips those. Here
+      // we harvest every visible option row from the open menu regardless of its
+      // breadcrumb, so non-clothing categories get real candidates to score.
+      if (!out.length) {
+        const menus = document.querySelectorAll(
+          '[role="listbox"], [class*="dropdown"], [class*="Dropdown"], [class*="Menu"], [class*="menu"], [data-testid*="dropdown"]');
+        const rows = [];
+        (menus.length ? menus : [document]).forEach((m) =>
+          rows.push(...m.querySelectorAll('[role="option"], li, label, [class*="Cell"], [class*="option"], [class*="Suggestion"]')));
+        for (const row of rows) {
+          push(row.querySelector?.('input[type="radio"]') || null, row);
+        }
+      }
       return out;
     };
 
