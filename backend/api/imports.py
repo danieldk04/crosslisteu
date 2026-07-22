@@ -158,7 +158,9 @@ async def _classify_with_claude(title: str | None, description: str | None,
     try:
         import anthropic as _anthropic
         from backend.config import settings as _settings
-        client = _anthropic.Anthropic(api_key=_settings.anthropic_api_key)
+        # A per-call timeout so one slow/hanging Haiku response can never freeze a
+        # bulk import indefinitely — on timeout we fall back to the keyword rules.
+        client = _anthropic.Anthropic(api_key=_settings.anthropic_api_key, timeout=20.0)
 
         taxonomy_lines = "\n".join(
             f"  {g}: {', '.join(cats)}" for g, cats in _TAXONOMY.items()
