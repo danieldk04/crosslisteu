@@ -1102,6 +1102,113 @@
   }
 
   // Like fillAttributeVinted but skips opening the trigger (panel already open).
+  // ---- COLOUR: robust, verified multi-select (Vinted allows up to 2). ----
+  // The old path silently failed when the colour didn't commit, leaving "Fill in
+  // colour to continue". This version: normalises the value (string/array,
+  // comma/slash/&/"en"-separated, Dutch→English), opens the panel, ticks each
+  // colour's checkbox with fallbacks (input → label → row), scrolls options into
+  // view like the material picker, and VERIFIES at least one colour is checked —
+  // retrying the whole open+pick cycle before giving up.
+  function parseColours(item) {
+    let raw = item.color ?? item.colour ?? item.colours ?? item.colors ?? "";
+    const list = Array.isArray(raw) ? raw : String(raw).split(/[,/;&]|\s+en\s+|\s+and\s+/i);
+    const out = [];
+    for (const s of list) {
+      const v = String(s).trim();
+      if (!v) continue;
+      const mapped = COLOUR_MAP[v.toLowerCase()] || v;
+      if (!out.some((o) => o.toLowerCase() === mapped.toLowerCase())) out.push(mapped);
+      if (out.length === 2) break; // Vinted caps at 2 colours
+    }
+    return out;
+  }
+
+  // How many colour checkboxes are currently ticked in the open panel.
+  function checkedColourCount() {
+    const titles = [...document.querySelectorAll('[class*="web_ui__Cell__title"]')];
+    let n = 0;
+    for (const t of titles) {
+      const cell = t.closest('[class*="web_ui__Cell__cell"]') || t.parentElement;
+      const cb = cell?.querySelector?.('input[type="checkbox"]');
+      if (cb && cb.checked) n++;
+    }
+    return n;
+  }
+
+  // Tick a single colour in the currently-open colour panel. Returns true only if
+  // its checkbox ends up checked.
+  async function pickColourInOpenPanel(colour) {
+    const w = colour.toLowerCase().trim();
+    let titleEls = [];
+    for (let i = 0; i < 20 && !titleEls.length; i++) {
+      // No offsetParent filter — long colour lists scroll, so options can be
+      // rendered but outside the viewport (this was a key cause of misses).
+      titleEls = [...document.querySelectorAll('[class*="web_ui__Cell__title"]')];
+      if (!titleEls.length) await sleep(100);
+    }
+    if (!titleEls.length) return false;
+
+    // exact → startsWith → includes (colour names are short, so keep it tight).
+    let best = titleEls.find((e) => e.textContent.trim().toLowerCase() === w)
+      || titleEls.find((e) => e.textContent.trim().toLowerCase().startsWith(w))
+      || titleEls.find((e) => e.textContent.trim().toLowerCase().includes(w));
+    if (!best) {
+      console.warn("[Omnivaleur] Vinted colour not found in panel:", colour);
+      return false;
+    }
+
+    best.scrollIntoView({ block: "nearest" });
+    await sleep(150);
+    const cell = best.closest('[class*="web_ui__Cell__cell"]') || best.parentElement || best;
+    const cb = cell.querySelector('input[type="checkbox"]');
+    if (cb && cb.checked) return true; // already selected
+
+    // Try, in order: the checkbox input, the <label for>, then the row itself.
+    if (cb) { cb.click(); await sleep(250); if (cb.checked) return true; }
+    const label = cb?.id ? document.querySelector(`label[for="${cb.id}"]`) : null;
+    if (label) { realClickEl(label); await sleep(250); if (cb && cb.checked) return true; }
+    realClickEl(cell);
+    await sleep(250);
+    return cb ? cb.checked : checkedColourCount() > 0;
+  }
+
+  async function fillColourVinted(item) {
+    const colours = parseColours(item);
+    if (!colours.length) return false;
+
+    const triggerSel = 'input[data-testid="color-select-dropdown-input"]';
+    let trigger = null;
+    for (let i = 0; i < 12 && !trigger; i++) {
+      const el = qs(triggerSel);
+      if (el && el.offsetParent) { trigger = el; break; }
+      await sleep(250);
+    }
+    if (!trigger) { console.warn("[Omnivaleur] Vinted colour trigger not found"); return false; }
+
+    // Up to 2 attempts at the full open+pick cycle, verifying a checkbox sticks.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      // Open the panel if it isn't already showing option rows.
+      if (!document.querySelector('[class*="web_ui__Cell__title"]')) {
+        realClickEl(trigger);
+        await sleep(700);
+      }
+      let picked = 0;
+      for (const colour of colours) {
+        if (await pickColourInOpenPanel(colour)) picked++;
+        await sleep(200);
+      }
+      if (picked > 0 || checkedColourCount() > 0) {
+        console.log("[Omnivaleur] Vinted colour set:", colours.join(", "), `(${Math.max(picked, checkedColourCount())} ticked)`);
+        return true;
+      }
+      // Nothing stuck — close and retry once.
+      console.warn("[Omnivaleur] Vinted colour didn't commit, retrying:", colours.join(", "));
+      realClickEl(trigger);
+      await sleep(500);
+    }
+    return false;
+  }
+
   async function fillMaterialFromOpenPanel(value) {
     if (!value) return false;
     const translated = MATERIAL_MAP[value.toLowerCase().trim()] || value;
