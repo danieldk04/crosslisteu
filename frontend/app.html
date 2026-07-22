@@ -505,6 +505,38 @@ input[type="checkbox"].row-check { width: 15px; height: 15px; cursor: pointer; a
   td, th { padding: 10px 12px; font-size: 12px; }
   th.col-check, td.col-check { padding-left: 14px; width: 32px; }
 
+  /* Items table → stacked cards on mobile (no more sideways scrolling that
+     cut off Price/Platforms/Actions). Each row becomes a self-contained card. */
+  .items-table .table-wrap, .table-wrap:has(.items-table) { overflow-x: visible; }
+  table.items-table { display: block; width: 100%; }
+  table.items-table thead { display: none; }
+  table.items-table tbody { display: block; width: 100%; }
+  table.items-table tr {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      "check info price"
+      "check platforms platforms"
+      "actions actions actions";
+    gap: 10px 12px;
+    align-items: center;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    background: #fff;
+  }
+  table.items-table tr.selected { border-color: var(--primary, #4f46e5); }
+  table.items-table td { display: block; padding: 0; border: none; }
+  table.items-table td.col-check { grid-area: check; align-self: start; width: auto; padding: 2px 0 0; }
+  table.items-table td:nth-child(2) { grid-area: info; }
+  table.items-table td:nth-child(3) { grid-area: price; text-align: right; font-size: 15px; white-space: nowrap; }
+  table.items-table td:nth-child(7) { grid-area: platforms; }
+  table.items-table td:nth-child(8) { grid-area: actions; display: flex; gap: 8px; white-space: normal; }
+  table.items-table td:nth-child(8) .btn { flex: 1; margin-left: 0 !important; }
+  /* Loading / empty / "no match" rows span the whole card width */
+  table.items-table td[colspan] { grid-area: unset; grid-column: 1 / -1; }
+
   /* Modals: full-width */
   .modal { max-width: 100%; border-radius: 16px 16px 0 0; margin-top: auto; max-height: 95vh; }
   .modal-overlay { align-items: flex-end; padding: 0; }
