@@ -527,13 +527,15 @@ input[type="checkbox"].row-check { width: 15px; height: 15px; cursor: pointer; a
     background: #fff;
   }
   table.items-table tr.selected { border-color: var(--primary, #4f46e5); }
-  table.items-table td { display: block; padding: 0; border: none; min-width: 0; }
+  table.items-table td { display: block; padding: 0 !important; border: none; }
   table.items-table .item-title { overflow-wrap: anywhere; }
   /* Keep the non-essential columns hidden — the block rule above would otherwise
      out-specify the shared hide-mobile rule and bring them back into the card. */
   table.items-table td.hide-mobile { display: none; }
-  table.items-table td.col-check { grid-area: check; align-self: start; width: auto; padding: 2px 0 0; }
-  table.items-table td:nth-child(2) { grid-area: info; }
+  table.items-table td.col-check { grid-area: check; align-self: start; width: auto; }
+  /* Only the flexible title cell may shrink; the price cell must keep its full
+     natural width so €xx.xx never gets clipped or pushed past the card edge. */
+  table.items-table td:nth-child(2) { grid-area: info; min-width: 0; }
   table.items-table td:nth-child(3) { grid-area: price; text-align: right; font-size: 15px; white-space: nowrap; }
   table.items-table td:nth-child(7) { grid-area: platforms; }
   table.items-table td:nth-child(8) { grid-area: actions; display: flex; gap: 8px; white-space: normal; }
