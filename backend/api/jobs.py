@@ -613,6 +613,7 @@ async def report_job_progress(job_id: str, body: dict, user_id: str = Depends(ge
     (the final /complete overwrites `result`, so this never lingers).
     """
     db = get_db()
+    _record_extension_heartbeat(db, user_id)  # progress pings only come from the extension
     db.table("jobs").update({
         "result": {"_progress": {**body, "at": datetime.now(timezone.utc).isoformat()}},
     }).eq("id", job_id).eq("user_id", user_id).execute()
