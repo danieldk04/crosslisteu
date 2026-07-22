@@ -181,7 +181,13 @@ async def _classify_with_claude(title: str | None, description: str | None,
             "- Set confidence low if you are guessing about what the garment is.\n\n"
             'Respond with ONLY JSON: {"gender":"...","category":"...","confidence":"high|medium|low"}'
         )
-        resp = client.messages.create(
+        # client.messages.create is a *blocking* sync call. Run it in a worker
+        # thread so the surrounding asyncio.gather in bulk-import actually runs the
+        # classifications concurrently instead of one-at-a-time on the event loop
+        # (which stalled large imports and made them look frozen).
+        import asyncio as _asyncio
+        resp = await _asyncio.to_thread(
+            client.messages.create,
             model="claude-haiku-4-5-20251001",
             max_tokens=200,
             messages=[{"role": "user", "content": prompt}],
