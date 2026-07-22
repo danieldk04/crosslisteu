@@ -150,6 +150,12 @@ CREATE TABLE IF NOT EXISTS extension_heartbeat (
     last_seen TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     user_agent TEXT
 );
+-- Access is enforced by the backend (which filters by user_id), not RLS. A table
+-- created via the Supabase UI comes with RLS enabled-but-policyless, which silently
+-- blocked every heartbeat upsert (error 42501) — so the table stayed empty and the
+-- "computer online" indicator was stuck on "offline". Turn RLS off to stay
+-- consistent with the rest of the schema and let the heartbeat writes land.
+ALTER TABLE extension_heartbeat DISABLE ROW LEVEL SECURITY;
 
 -- Listing import: 'scan' jobs (extension reads the user's own "my listings"
 -- page on a platform and reports back what it finds) land here for manual
