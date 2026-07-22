@@ -918,6 +918,21 @@
 
     const visible = (el) => !!el && (el.offsetParent !== null || el.getClientRects().length > 0);
 
+    // Type into the catalogue SEARCH without blurring. fillInput() dispatches a
+    // "blur" that closes Vinted's dropdown, wiping the typed results before we
+    // can read them — fatal for every non-suggested category (games, electronics,
+    // any leaf that needs searching). Here we set the value + fire input/keyup and
+    // KEEP focus so the result list stays open.
+    const typeSearch = (value) => {
+      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+      inp.focus();
+      try { setter.call(inp, ""); } catch (_) { inp.value = ""; }
+      inp.dispatchEvent(new Event("input", { bubbles: true }));
+      try { setter.call(inp, value); } catch (_) { inp.value = value; }
+      inp.dispatchEvent(new Event("input", { bubbles: true }));
+      inp.dispatchEvent(new KeyboardEvent("keyup", { bubbles: true, key: value.slice(-1) }));
+    };
+
     // Collect the suggested option rows. Vinted hides the native radio (custom-styled),
     // so we must NOT filter on radio visibility — we filter on the visible ROW instead.
     // Strategy A: every radio/role=radio → its clickable row. Strategy B (fallback):
