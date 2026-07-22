@@ -527,7 +527,8 @@ input[type="checkbox"].row-check { width: 15px; height: 15px; cursor: pointer; a
     background: #fff;
   }
   table.items-table tr.selected { border-color: var(--primary, #4f46e5); }
-  table.items-table td { display: block; padding: 0; border: none; }
+  table.items-table td { display: block; padding: 0; border: none; min-width: 0; }
+  table.items-table .item-title { overflow-wrap: anywhere; }
   /* Keep the non-essential columns hidden — the block rule above would otherwise
      out-specify the shared hide-mobile rule and bring them back into the card. */
   table.items-table td.hide-mobile { display: none; }
