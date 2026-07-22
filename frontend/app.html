@@ -528,6 +528,9 @@ input[type="checkbox"].row-check { width: 15px; height: 15px; cursor: pointer; a
   }
   table.items-table tr.selected { border-color: var(--primary, #4f46e5); }
   table.items-table td { display: block; padding: 0; border: none; }
+  /* Keep the non-essential columns hidden — the block rule above would otherwise
+     out-specify the shared hide-mobile rule and bring them back into the card. */
+  table.items-table td.hide-mobile { display: none; }
   table.items-table td.col-check { grid-area: check; align-self: start; width: auto; padding: 2px 0 0; }
   table.items-table td:nth-child(2) { grid-area: info; }
   table.items-table td:nth-child(3) { grid-area: price; text-align: right; font-size: 15px; white-space: nowrap; }
