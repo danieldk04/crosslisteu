@@ -52,6 +52,7 @@
         "https://www.facebook.com/marketplace/create/*",
         "https://www.facebook.com/marketplace/item/*",
         "https://www.facebook.com/marketplace/you/*",
+        "https://www.facebook.com/marketplace/ineligible/*",
         "https://www.facebook.com/privacy/consent/*",
         "https://www.facebook.com/checkpoint/*"
       ],
