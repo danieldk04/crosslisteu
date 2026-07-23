@@ -232,19 +232,33 @@
 
     // FB localises the whole form (verified NL: "Titel"/"Prijs"/"Categorie"/
     // "Staat"), so every label match accepts both the Dutch and English term.
-    await typeInto(findField(/^(titel|title)$/i), smartTrunc(item.title || "", 100));
+    // Every one of these is REQUIRED by Facebook's own form (the Volgende/Next
+    // button stays disabled until all four are set) — if any can't be found or
+    // filled, publishAndCapture would click a disabled button, find no Publish
+    // button next, and throw a vague "layout changed?" error with no indication
+    // of WHICH field actually failed. Fail here instead, immediately and
+    // specifically, so the user knows exactly what to fix.
+    const titleField = findField(/^(titel|title)$/i);
+    if (!titleField) throw new Error(
+      "Could not find the Title field on Facebook's form (layout may have changed). Nothing was published.");
+    await typeInto(titleField, smartTrunc(item.title || "", 100));
 
     // Price is locale-sensitive. On the Dutch form the number input reads "." as a
     // THOUSANDS separator, so typing "29.99" is stored as 2999. Detect the field's
     // language from its own label and type the matching decimal separator ("29,99"
     // on NL, "29.99" on EN). Whole amounts are typed without decimals.
     const priceField = findField(/^(prijs|price)$/i);
-    if (priceField) await typeInto(priceField, formatPrice(item.price, priceField));
+    if (!priceField) throw new Error(
+      "Could not find the Price field on Facebook's form (layout may have changed). Nothing was published.");
+    await typeInto(priceField, formatPrice(item.price, priceField));
 
     // Category is required. FB uses its own flat taxonomy (no free-text search),
     // so we map the item to a verified selectable leaf rather than typing.
-    await selectCombo(/categorie|category/i, fbCategoryCandidates(item));
-    await selectCombo(/staat|conditie|condition/i, CONDITION_MAP[item.condition] || CONDITION_MAP.good);
+    if (!(await selectCombo(/categorie|category/i, fbCategoryCandidates(item)))) throw new Error(
+      "Could not set the Category field on Facebook's form (layout may have changed, or none of the " +
+      "expected category options were found). Nothing was published.");
+    if (!(await selectCombo(/staat|conditie|condition/i, CONDITION_MAP[item.condition] || CONDITION_MAP.good))) throw new Error(
+      "Could not set the Condition field on Facebook's form (layout may have changed). Nothing was published.");
 
     // Description ("Beschrijving") is a <textarea> that only mounts AFTER a category
     // is picked (it's a clothing-specific field), so it can render a beat late.
