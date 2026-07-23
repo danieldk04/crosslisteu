@@ -612,7 +612,38 @@ async function processJob(job, serverUrl) {
     // other's photos, prices, titles and descriptions. Per-tab keying makes that
     // impossible even if two tabs ever run at once.
     chrome.storage.local.set({ [`jobtab_${tab.id}`]: { ...job, jobId: job.id, serverUrl } });
+    armJobWatchdog(tab.id, job.id, job.platform, serverUrl);
   });
+}
+
+// ── Per-tab watchdog for content-script-driven jobs ────────────────────────
+// Facebook (beta, unstable selectors) and any other tab-based job can hang
+// without ever calling JOB_DONE/JOB_ERROR — e.g. getJob() never resolves, or
+// fillForm() gets stuck in a wait loop on a form Facebook changed. Because the
+// extension dispatches strictly ONE job at a time, a single silently-hung tab
+// used to freeze the ENTIRE queue (every platform) until the server's 5-minute
+// stale-claim sweep finally reset it — with no visible error in the meantime.
+// This watchdog force-fails the job itself after a shorter timeout so the
+// queue keeps moving and the user gets an actionable error immediately.
+const JOB_TAB_TIMEOUT_MS = 3 * 60 * 1000; // 3 minutes — generous for slow forms, short vs. the 5-min server sweep
+
+function armJobWatchdog(tabId, jobId, platform, serverUrl) {
+  setTimeout(async () => {
+    const key = `jobtab_${tabId}`;
+    const stored = await new Promise((res) => chrome.storage.local.get(key, res));
+    if (!stored[key]) return; // already resolved (JOB_DONE/JOB_ERROR cleared it)
+    console.warn(`[Omnivaleur] Watchdog: job ${jobId} (${platform}) on tab ${tabId} did not finish in time — force-failing.`);
+    try {
+      await reportError(jobId, serverUrl,
+        `Extension timed out waiting for this ${platform} job to finish (no response after 3 minutes). ` +
+        `The page may have changed, needs a manual step, or the extension lost track of the tab. ` +
+        `Check the tab if it's still open, then publish again.`);
+    } catch (e) {
+      console.error("[Omnivaleur] Watchdog: failed to report timeout error:", e);
+    }
+    chrome.storage.local.remove(key);
+    chrome.tabs.remove(tabId).catch(() => {});
+  }, JOB_TAB_TIMEOUT_MS);
 }
 
 // ── Background-driven delete for Marktplaats / 2dehands ───────────────────
