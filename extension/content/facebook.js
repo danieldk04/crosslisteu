@@ -138,9 +138,18 @@
   // the option matching one of `candidates` (tried in order). FB is a role=combobox
   // that opens a role=listbox of role=option rows; the category picker also exposes
   // a search box we can type into to filter a long taxonomy.
+  // Normalize curly quotes/apostrophes to straight ones. VERIFIED live 2026-07:
+  // Facebook's English UI renders "Men's clothing & shoes" with a STRAIGHT
+  // apostrophe (U+0027), but the candidate list here was written with a curly
+  // one (U+2019) — an exact-match AND the substring fallback both silently
+  // failed on that one character, so Men's/Women's clothing could never be
+  // selected on an English-language account. Normalizing both sides makes the
+  // match immune to whichever variant Facebook (or this file) happens to use.
+  const normApos = (s) => s.replace(/[‘’ʼ]/g, "'");
+
   async function selectCombo(labelRe, candidates) {
     const wants = (Array.isArray(candidates) ? candidates : [candidates])
-      .filter(Boolean).map((c) => String(c).toLowerCase().trim());
+      .filter(Boolean).map((c) => normApos(String(c).toLowerCase().trim()));
     if (!wants.length) return false;
 
     // VERIFIED live: the Categorie/Staat comboboxes also have NO aria-label —
