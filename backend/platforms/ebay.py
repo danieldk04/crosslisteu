@@ -765,7 +765,7 @@ async def _translate_category_names(results: list[dict]) -> list[dict]:
     try:
         import anthropic
         client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-        numbered = "\n".join(f"{i}: {r['name']}" for i, r in enumerate(results))
+        numbered = "\n".join(f"{i}: {r['name']}" for i, r in enumerate(remaining))
         response = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=1024,
@@ -784,8 +784,8 @@ async def _translate_category_names(results: list[dict]) -> list[dict]:
                 idx = int(idx_str.strip())
             except ValueError:
                 continue
-            if 0 <= idx < len(results):
-                results[idx]["name"] = translated.strip()
+            if 0 <= idx < len(remaining):
+                remaining[idx]["name"] = translated.strip()
     except Exception as e:
         logger.warning(f"eBay category name translation failed: {e}")
     return results
